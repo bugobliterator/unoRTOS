@@ -1,0 +1,339 @@
+   1               		.file	"main1.c"
+   2               	__SP_H__ = 0x3e
+   3               	__SP_L__ = 0x3d
+   4               	__SREG__ = 0x3f
+   5               	__tmp_reg__ = 0
+   6               	__zero_reg__ = 1
+   9               		.text
+  10               	.Ltext0:
+ 139               	.global	vTask1
+ 141               	vTask1:
+ 142               		.stabd	46,0,0
+   1:main1.c       **** 
+   2:main1.c       **** #include <stdlib.h>
+   3:main1.c       **** #include <string.h>
+   4:main1.c       **** 
+   5:main1.c       **** #ifdef GCC_MEGA_AVR
+   6:main1.c       **** 	/* EEPROM routines used only with the WinAVR compiler. */
+   7:main1.c       **** 	#include <avr/eeprom.h> 
+   8:main1.c       **** #endif
+   9:main1.c       **** 
+  10:main1.c       **** /* Scheduler include files. */
+  11:main1.c       **** #include "FreeRTOS.h"
+  12:main1.c       **** #include "task.h"
+  13:main1.c       **** #include "croutine.h"
+  14:main1.c       **** 
+  15:main1.c       **** /* Demo file headers. */
+  16:main1.c       **** #include "PollQ.h"
+  17:main1.c       **** #include "integer.h"
+  18:main1.c       **** #include "serial.h"
+  19:main1.c       **** //#include "comtest.h"
+  20:main1.c       **** #include "crflash.h"
+  21:main1.c       **** #include "print.h"
+  22:main1.c       **** #include "partest.h"
+  23:main1.c       **** #include "regtest.h"
+  24:main1.c       **** 
+  25:main1.c       **** void vTask1( void *pvParameters );
+  26:main1.c       **** void vTask2( void *pvParameters );
+  27:main1.c       **** void vApplicationIdleHook( void );
+  28:main1.c       **** void vTask1( void *pvParameters )
+  29:main1.c       **** {
+ 144               	.LM0:
+ 145               	.LFBB1:
+ 146 0000 CF93      		push r28
+ 147 0002 DF93      		push r29
+ 148 0004 00D0      		rcall .
+ 149 0006 00D0      		rcall .
+ 150 0008 CDB7      		in r28,__SP_L__
+ 151 000a DEB7      		in r29,__SP_H__
+ 152               	/* prologue: function */
+ 153               	/* frame size = 4 */
+ 154               	/* stack size = 6 */
+ 155               	.L__stack_usage = 6
+ 156               	.L4:
+  30:main1.c       **** 	const char *pcTaskName = "Task 1 is running\n";
+  31:main1.c       **** 	volatile unsigned long ul;
+  32:main1.c       **** 	/* As per most tasks, this task is implemented in an infinite loop. */
+  33:main1.c       **** 	for( ;; )
+  34:main1.c       **** 	{
+  35:main1.c       **** 		/* Print out the name of this task. */
+  36:main1.c       **** 		//vPrintString( pcTaskName );
+  37:main1.c       **** 		for( ul = 0; ul < 10000; ul++ )
+ 158               	.LM1:
+ 159 000c 1982      		std Y+1,__zero_reg__
+ 160 000e 1A82      		std Y+2,__zero_reg__
+ 161 0010 1B82      		std Y+3,__zero_reg__
+ 162 0012 1C82      		std Y+4,__zero_reg__
+ 163 0014 00C0      		rjmp .L2
+ 164               	.L3:
+ 166               	.LM2:
+ 167 0016 8981      		ldd r24,Y+1
+ 168 0018 9A81      		ldd r25,Y+2
+ 169 001a AB81      		ldd r26,Y+3
+ 170 001c BC81      		ldd r27,Y+4
+ 171 001e 0196      		adiw r24,1
+ 172 0020 A11D      		adc r26,__zero_reg__
+ 173 0022 B11D      		adc r27,__zero_reg__
+ 174 0024 8983      		std Y+1,r24
+ 175 0026 9A83      		std Y+2,r25
+ 176 0028 AB83      		std Y+3,r26
+ 177 002a BC83      		std Y+4,r27
+ 178               	.L2:
+ 180               	.LM3:
+ 181 002c 8981      		ldd r24,Y+1
+ 182 002e 9A81      		ldd r25,Y+2
+ 183 0030 AB81      		ldd r26,Y+3
+ 184 0032 BC81      		ldd r27,Y+4
+ 185 0034 8031      		cpi r24,16
+ 186 0036 9742      		sbci r25,39
+ 187 0038 A105      		cpc r26,__zero_reg__
+ 188 003a B105      		cpc r27,__zero_reg__
+ 189 003c 00F0      		brlo .L3
+ 190 003e 00C0      		rjmp .L4
+ 195               	.Lscope1:
+ 197               		.stabd	78,0,0
+ 200               	.global	vTask2
+ 202               	vTask2:
+ 203               		.stabd	46,0,0
+  38:main1.c       **** 		{
+  39:main1.c       **** 			/* This loop is just a very crude delay implementation. There is
+  40:main1.c       **** 			nothing to do in here. Later examples will replace this crude
+  41:main1.c       **** 			loop with a proper delay/sleep function. */
+  42:main1.c       **** 			
+  43:main1.c       **** 		}
+  44:main1.c       **** 
+  45:main1.c       **** 	}
+  46:main1.c       **** }
+  47:main1.c       **** void vTask2( void *pvParameters )
+  48:main1.c       **** {
+ 205               	.LM4:
+ 206               	.LFBB2:
+ 207 0040 CF93      		push r28
+ 208 0042 DF93      		push r29
+ 209 0044 00D0      		rcall .
+ 210 0046 00D0      		rcall .
+ 211 0048 CDB7      		in r28,__SP_L__
+ 212 004a DEB7      		in r29,__SP_H__
+ 213               	/* prologue: function */
+ 214               	/* frame size = 4 */
+ 215               	/* stack size = 6 */
+ 216               	.L__stack_usage = 6
+  49:main1.c       **** 	const char *pcTaskName = "Task 2 is running\n";
+  50:main1.c       **** 	volatile unsigned long ul,i;
+  51:main1.c       **** 	DDRB = 0xFF;
+ 218               	.LM5:
+ 219 004c 8FEF      		ldi r24,lo8(-1)
+ 220 004e 84B9      		out 0x4,r24
+  52:main1.c       **** 	/* As per most tasks, this task is implemented in an infinite loop. */
+  53:main1.c       **** 	for( ;; )
+  54:main1.c       **** 	{
+  55:main1.c       **** 		/* Define pull-ups and set outputs high */
+  56:main1.c       **** 		/* Define directions for port pins */
+  57:main1.c       **** 			
+  58:main1.c       **** 			PORTB = 0x00;
+  59:main1.c       **** 			for(i=0;i<10000;i++);
+  60:main1.c       **** 			PORTB = 0xFF;
+ 222               	.LM6:
+ 223 0050 2FEF      		ldi r18,lo8(-1)
+ 224               	.L10:
+  58:main1.c       **** 			PORTB = 0x00;
+ 226               	.LM7:
+ 227 0052 15B8      		out 0x5,__zero_reg__
+  59:main1.c       **** 			for(i=0;i<10000;i++);
+ 229               	.LM8:
+ 230 0054 1982      		std Y+1,__zero_reg__
+ 231 0056 1A82      		std Y+2,__zero_reg__
+ 232 0058 1B82      		std Y+3,__zero_reg__
+ 233 005a 1C82      		std Y+4,__zero_reg__
+ 234 005c 00C0      		rjmp .L6
+ 235               	.L7:
+  59:main1.c       **** 			for(i=0;i<10000;i++);
+ 237               	.LM9:
+ 238 005e 8981      		ldd r24,Y+1
+ 239 0060 9A81      		ldd r25,Y+2
+ 240 0062 AB81      		ldd r26,Y+3
+ 241 0064 BC81      		ldd r27,Y+4
+ 242 0066 0196      		adiw r24,1
+ 243 0068 A11D      		adc r26,__zero_reg__
+ 244 006a B11D      		adc r27,__zero_reg__
+ 245 006c 8983      		std Y+1,r24
+ 246 006e 9A83      		std Y+2,r25
+ 247 0070 AB83      		std Y+3,r26
+ 248 0072 BC83      		std Y+4,r27
+ 249               	.L6:
+  59:main1.c       **** 			for(i=0;i<10000;i++);
+ 251               	.LM10:
+ 252 0074 8981      		ldd r24,Y+1
+ 253 0076 9A81      		ldd r25,Y+2
+ 254 0078 AB81      		ldd r26,Y+3
+ 255 007a BC81      		ldd r27,Y+4
+ 256 007c 8031      		cpi r24,16
+ 257 007e 9742      		sbci r25,39
+ 258 0080 A105      		cpc r26,__zero_reg__
+ 259 0082 B105      		cpc r27,__zero_reg__
+ 260 0084 00F0      		brlo .L7
+ 262               	.LM11:
+ 263 0086 25B9      		out 0x5,r18
+  61:main1.c       **** 			for(i=0;i<10000;i++);
+ 265               	.LM12:
+ 266 0088 1982      		std Y+1,__zero_reg__
+ 267 008a 1A82      		std Y+2,__zero_reg__
+ 268 008c 1B82      		std Y+3,__zero_reg__
+ 269 008e 1C82      		std Y+4,__zero_reg__
+ 270 0090 00C0      		rjmp .L8
+ 271               	.L9:
+ 273               	.LM13:
+ 274 0092 8981      		ldd r24,Y+1
+ 275 0094 9A81      		ldd r25,Y+2
+ 276 0096 AB81      		ldd r26,Y+3
+ 277 0098 BC81      		ldd r27,Y+4
+ 278 009a 0196      		adiw r24,1
+ 279 009c A11D      		adc r26,__zero_reg__
+ 280 009e B11D      		adc r27,__zero_reg__
+ 281 00a0 8983      		std Y+1,r24
+ 282 00a2 9A83      		std Y+2,r25
+ 283 00a4 AB83      		std Y+3,r26
+ 284 00a6 BC83      		std Y+4,r27
+ 285               	.L8:
+ 287               	.LM14:
+ 288 00a8 8981      		ldd r24,Y+1
+ 289 00aa 9A81      		ldd r25,Y+2
+ 290 00ac AB81      		ldd r26,Y+3
+ 291 00ae BC81      		ldd r27,Y+4
+ 292 00b0 8031      		cpi r24,16
+ 293 00b2 9742      		sbci r25,39
+ 294 00b4 A105      		cpc r26,__zero_reg__
+ 295 00b6 B105      		cpc r27,__zero_reg__
+ 296 00b8 00F0      		brlo .L9
+ 297 00ba 00C0      		rjmp .L10
+ 302               	.Lscope2:
+ 304               		.stabd	78,0,0
+ 306               	.global	vApplicationIdleHook
+ 308               	vApplicationIdleHook:
+ 309               		.stabd	46,0,0
+  62:main1.c       **** 	}
+  63:main1.c       **** }
+  64:main1.c       **** void vApplicationIdleHook( void )
+  65:main1.c       **** {
+ 311               	.LM15:
+ 312               	.LFBB3:
+ 313               	/* prologue: function */
+ 314               	/* frame size = 0 */
+ 315               	/* stack size = 0 */
+ 316               	.L__stack_usage = 0
+  66:main1.c       **** 	vCoRoutineSchedule();
+ 318               	.LM16:
+ 319 00bc 0C94 0000 		jmp vCoRoutineSchedule
+ 321               	.Lscope3:
+ 323               		.stabd	78,0,0
+ 324               		.section	.rodata.str1.1,"aMS",@progbits,1
+ 325               	.LC0:
+ 326 0000 5461 736B 		.string	"Task 1"
+ 326      2031 00
+ 327               	.LC1:
+ 328 0007 5461 736B 		.string	"Task 2"
+ 328      2032 00
+ 329               		.section	.text.startup,"ax",@progbits
+ 331               	.global	main
+ 333               	main:
+ 334               		.stabd	46,0,0
+  67:main1.c       **** }
+  68:main1.c       **** 
+  69:main1.c       **** int main( void )
+  70:main1.c       **** {
+ 336               	.LM17:
+ 337               	.LFBB4:
+ 338 0000 AF92      		push r10
+ 339 0002 BF92      		push r11
+ 340 0004 CF92      		push r12
+ 341 0006 DF92      		push r13
+ 342 0008 EF92      		push r14
+ 343 000a FF92      		push r15
+ 344 000c 0F93      		push r16
+ 345               	/* prologue: function */
+ 346               	/* frame size = 0 */
+ 347               	/* stack size = 7 */
+ 348               	.L__stack_usage = 7
+  71:main1.c       **** 	/* Create one of the two tasks. Note that a real application should check
+  72:main1.c       **** 	the return value of the xTaskCreate() call to ensure the task was created
+  73:main1.c       **** 	successfully. */
+  74:main1.c       **** 	xTaskCreate(vTask1, /* Pointer to the function that implements the task. */
+ 350               	.LM18:
+ 351 000e A12C      		mov r10,__zero_reg__
+ 352 0010 B12C      		mov r11,__zero_reg__
+ 353 0012 C12C      		mov r12,__zero_reg__
+ 354 0014 D12C      		mov r13,__zero_reg__
+ 355 0016 E12C      		mov r14,__zero_reg__
+ 356 0018 F12C      		mov r15,__zero_reg__
+ 357 001a 01E0      		ldi r16,lo8(1)
+ 358 001c 20E0      		ldi r18,0
+ 359 001e 30E0      		ldi r19,0
+ 360 0020 40EF      		ldi r20,lo8(-16)
+ 361 0022 50E0      		ldi r21,0
+ 362 0024 60E0      		ldi r22,lo8(.LC0)
+ 363 0026 70E0      		ldi r23,hi8(.LC0)
+ 364 0028 80E0      		ldi r24,lo8(gs(vTask1))
+ 365 002a 90E0      		ldi r25,hi8(gs(vTask1))
+ 366 002c 0E94 0000 		call xTaskGenericCreate
+  75:main1.c       **** 		"Task 1",/* Text name for the task. This is to facilitate debugging only. */
+  76:main1.c       **** 		240,/* Stack depth in words. */
+  77:main1.c       **** 		NULL,/* We are not using the task parameter. */
+  78:main1.c       **** 		1,/* This task will run at priority 1. */
+  79:main1.c       **** 		NULL ); /* We are not going to use the task handle. */
+  80:main1.c       **** 	/* Create the other task in exactly the same way and at the same priority. */
+  81:main1.c       **** 	xTaskCreate( vTask2, "Task 2", 240, NULL, 1, NULL );
+ 368               	.LM19:
+ 369 0030 20E0      		ldi r18,0
+ 370 0032 30E0      		ldi r19,0
+ 371 0034 40EF      		ldi r20,lo8(-16)
+ 372 0036 50E0      		ldi r21,0
+ 373 0038 60E0      		ldi r22,lo8(.LC1)
+ 374 003a 70E0      		ldi r23,hi8(.LC1)
+ 375 003c 80E0      		ldi r24,lo8(gs(vTask2))
+ 376 003e 90E0      		ldi r25,hi8(gs(vTask2))
+ 377 0040 0E94 0000 		call xTaskGenericCreate
+  82:main1.c       **** 	/* Start the scheduler so the tasks start executing. */
+  83:main1.c       **** 	vTaskStartScheduler();
+ 379               	.LM20:
+ 380 0044 0E94 0000 		call vTaskStartScheduler
+  84:main1.c       **** 	/* If all is well then main() will never reach here as the scheduler will
+  85:main1.c       **** 	now be running the tasks. If main() does reach here then it is likely that
+  86:main1.c       **** 	there was insufficient heap memory available for the idle task to be created.
+  87:main1.c       **** 	CHAPTER 5 provides more information on memory management. */
+  88:main1.c       **** 	return 0;
+  89:main1.c       **** }	
+ 382               	.LM21:
+ 383 0048 80E0      		ldi r24,0
+ 384 004a 90E0      		ldi r25,0
+ 385               	/* epilogue start */
+ 386 004c 0F91      		pop r16
+ 387 004e FF90      		pop r15
+ 388 0050 EF90      		pop r14
+ 389 0052 DF90      		pop r13
+ 390 0054 CF90      		pop r12
+ 391 0056 BF90      		pop r11
+ 392 0058 AF90      		pop r10
+ 393 005a 0895      		ret
+ 395               	.Lscope4:
+ 397               		.stabd	78,0,0
+ 398               		.text
+ 400               	.Letext0:
+ 401               		.ident	"GCC: (GNU) 4.7.2"
+ 402               	.global __do_copy_data
+DEFINED SYMBOLS
+                            *ABS*:00000000 main1.c
+     /tmp/cclckC7D.s:2      *ABS*:0000003e __SP_H__
+     /tmp/cclckC7D.s:3      *ABS*:0000003d __SP_L__
+     /tmp/cclckC7D.s:4      *ABS*:0000003f __SREG__
+     /tmp/cclckC7D.s:5      *ABS*:00000000 __tmp_reg__
+     /tmp/cclckC7D.s:6      *ABS*:00000001 __zero_reg__
+     /tmp/cclckC7D.s:141    .text:00000000 vTask1
+     /tmp/cclckC7D.s:202    .text:00000040 vTask2
+     /tmp/cclckC7D.s:308    .text:000000bc vApplicationIdleHook
+     /tmp/cclckC7D.s:333    .text.startup:00000000 main
+
+UNDEFINED SYMBOLS
+vCoRoutineSchedule
+xTaskGenericCreate
+vTaskStartScheduler
+__do_copy_data

@@ -1,0 +1,1 @@
+sudo avrdude -C ~/rt-duino/avrdude.conf -v -v -v -v -patmega328p -carduino -P /dev/ttyACM0 -b115200 -D -Uflash:w:rtosdemo.hex:i

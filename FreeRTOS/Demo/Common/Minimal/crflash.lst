@@ -1,0 +1,601 @@
+   1               		.file	"crflash.c"
+   2               	__SP_H__ = 0x3e
+   3               	__SP_L__ = 0x3d
+   4               	__SREG__ = 0x3f
+   5               	__tmp_reg__ = 0
+   6               	__zero_reg__ = 1
+   9               		.text
+  10               	.Ltext0:
+ 111               	prvFlashCoRoutine:
+ 112               		.stabd	46,0,0
+   1:../Common/Minimal/crflash.c **** /*
+   2:../Common/Minimal/crflash.c ****     FreeRTOS V7.6.0 - Copyright (C) 2013 Real Time Engineers Ltd. 
+   3:../Common/Minimal/crflash.c ****     All rights reserved
+   4:../Common/Minimal/crflash.c **** 
+   5:../Common/Minimal/crflash.c ****     VISIT http://www.FreeRTOS.org TO ENSURE YOU ARE USING THE LATEST VERSION.
+   6:../Common/Minimal/crflash.c **** 
+   7:../Common/Minimal/crflash.c ****     ***************************************************************************
+   8:../Common/Minimal/crflash.c ****      *                                                                       *
+   9:../Common/Minimal/crflash.c ****      *    FreeRTOS provides completely free yet professionally developed,    *
+  10:../Common/Minimal/crflash.c ****      *    robust, strictly quality controlled, supported, and cross          *
+  11:../Common/Minimal/crflash.c ****      *    platform software that has become a de facto standard.             *
+  12:../Common/Minimal/crflash.c ****      *                                                                       *
+  13:../Common/Minimal/crflash.c ****      *    Help yourself get started quickly and support the FreeRTOS         *
+  14:../Common/Minimal/crflash.c ****      *    project by purchasing a FreeRTOS tutorial book, reference          *
+  15:../Common/Minimal/crflash.c ****      *    manual, or both from: http://www.FreeRTOS.org/Documentation        *
+  16:../Common/Minimal/crflash.c ****      *                                                                       *
+  17:../Common/Minimal/crflash.c ****      *    Thank you!                                                         *
+  18:../Common/Minimal/crflash.c ****      *                                                                       *
+  19:../Common/Minimal/crflash.c ****     ***************************************************************************
+  20:../Common/Minimal/crflash.c **** 
+  21:../Common/Minimal/crflash.c ****     This file is part of the FreeRTOS distribution.
+  22:../Common/Minimal/crflash.c **** 
+  23:../Common/Minimal/crflash.c ****     FreeRTOS is free software; you can redistribute it and/or modify it under
+  24:../Common/Minimal/crflash.c ****     the terms of the GNU General Public License (version 2) as published by the
+  25:../Common/Minimal/crflash.c ****     Free Software Foundation >>!AND MODIFIED BY!<< the FreeRTOS exception.
+  26:../Common/Minimal/crflash.c **** 
+  27:../Common/Minimal/crflash.c ****     >>! NOTE: The modification to the GPL is included to allow you to distribute
+  28:../Common/Minimal/crflash.c ****     >>! a combined work that includes FreeRTOS without being obliged to provide
+  29:../Common/Minimal/crflash.c ****     >>! the source code for proprietary components outside of the FreeRTOS
+  30:../Common/Minimal/crflash.c ****     >>! kernel.
+  31:../Common/Minimal/crflash.c **** 
+  32:../Common/Minimal/crflash.c ****     FreeRTOS is distributed in the hope that it will be useful, but WITHOUT ANY
+  33:../Common/Minimal/crflash.c ****     WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+  34:../Common/Minimal/crflash.c ****     FOR A PARTICULAR PURPOSE.  Full license text is available from the following
+  35:../Common/Minimal/crflash.c ****     link: http://www.freertos.org/a00114.html
+  36:../Common/Minimal/crflash.c **** 
+  37:../Common/Minimal/crflash.c ****     1 tab == 4 spaces!
+  38:../Common/Minimal/crflash.c **** 
+  39:../Common/Minimal/crflash.c ****     ***************************************************************************
+  40:../Common/Minimal/crflash.c ****      *                                                                       *
+  41:../Common/Minimal/crflash.c ****      *    Having a problem?  Start by reading the FAQ "My application does   *
+  42:../Common/Minimal/crflash.c ****      *    not run, what could be wrong?"                                     *
+  43:../Common/Minimal/crflash.c ****      *                                                                       *
+  44:../Common/Minimal/crflash.c ****      *    http://www.FreeRTOS.org/FAQHelp.html                               *
+  45:../Common/Minimal/crflash.c ****      *                                                                       *
+  46:../Common/Minimal/crflash.c ****     ***************************************************************************
+  47:../Common/Minimal/crflash.c **** 
+  48:../Common/Minimal/crflash.c ****     http://www.FreeRTOS.org - Documentation, books, training, latest versions,
+  49:../Common/Minimal/crflash.c ****     license and Real Time Engineers Ltd. contact details.
+  50:../Common/Minimal/crflash.c **** 
+  51:../Common/Minimal/crflash.c ****     http://www.FreeRTOS.org/plus - A selection of FreeRTOS ecosystem products,
+  52:../Common/Minimal/crflash.c ****     including FreeRTOS+Trace - an indispensable productivity tool, a DOS
+  53:../Common/Minimal/crflash.c ****     compatible FAT file system, and our tiny thread aware UDP/IP stack.
+  54:../Common/Minimal/crflash.c **** 
+  55:../Common/Minimal/crflash.c ****     http://www.OpenRTOS.com - Real Time Engineers ltd license FreeRTOS to High
+  56:../Common/Minimal/crflash.c ****     Integrity Systems to sell under the OpenRTOS brand.  Low cost OpenRTOS
+  57:../Common/Minimal/crflash.c ****     licenses offer ticketed support, indemnification and middleware.
+  58:../Common/Minimal/crflash.c **** 
+  59:../Common/Minimal/crflash.c ****     http://www.SafeRTOS.com - High Integrity Systems also provide a safety
+  60:../Common/Minimal/crflash.c ****     engineered and independently SIL3 certified version for use in safety and
+  61:../Common/Minimal/crflash.c ****     mission critical applications that require provable dependability.
+  62:../Common/Minimal/crflash.c **** 
+  63:../Common/Minimal/crflash.c ****     1 tab == 4 spaces!
+  64:../Common/Minimal/crflash.c **** */
+  65:../Common/Minimal/crflash.c **** 
+  66:../Common/Minimal/crflash.c **** /*
+  67:../Common/Minimal/crflash.c ****  * This demo application file demonstrates the use of queues to pass data
+  68:../Common/Minimal/crflash.c ****  * between co-routines.
+  69:../Common/Minimal/crflash.c ****  *
+  70:../Common/Minimal/crflash.c ****  * N represents the number of 'fixed delay' co-routines that are created and
+  71:../Common/Minimal/crflash.c ****  * is set during initialisation.
+  72:../Common/Minimal/crflash.c ****  *
+  73:../Common/Minimal/crflash.c ****  * N 'fixed delay' co-routines are created that just block for a fixed
+  74:../Common/Minimal/crflash.c ****  * period then post the number of an LED onto a queue.  Each such co-routine
+  75:../Common/Minimal/crflash.c ****  * uses a different block period.  A single 'flash' co-routine is also created
+  76:../Common/Minimal/crflash.c ****  * that blocks on the same queue, waiting for the number of the next LED it
+  77:../Common/Minimal/crflash.c ****  * should flash.  Upon receiving a number it simply toggle the instructed LED
+  78:../Common/Minimal/crflash.c ****  * then blocks on the queue once more.  In this manner each LED from LED 0 to
+  79:../Common/Minimal/crflash.c ****  * LED N-1 is caused to flash at a different rate.
+  80:../Common/Minimal/crflash.c ****  *
+  81:../Common/Minimal/crflash.c ****  * The 'fixed delay' co-routines are created with co-routine priority 0.  The
+  82:../Common/Minimal/crflash.c ****  * flash co-routine is created with co-routine priority 1.  This means that
+  83:../Common/Minimal/crflash.c ****  * the queue should never contain more than a single item.  This is because
+  84:../Common/Minimal/crflash.c ****  * posting to the queue will unblock the 'flash' co-routine, and as this has
+  85:../Common/Minimal/crflash.c ****  * a priority greater than the tasks posting to the queue it is guaranteed to
+  86:../Common/Minimal/crflash.c ****  * have emptied the queue and blocked once again before the queue can contain
+  87:../Common/Minimal/crflash.c ****  * any more date.  An error is indicated if an attempt to post data to the
+  88:../Common/Minimal/crflash.c ****  * queue fails - indicating that the queue is already full.
+  89:../Common/Minimal/crflash.c ****  *
+  90:../Common/Minimal/crflash.c ****  */
+  91:../Common/Minimal/crflash.c **** 
+  92:../Common/Minimal/crflash.c **** /* Scheduler includes. */
+  93:../Common/Minimal/crflash.c **** #include "FreeRTOS.h"
+  94:../Common/Minimal/crflash.c **** #include "croutine.h"
+  95:../Common/Minimal/crflash.c **** #include "queue.h"
+  96:../Common/Minimal/crflash.c **** 
+  97:../Common/Minimal/crflash.c **** /* Demo application includes. */
+  98:../Common/Minimal/crflash.c **** #include "partest.h"
+  99:../Common/Minimal/crflash.c **** #include "crflash.h"
+ 100:../Common/Minimal/crflash.c **** 
+ 101:../Common/Minimal/crflash.c **** /* The queue should only need to be of length 1.  See the description at the
+ 102:../Common/Minimal/crflash.c **** top of the file. */
+ 103:../Common/Minimal/crflash.c **** #define crfQUEUE_LENGTH		1
+ 104:../Common/Minimal/crflash.c **** 
+ 105:../Common/Minimal/crflash.c **** #define crfFIXED_DELAY_PRIORITY		0
+ 106:../Common/Minimal/crflash.c **** #define crfFLASH_PRIORITY			1
+ 107:../Common/Minimal/crflash.c **** 
+ 108:../Common/Minimal/crflash.c **** /* Only one flash co-routine is created so the index is not significant. */
+ 109:../Common/Minimal/crflash.c **** #define crfFLASH_INDEX				0
+ 110:../Common/Minimal/crflash.c **** 
+ 111:../Common/Minimal/crflash.c **** /* Don't allow more than crfMAX_FLASH_TASKS 'fixed delay' co-routines to be
+ 112:../Common/Minimal/crflash.c **** created. */
+ 113:../Common/Minimal/crflash.c **** #define crfMAX_FLASH_TASKS			8
+ 114:../Common/Minimal/crflash.c **** 
+ 115:../Common/Minimal/crflash.c **** /* We don't want to block when posting to the queue. */
+ 116:../Common/Minimal/crflash.c **** #define crfPOSTING_BLOCK_TIME		0
+ 117:../Common/Minimal/crflash.c **** 
+ 118:../Common/Minimal/crflash.c **** /*
+ 119:../Common/Minimal/crflash.c ****  * The 'fixed delay' co-routine as described at the top of the file.
+ 120:../Common/Minimal/crflash.c ****  */
+ 121:../Common/Minimal/crflash.c **** static void prvFixedDelayCoRoutine( xCoRoutineHandle xHandle, unsigned portBASE_TYPE uxIndex );
+ 122:../Common/Minimal/crflash.c **** 
+ 123:../Common/Minimal/crflash.c **** /*
+ 124:../Common/Minimal/crflash.c ****  * The 'flash' co-routine as described at the top of the file.
+ 125:../Common/Minimal/crflash.c ****  */
+ 126:../Common/Minimal/crflash.c **** static void prvFlashCoRoutine( xCoRoutineHandle xHandle, unsigned portBASE_TYPE uxIndex );
+ 127:../Common/Minimal/crflash.c **** 
+ 128:../Common/Minimal/crflash.c **** /* The queue used to pass data between the 'fixed delay' co-routines and the
+ 129:../Common/Minimal/crflash.c **** 'flash' co-routine. */
+ 130:../Common/Minimal/crflash.c **** static xQueueHandle xFlashQueue;
+ 131:../Common/Minimal/crflash.c **** 
+ 132:../Common/Minimal/crflash.c **** /* This will be set to pdFALSE if we detect an error. */
+ 133:../Common/Minimal/crflash.c **** static portBASE_TYPE xCoRoutineFlashStatus = pdPASS;
+ 134:../Common/Minimal/crflash.c **** 
+ 135:../Common/Minimal/crflash.c **** /*-----------------------------------------------------------*/
+ 136:../Common/Minimal/crflash.c **** 
+ 137:../Common/Minimal/crflash.c **** /*
+ 138:../Common/Minimal/crflash.c ****  * See the header file for details.
+ 139:../Common/Minimal/crflash.c ****  */
+ 140:../Common/Minimal/crflash.c **** void vStartFlashCoRoutines( unsigned portBASE_TYPE uxNumberToCreate )
+ 141:../Common/Minimal/crflash.c **** {
+ 142:../Common/Minimal/crflash.c **** unsigned portBASE_TYPE uxIndex;
+ 143:../Common/Minimal/crflash.c **** 
+ 144:../Common/Minimal/crflash.c **** 	if( uxNumberToCreate > crfMAX_FLASH_TASKS )
+ 145:../Common/Minimal/crflash.c **** 	{
+ 146:../Common/Minimal/crflash.c **** 		uxNumberToCreate = crfMAX_FLASH_TASKS;
+ 147:../Common/Minimal/crflash.c **** 	}
+ 148:../Common/Minimal/crflash.c **** 
+ 149:../Common/Minimal/crflash.c **** 	/* Create the queue used to pass data between the co-routines. */
+ 150:../Common/Minimal/crflash.c **** 	xFlashQueue = xQueueCreate( crfQUEUE_LENGTH, sizeof( unsigned portBASE_TYPE ) );
+ 151:../Common/Minimal/crflash.c **** 
+ 152:../Common/Minimal/crflash.c **** 	if( xFlashQueue )
+ 153:../Common/Minimal/crflash.c **** 	{
+ 154:../Common/Minimal/crflash.c **** 		/* Create uxNumberToCreate 'fixed delay' co-routines. */
+ 155:../Common/Minimal/crflash.c **** 		for( uxIndex = 0; uxIndex < uxNumberToCreate; uxIndex++ )
+ 156:../Common/Minimal/crflash.c **** 		{
+ 157:../Common/Minimal/crflash.c **** 			xCoRoutineCreate( prvFixedDelayCoRoutine, crfFIXED_DELAY_PRIORITY, uxIndex );
+ 158:../Common/Minimal/crflash.c **** 		}
+ 159:../Common/Minimal/crflash.c **** 
+ 160:../Common/Minimal/crflash.c **** 		/* Create the 'flash' co-routine. */
+ 161:../Common/Minimal/crflash.c **** 		xCoRoutineCreate( prvFlashCoRoutine, crfFLASH_PRIORITY, crfFLASH_INDEX );
+ 162:../Common/Minimal/crflash.c **** 	}
+ 163:../Common/Minimal/crflash.c **** }
+ 164:../Common/Minimal/crflash.c **** /*-----------------------------------------------------------*/
+ 165:../Common/Minimal/crflash.c **** 
+ 166:../Common/Minimal/crflash.c **** static void prvFixedDelayCoRoutine( xCoRoutineHandle xHandle, unsigned portBASE_TYPE uxIndex )
+ 167:../Common/Minimal/crflash.c **** {
+ 168:../Common/Minimal/crflash.c **** /* Even though this is a co-routine the xResult variable does not need to be
+ 169:../Common/Minimal/crflash.c **** static as we do not need it to maintain its state between blocks. */
+ 170:../Common/Minimal/crflash.c **** signed portBASE_TYPE xResult;
+ 171:../Common/Minimal/crflash.c **** /* The uxIndex parameter of the co-routine function is used as an index into
+ 172:../Common/Minimal/crflash.c **** the xFlashRates array to obtain the delay period to use. */
+ 173:../Common/Minimal/crflash.c **** static const portTickType xFlashRates[ crfMAX_FLASH_TASKS ] = { 150 / portTICK_RATE_MS,
+ 174:../Common/Minimal/crflash.c **** 																200 / portTICK_RATE_MS,
+ 175:../Common/Minimal/crflash.c **** 																250 / portTICK_RATE_MS,
+ 176:../Common/Minimal/crflash.c **** 																300 / portTICK_RATE_MS,
+ 177:../Common/Minimal/crflash.c **** 																350 / portTICK_RATE_MS,
+ 178:../Common/Minimal/crflash.c **** 																400 / portTICK_RATE_MS,
+ 179:../Common/Minimal/crflash.c **** 																450 / portTICK_RATE_MS,
+ 180:../Common/Minimal/crflash.c **** 																500  / portTICK_RATE_MS };
+ 181:../Common/Minimal/crflash.c **** 
+ 182:../Common/Minimal/crflash.c **** 	/* Co-routines MUST start with a call to crSTART. */
+ 183:../Common/Minimal/crflash.c **** 	crSTART( xHandle );
+ 184:../Common/Minimal/crflash.c **** 
+ 185:../Common/Minimal/crflash.c **** 	for( ;; )
+ 186:../Common/Minimal/crflash.c **** 	{
+ 187:../Common/Minimal/crflash.c **** 		/* Post our uxIndex value onto the queue.  This is used as the LED to
+ 188:../Common/Minimal/crflash.c **** 		flash. */
+ 189:../Common/Minimal/crflash.c **** 		crQUEUE_SEND( xHandle, xFlashQueue, ( void * ) &uxIndex, crfPOSTING_BLOCK_TIME, &xResult );
+ 190:../Common/Minimal/crflash.c **** 
+ 191:../Common/Minimal/crflash.c **** 		if( xResult != pdPASS )
+ 192:../Common/Minimal/crflash.c **** 		{
+ 193:../Common/Minimal/crflash.c **** 			/* For the reasons stated at the top of the file we should always
+ 194:../Common/Minimal/crflash.c **** 			find that we can post to the queue.  If we could not then an error
+ 195:../Common/Minimal/crflash.c **** 			has occurred. */
+ 196:../Common/Minimal/crflash.c **** 			xCoRoutineFlashStatus = pdFAIL;
+ 197:../Common/Minimal/crflash.c **** 		}
+ 198:../Common/Minimal/crflash.c **** 
+ 199:../Common/Minimal/crflash.c **** 		crDELAY( xHandle, xFlashRates[ uxIndex ] );
+ 200:../Common/Minimal/crflash.c **** 	}
+ 201:../Common/Minimal/crflash.c **** 
+ 202:../Common/Minimal/crflash.c **** 	/* Co-routines MUST end with a call to crEND. */
+ 203:../Common/Minimal/crflash.c **** 	crEND();
+ 204:../Common/Minimal/crflash.c **** }
+ 205:../Common/Minimal/crflash.c **** /*-----------------------------------------------------------*/
+ 206:../Common/Minimal/crflash.c **** 
+ 207:../Common/Minimal/crflash.c **** static void prvFlashCoRoutine( xCoRoutineHandle xHandle, unsigned portBASE_TYPE uxIndex )
+ 208:../Common/Minimal/crflash.c **** {
+ 114               	.LM0:
+ 115               	.LFBB1:
+ 116 0000 0F93      		push r16
+ 117 0002 1F93      		push r17
+ 118 0004 CF93      		push r28
+ 119 0006 DF93      		push r29
+ 120 0008 1F92      		push __zero_reg__
+ 121 000a CDB7      		in r28,__SP_L__
+ 122 000c DEB7      		in r29,__SP_H__
+ 123               	/* prologue: function */
+ 124               	/* frame size = 1 */
+ 125               	/* stack size = 5 */
+ 126               	.L__stack_usage = 5
+ 127 000e 8C01      		movw r16,r24
+ 209:../Common/Minimal/crflash.c **** /* Even though this is a co-routine the variable do not need to be
+ 210:../Common/Minimal/crflash.c **** static as we do not need it to maintain their state between blocks. */
+ 211:../Common/Minimal/crflash.c **** signed portBASE_TYPE xResult;
+ 212:../Common/Minimal/crflash.c **** unsigned portBASE_TYPE uxLEDToFlash;
+ 213:../Common/Minimal/crflash.c **** 
+ 214:../Common/Minimal/crflash.c **** 	/* Co-routines MUST start with a call to crSTART. */
+ 215:../Common/Minimal/crflash.c **** 	crSTART( xHandle );
+ 129               	.LM1:
+ 130 0010 FC01      		movw r30,r24
+ 131 0012 808D      		ldd r24,Z+24
+ 132 0014 918D      		ldd r25,Z+25
+ 133 0016 8A3B      		cpi r24,-70
+ 134 0018 F1E0      		ldi r31,1
+ 135 001a 9F07      		cpc r25,r31
+ 136 001c 01F0      		breq .L4
+ 137 001e 8B3B      		cpi r24,-69
+ 138 0020 21E0      		ldi r18,1
+ 139 0022 9207      		cpc r25,r18
+ 140 0024 01F0      		breq .L5
+ 141 0026 892B      		or r24,r25
+ 142 0028 01F4      		brne .L1
+ 143               	.L3:
+ 216:../Common/Minimal/crflash.c **** 	( void ) uxIndex;
+ 217:../Common/Minimal/crflash.c **** 	
+ 218:../Common/Minimal/crflash.c **** 	for( ;; )
+ 219:../Common/Minimal/crflash.c **** 	{
+ 220:../Common/Minimal/crflash.c **** 		/* Block to wait for the number of the LED to flash. */
+ 221:../Common/Minimal/crflash.c **** 		crQUEUE_RECEIVE( xHandle, xFlashQueue, &uxLEDToFlash, portMAX_DELAY, &xResult );		
+ 145               	.LM2:
+ 146 002a 4FEF      		ldi r20,lo8(-1)
+ 147 002c 5FEF      		ldi r21,lo8(-1)
+ 148 002e BE01      		movw r22,r28
+ 149 0030 6F5F      		subi r22,-1
+ 150 0032 7F4F      		sbci r23,-1
+ 151 0034 8091 0000 		lds r24,xFlashQueue
+ 152 0038 9091 0000 		lds r25,xFlashQueue+1
+ 153 003c 0E94 0000 		call xQueueCRReceive
+ 154 0040 8C3F      		cpi r24,lo8(-4)
+ 155 0042 01F4      		brne .L6
+ 157               	.LM3:
+ 158 0044 8AEB      		ldi r24,lo8(-70)
+ 159 0046 91E0      		ldi r25,lo8(1)
+ 160 0048 00C0      		rjmp .L19
+ 161               	.L4:
+ 163               	.LM4:
+ 164 004a 40E0      		ldi r20,0
+ 165 004c 50E0      		ldi r21,0
+ 166 004e BE01      		movw r22,r28
+ 167 0050 6F5F      		subi r22,-1
+ 168 0052 7F4F      		sbci r23,-1
+ 169 0054 8091 0000 		lds r24,xFlashQueue
+ 170 0058 9091 0000 		lds r25,xFlashQueue+1
+ 171 005c 0E94 0000 		call xQueueCRReceive
+ 172               	.L6:
+ 174               	.LM5:
+ 175 0060 8B3F      		cpi r24,lo8(-5)
+ 176 0062 01F4      		brne .L8
+ 178               	.LM6:
+ 179 0064 8BEB      		ldi r24,lo8(-69)
+ 180 0066 91E0      		ldi r25,lo8(1)
+ 181               	.L19:
+ 182 0068 F801      		movw r30,r16
+ 183 006a 918F      		std Z+25,r25
+ 184 006c 808F      		std Z+24,r24
+ 185 006e 00C0      		rjmp .L1
+ 186               	.L8:
+ 222:../Common/Minimal/crflash.c **** 
+ 223:../Common/Minimal/crflash.c **** 		if( xResult != pdPASS )
+ 188               	.LM7:
+ 189 0070 8130      		cpi r24,lo8(1)
+ 190 0072 01F0      		breq .L5
+ 224:../Common/Minimal/crflash.c **** 		{
+ 225:../Common/Minimal/crflash.c **** 			/* We would not expect to wake unless we received something. */
+ 226:../Common/Minimal/crflash.c **** 			xCoRoutineFlashStatus = pdFAIL;
+ 192               	.LM8:
+ 193 0074 1092 0000 		sts xCoRoutineFlashStatus,__zero_reg__
+ 194 0078 00C0      		rjmp .L3
+ 195               	.L5:
+ 227:../Common/Minimal/crflash.c **** 		}
+ 228:../Common/Minimal/crflash.c **** 		else
+ 229:../Common/Minimal/crflash.c **** 		{
+ 230:../Common/Minimal/crflash.c **** 			/* We received the number of an LED to flash - flash it! */
+ 231:../Common/Minimal/crflash.c **** 			vParTestToggleLED( uxLEDToFlash );
+ 197               	.LM9:
+ 198 007a 8981      		ldd r24,Y+1
+ 199 007c 0E94 0000 		call vParTestToggleLED
+ 200 0080 00C0      		rjmp .L3
+ 201               	.L1:
+ 202               	/* epilogue start */
+ 232:../Common/Minimal/crflash.c **** 		}
+ 233:../Common/Minimal/crflash.c **** 	}
+ 234:../Common/Minimal/crflash.c **** 
+ 235:../Common/Minimal/crflash.c **** 	/* Co-routines MUST end with a call to crEND. */
+ 236:../Common/Minimal/crflash.c **** 	crEND();
+ 237:../Common/Minimal/crflash.c **** }
+ 204               	.LM10:
+ 205 0082 0F90      		pop __tmp_reg__
+ 206 0084 DF91      		pop r29
+ 207 0086 CF91      		pop r28
+ 208 0088 1F91      		pop r17
+ 209 008a 0F91      		pop r16
+ 210 008c 0895      		ret
+ 216               	.Lscope1:
+ 218               		.stabd	78,0,0
+ 223               	prvFixedDelayCoRoutine:
+ 224               		.stabd	46,0,0
+ 167:../Common/Minimal/crflash.c **** {
+ 226               	.LM11:
+ 227               	.LFBB2:
+ 228 008e 0F93      		push r16
+ 229 0090 1F93      		push r17
+ 230 0092 CF93      		push r28
+ 231 0094 DF93      		push r29
+ 232 0096 1F92      		push __zero_reg__
+ 233 0098 CDB7      		in r28,__SP_L__
+ 234 009a DEB7      		in r29,__SP_H__
+ 235               	/* prologue: function */
+ 236               	/* frame size = 1 */
+ 237               	/* stack size = 5 */
+ 238               	.L__stack_usage = 5
+ 239 009c 8C01      		movw r16,r24
+ 240 009e 6983      		std Y+1,r22
+ 183:../Common/Minimal/crflash.c **** 	crSTART( xHandle );
+ 242               	.LM12:
+ 243 00a0 FC01      		movw r30,r24
+ 244 00a2 208D      		ldd r18,Z+24
+ 245 00a4 318D      		ldd r19,Z+25
+ 246 00a6 2A37      		cpi r18,122
+ 247 00a8 F1E0      		ldi r31,1
+ 248 00aa 3F07      		cpc r19,r31
+ 249 00ac 01F0      		breq .L23
+ 250 00ae 00F4      		brsh .L25
+ 251 00b0 232B      		or r18,r19
+ 252 00b2 01F0      		breq .L22
+ 253 00b4 00C0      		rjmp .L20
+ 254               	.L25:
+ 255 00b6 2B37      		cpi r18,123
+ 256 00b8 E1E0      		ldi r30,1
+ 257 00ba 3E07      		cpc r19,r30
+ 258 00bc 01F0      		breq .L24
+ 259 00be 2E38      		cpi r18,-114
+ 260 00c0 3140      		sbci r19,1
+ 261 00c2 01F4      		brne .L20
+ 262               	.L22:
+ 189:../Common/Minimal/crflash.c **** 		crQUEUE_SEND( xHandle, xFlashQueue, ( void * ) &uxIndex, crfPOSTING_BLOCK_TIME, &xResult );
+ 264               	.LM13:
+ 265 00c4 40E0      		ldi r20,0
+ 266 00c6 50E0      		ldi r21,0
+ 267 00c8 BE01      		movw r22,r28
+ 268 00ca 6F5F      		subi r22,-1
+ 269 00cc 7F4F      		sbci r23,-1
+ 270 00ce 8091 0000 		lds r24,xFlashQueue
+ 271 00d2 9091 0000 		lds r25,xFlashQueue+1
+ 272 00d6 0E94 0000 		call xQueueCRSend
+ 273 00da 8C3F      		cpi r24,lo8(-4)
+ 274 00dc 01F4      		brne .L26
+ 189:../Common/Minimal/crflash.c **** 		crQUEUE_SEND( xHandle, xFlashQueue, ( void * ) &uxIndex, crfPOSTING_BLOCK_TIME, &xResult );
+ 276               	.LM14:
+ 277 00de 8AE7      		ldi r24,lo8(122)
+ 278 00e0 91E0      		ldi r25,lo8(1)
+ 279 00e2 00C0      		rjmp .L44
+ 280               	.L23:
+ 189:../Common/Minimal/crflash.c **** 		crQUEUE_SEND( xHandle, xFlashQueue, ( void * ) &uxIndex, crfPOSTING_BLOCK_TIME, &xResult );
+ 282               	.LM15:
+ 283 00e4 40E0      		ldi r20,0
+ 284 00e6 50E0      		ldi r21,0
+ 285 00e8 BE01      		movw r22,r28
+ 286 00ea 6F5F      		subi r22,-1
+ 287 00ec 7F4F      		sbci r23,-1
+ 288 00ee 8091 0000 		lds r24,xFlashQueue
+ 289 00f2 9091 0000 		lds r25,xFlashQueue+1
+ 290 00f6 0E94 0000 		call xQueueCRSend
+ 291               	.L26:
+ 189:../Common/Minimal/crflash.c **** 		crQUEUE_SEND( xHandle, xFlashQueue, ( void * ) &uxIndex, crfPOSTING_BLOCK_TIME, &xResult );
+ 293               	.LM16:
+ 294 00fa 8B3F      		cpi r24,lo8(-5)
+ 295 00fc 01F4      		brne .L27
+ 189:../Common/Minimal/crflash.c **** 		crQUEUE_SEND( xHandle, xFlashQueue, ( void * ) &uxIndex, crfPOSTING_BLOCK_TIME, &xResult );
+ 297               	.LM17:
+ 298 00fe 8BE7      		ldi r24,lo8(123)
+ 299 0100 91E0      		ldi r25,lo8(1)
+ 300 0102 00C0      		rjmp .L44
+ 301               	.L27:
+ 191:../Common/Minimal/crflash.c **** 		if( xResult != pdPASS )
+ 303               	.LM18:
+ 304 0104 8130      		cpi r24,lo8(1)
+ 305 0106 01F0      		breq .L24
+ 196:../Common/Minimal/crflash.c **** 			xCoRoutineFlashStatus = pdFAIL;
+ 307               	.LM19:
+ 308 0108 1092 0000 		sts xCoRoutineFlashStatus,__zero_reg__
+ 309               	.L24:
+ 199:../Common/Minimal/crflash.c **** 		crDELAY( xHandle, xFlashRates[ uxIndex ] );
+ 311               	.LM20:
+ 312 010c E981      		ldd r30,Y+1
+ 313 010e F0E0      		ldi r31,0
+ 314 0110 EE0F      		lsl r30
+ 315 0112 FF1F      		rol r31
+ 316 0114 E050      		subi r30,lo8(-(xFlashRates.1567))
+ 317 0116 F040      		sbci r31,hi8(-(xFlashRates.1567))
+ 318 0118 8081      		ld r24,Z
+ 319 011a 9181      		ldd r25,Z+1
+ 320 011c 0097      		sbiw r24,0
+ 321 011e 01F0      		breq .L28
+ 199:../Common/Minimal/crflash.c **** 		crDELAY( xHandle, xFlashRates[ uxIndex ] );
+ 323               	.LM21:
+ 324 0120 60E0      		ldi r22,0
+ 325 0122 70E0      		ldi r23,0
+ 326 0124 0E94 0000 		call vCoRoutineAddToDelayedList
+ 327               	.L28:
+ 199:../Common/Minimal/crflash.c **** 		crDELAY( xHandle, xFlashRates[ uxIndex ] );
+ 329               	.LM22:
+ 330 0128 8EE8      		ldi r24,lo8(-114)
+ 331 012a 91E0      		ldi r25,lo8(1)
+ 332               	.L44:
+ 333 012c F801      		movw r30,r16
+ 334 012e 918F      		std Z+25,r25
+ 335 0130 808F      		std Z+24,r24
+ 336               	.L20:
+ 337               	/* epilogue start */
+ 204:../Common/Minimal/crflash.c **** }
+ 339               	.LM23:
+ 340 0132 0F90      		pop __tmp_reg__
+ 341 0134 DF91      		pop r29
+ 342 0136 CF91      		pop r28
+ 343 0138 1F91      		pop r17
+ 344 013a 0F91      		pop r16
+ 345 013c 0895      		ret
+ 351               	.Lscope2:
+ 353               		.stabd	78,0,0
+ 356               	.global	vStartFlashCoRoutines
+ 358               	vStartFlashCoRoutines:
+ 359               		.stabd	46,0,0
+ 141:../Common/Minimal/crflash.c **** {
+ 361               	.LM24:
+ 362               	.LFBB3:
+ 363 013e CF93      		push r28
+ 364 0140 DF93      		push r29
+ 365               	/* prologue: function */
+ 366               	/* frame size = 0 */
+ 367               	/* stack size = 2 */
+ 368               	.L__stack_usage = 2
+ 369 0142 D82F      		mov r29,r24
+ 370 0144 8930      		cpi r24,lo8(9)
+ 371 0146 00F0      		brlo .L46
+ 372 0148 D8E0      		ldi r29,lo8(8)
+ 373               	.L46:
+ 150:../Common/Minimal/crflash.c **** 	xFlashQueue = xQueueCreate( crfQUEUE_LENGTH, sizeof( unsigned portBASE_TYPE ) );
+ 375               	.LM25:
+ 376 014a 40E0      		ldi r20,0
+ 377 014c 61E0      		ldi r22,lo8(1)
+ 378 014e 81E0      		ldi r24,lo8(1)
+ 379 0150 0E94 0000 		call xQueueGenericCreate
+ 380 0154 9093 0000 		sts xFlashQueue+1,r25
+ 381 0158 8093 0000 		sts xFlashQueue,r24
+ 152:../Common/Minimal/crflash.c **** 	if( xFlashQueue )
+ 383               	.LM26:
+ 384 015c 892B      		or r24,r25
+ 385 015e 01F4      		brne .L50
+ 386 0160 00C0      		rjmp .L51
+ 387               	.L49:
+ 157:../Common/Minimal/crflash.c **** 			xCoRoutineCreate( prvFixedDelayCoRoutine, crfFIXED_DELAY_PRIORITY, uxIndex );
+ 389               	.LM27:
+ 390 0162 4C2F      		mov r20,r28
+ 391 0164 60E0      		ldi r22,0
+ 392 0166 80E0      		ldi r24,lo8(gs(prvFixedDelayCoRoutine))
+ 393 0168 90E0      		ldi r25,hi8(gs(prvFixedDelayCoRoutine))
+ 394 016a 0E94 0000 		call xCoRoutineCreate
+ 155:../Common/Minimal/crflash.c **** 		for( uxIndex = 0; uxIndex < uxNumberToCreate; uxIndex++ )
+ 396               	.LM28:
+ 397 016e CF5F      		subi r28,lo8(-(1))
+ 398 0170 00C0      		rjmp .L47
+ 399               	.L50:
+ 152:../Common/Minimal/crflash.c **** 	if( xFlashQueue )
+ 401               	.LM29:
+ 402 0172 C0E0      		ldi r28,0
+ 403               	.L47:
+ 155:../Common/Minimal/crflash.c **** 		for( uxIndex = 0; uxIndex < uxNumberToCreate; uxIndex++ )
+ 405               	.LM30:
+ 406 0174 CD13      		cpse r28,r29
+ 407 0176 00C0      		rjmp .L49
+ 161:../Common/Minimal/crflash.c **** 		xCoRoutineCreate( prvFlashCoRoutine, crfFLASH_PRIORITY, crfFLASH_INDEX );
+ 409               	.LM31:
+ 410 0178 40E0      		ldi r20,0
+ 411 017a 61E0      		ldi r22,lo8(1)
+ 412 017c 80E0      		ldi r24,lo8(gs(prvFlashCoRoutine))
+ 413 017e 90E0      		ldi r25,hi8(gs(prvFlashCoRoutine))
+ 414               	/* epilogue start */
+ 163:../Common/Minimal/crflash.c **** }
+ 416               	.LM32:
+ 417 0180 DF91      		pop r29
+ 418 0182 CF91      		pop r28
+ 161:../Common/Minimal/crflash.c **** 		xCoRoutineCreate( prvFlashCoRoutine, crfFLASH_PRIORITY, crfFLASH_INDEX );
+ 420               	.LM33:
+ 421 0184 0C94 0000 		jmp xCoRoutineCreate
+ 422               	.L51:
+ 423               	/* epilogue start */
+ 163:../Common/Minimal/crflash.c **** }
+ 425               	.LM34:
+ 426 0188 DF91      		pop r29
+ 427 018a CF91      		pop r28
+ 428 018c 0895      		ret
+ 433               	.Lscope3:
+ 435               		.stabd	78,0,0
+ 437               	.global	xAreFlashCoRoutinesStillRunning
+ 439               	xAreFlashCoRoutinesStillRunning:
+ 440               		.stabd	46,0,0
+ 238:../Common/Minimal/crflash.c **** /*-----------------------------------------------------------*/
+ 239:../Common/Minimal/crflash.c **** 
+ 240:../Common/Minimal/crflash.c **** portBASE_TYPE xAreFlashCoRoutinesStillRunning( void )
+ 241:../Common/Minimal/crflash.c **** {
+ 442               	.LM35:
+ 443               	.LFBB4:
+ 444               	/* prologue: function */
+ 445               	/* frame size = 0 */
+ 446               	/* stack size = 0 */
+ 447               	.L__stack_usage = 0
+ 242:../Common/Minimal/crflash.c **** 	/* Return pdPASS or pdFAIL depending on whether an error has been detected
+ 243:../Common/Minimal/crflash.c **** 	or not. */
+ 244:../Common/Minimal/crflash.c **** 	return xCoRoutineFlashStatus;
+ 245:../Common/Minimal/crflash.c **** }
+ 449               	.LM36:
+ 450 018e 8091 0000 		lds r24,xCoRoutineFlashStatus
+ 451 0192 0895      		ret
+ 453               	.Lscope4:
+ 455               		.stabd	78,0,0
+ 456               		.local	xFlashQueue
+ 457               		.comm	xFlashQueue,2,1
+ 458               		.data
+ 461               	xCoRoutineFlashStatus:
+ 462 0000 01        		.byte	1
+ 463               		.section	.rodata
+ 466               	xFlashRates.1567:
+ 467 0000 9600      		.word	150
+ 468 0002 C800      		.word	200
+ 469 0004 FA00      		.word	250
+ 470 0006 2C01      		.word	300
+ 471 0008 5E01      		.word	350
+ 472 000a 9001      		.word	400
+ 473 000c C201      		.word	450
+ 474 000e F401      		.word	500
+ 477               		.text
+ 479               	.Letext0:
+ 480               		.ident	"GCC: (GNU) 4.7.2"
+ 481               	.global __do_copy_data
+ 482               	.global __do_clear_bss
+DEFINED SYMBOLS
+                            *ABS*:00000000 crflash.c
+     /tmp/cc2DbE4n.s:2      *ABS*:0000003e __SP_H__
+     /tmp/cc2DbE4n.s:3      *ABS*:0000003d __SP_L__
+     /tmp/cc2DbE4n.s:4      *ABS*:0000003f __SREG__
+     /tmp/cc2DbE4n.s:5      *ABS*:00000000 __tmp_reg__
+     /tmp/cc2DbE4n.s:6      *ABS*:00000001 __zero_reg__
+     /tmp/cc2DbE4n.s:111    .text:00000000 prvFlashCoRoutine
+                             .bss:00000000 xFlashQueue
+     /tmp/cc2DbE4n.s:461    .data:00000000 xCoRoutineFlashStatus
+     /tmp/cc2DbE4n.s:223    .text:0000008e prvFixedDelayCoRoutine
+     /tmp/cc2DbE4n.s:466    .rodata:00000000 xFlashRates.1567
+     /tmp/cc2DbE4n.s:358    .text:0000013e vStartFlashCoRoutines
+     /tmp/cc2DbE4n.s:439    .text:0000018e xAreFlashCoRoutinesStillRunning
+
+UNDEFINED SYMBOLS
+xQueueCRReceive
+vParTestToggleLED
+xQueueCRSend
+vCoRoutineAddToDelayedList
+xQueueGenericCreate
+xCoRoutineCreate
+__do_copy_data
+__do_clear_bss
