@@ -1,0 +1,92 @@
+   1               		.file	"difftime.c"
+   2               	__SP_H__ = 0x3e
+   3               	__SP_L__ = 0x3d
+   4               	__SREG__ = 0x3f
+   5               	__tmp_reg__ = 0
+   6               	__zero_reg__ = 1
+   9               		.text
+  10               	.Ltext0:
+  83               	.global	difftime
+  85               	difftime:
+  86               		.stabd	46,0,0
+   1:../freeRTOS750/lib_time/difftime.c **** /*
+   2:../freeRTOS750/lib_time/difftime.c ****  * (C)2012 Michael Duane Rice All rights reserved.
+   3:../freeRTOS750/lib_time/difftime.c ****  *
+   4:../freeRTOS750/lib_time/difftime.c ****  * Redistribution and use in source and binary forms, with or without
+   5:../freeRTOS750/lib_time/difftime.c ****  * modification, are permitted provided that the following conditions are
+   6:../freeRTOS750/lib_time/difftime.c ****  * met:
+   7:../freeRTOS750/lib_time/difftime.c ****  *
+   8:../freeRTOS750/lib_time/difftime.c ****  * Redistributions of source code must retain the above copyright notice, this
+   9:../freeRTOS750/lib_time/difftime.c ****  * list of conditions and the following disclaimer. Redistributions in binary
+  10:../freeRTOS750/lib_time/difftime.c ****  * form must reproduce the above copyright notice, this list of conditions
+  11:../freeRTOS750/lib_time/difftime.c ****  * and the following disclaimer in the documentation and/or other materials
+  12:../freeRTOS750/lib_time/difftime.c ****  * provided with the distribution. Neither the name of the copyright holders
+  13:../freeRTOS750/lib_time/difftime.c ****  * nor the names of contributors may be used to endorse or promote products
+  14:../freeRTOS750/lib_time/difftime.c ****  * derived from this software without specific prior written permission.
+  15:../freeRTOS750/lib_time/difftime.c ****  *
+  16:../freeRTOS750/lib_time/difftime.c ****  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  17:../freeRTOS750/lib_time/difftime.c ****  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  18:../freeRTOS750/lib_time/difftime.c ****  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  19:../freeRTOS750/lib_time/difftime.c ****  * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+  20:../freeRTOS750/lib_time/difftime.c ****  * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+  21:../freeRTOS750/lib_time/difftime.c ****  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+  22:../freeRTOS750/lib_time/difftime.c ****  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+  23:../freeRTOS750/lib_time/difftime.c ****  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+  24:../freeRTOS750/lib_time/difftime.c ****  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+  25:../freeRTOS750/lib_time/difftime.c ****  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+  26:../freeRTOS750/lib_time/difftime.c ****  * POSSIBILITY OF SUCH DAMAGE.
+  27:../freeRTOS750/lib_time/difftime.c ****  */
+  28:../freeRTOS750/lib_time/difftime.c **** 
+  29:../freeRTOS750/lib_time/difftime.c **** /* $Id$ */
+  30:../freeRTOS750/lib_time/difftime.c **** 
+  31:../freeRTOS750/lib_time/difftime.c **** /*
+  32:../freeRTOS750/lib_time/difftime.c **** 	The C90 standard specifies this returns a 'double. Since we do not have a true double,
+  33:../freeRTOS750/lib_time/difftime.c **** 	we return a work alike type.
+  34:../freeRTOS750/lib_time/difftime.c **** */
+  35:../freeRTOS750/lib_time/difftime.c **** #include <time.h>
+  36:../freeRTOS750/lib_time/difftime.c **** 
+  37:../freeRTOS750/lib_time/difftime.c **** int32_t
+  38:../freeRTOS750/lib_time/difftime.c **** difftime(time_t t1, time_t t2)
+  39:../freeRTOS750/lib_time/difftime.c **** {
+  88               	.LM0:
+  89               	.LFBB1:
+  90 0000 CF92      		push r12
+  91 0002 DF92      		push r13
+  92 0004 EF92      		push r14
+  93 0006 FF92      		push r15
+  94               	/* prologue: function */
+  95               	/* frame size = 0 */
+  96               	/* stack size = 4 */
+  97               	.L__stack_usage = 4
+  98 0008 6B01      		movw r12,r22
+  99 000a 7C01      		movw r14,r24
+  40:../freeRTOS750/lib_time/difftime.c **** 	return t1 - t2;
+ 101               	.LM1:
+ 102 000c C21A      		sub r12,r18
+ 103 000e D30A      		sbc r13,r19
+ 104 0010 E40A      		sbc r14,r20
+ 105 0012 F50A      		sbc r15,r21
+  41:../freeRTOS750/lib_time/difftime.c **** }
+ 107               	.LM2:
+ 108 0014 B601      		movw r22,r12
+ 109 0016 C701      		movw r24,r14
+ 110               	/* epilogue start */
+ 111 0018 FF90      		pop r15
+ 112 001a EF90      		pop r14
+ 113 001c DF90      		pop r13
+ 114 001e CF90      		pop r12
+ 115 0020 0895      		ret
+ 117               	.Lscope1:
+ 119               		.stabd	78,0,0
+ 121               	.Letext0:
+ 122               		.ident	"GCC: (GNU) 4.7.2"
+DEFINED SYMBOLS
+                            *ABS*:00000000 difftime.c
+     /tmp/cclUY9yd.s:2      *ABS*:0000003e __SP_H__
+     /tmp/cclUY9yd.s:3      *ABS*:0000003d __SP_L__
+     /tmp/cclUY9yd.s:4      *ABS*:0000003f __SREG__
+     /tmp/cclUY9yd.s:5      *ABS*:00000000 __tmp_reg__
+     /tmp/cclUY9yd.s:6      *ABS*:00000001 __zero_reg__
+     /tmp/cclUY9yd.s:85     .text:00000000 difftime
+
+NO UNDEFINED SYMBOLS

@@ -1,0 +1,1320 @@
+   1               		.file	"i2cMultiMaster.c"
+   2               	__SP_H__ = 0x3e
+   3               	__SP_L__ = 0x3d
+   4               	__SREG__ = 0x3f
+   5               	__tmp_reg__ = 0
+   6               	__zero_reg__ = 1
+   9               		.text
+  10               	.Ltext0:
+ 131               	.global	I2C_Slave_Initialise
+ 133               	I2C_Slave_Initialise:
+ 134               		.stabd	46,0,0
+   1:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** /*****************************************************************************
+   2:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** *
+   3:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** * File              : i2cMultiMaster.c
+   4:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** * Compiler          : avr gcc
+   5:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** * Description       : This is a sample driver for the TWI hardware modules.
+   6:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** *                     It is interrupt driven. All functionality is controlled through
+   7:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** *                     passing information to and from functions.
+   8:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** *
+   9:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** ****************************************************************************/
+  10:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+  11:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** #include <stdio.h>
+  12:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** #include <stdbool.h>
+  13:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** #include <freeRTOSBoardDefs.h>
+  14:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** #include <avr/interrupt.h>
+  15:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+  16:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** #include <i2cMultiMaster.h>
+  17:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+  18:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** /* Create a Semaphore binary flag for the i2c Bus. To ensure only single access. */
+  19:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** xSemaphoreHandle xI2CSemaphore;
+  20:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+  21:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** static uint8_t I2C_buf[ I2C_BUFFER_SIZE ];    // Transceiver buffer
+  22:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** static uint8_t I2C_msgSize;                   // Number of bytes to be transmitted.
+  23:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** static uint8_t I2C_state = I2C_NO_STATE;      // State byte. Default set to I2C_NO_STATE.
+  24:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+  25:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** static uint8_t I2C_checkBusyAfterStop = 0; 	  // Number of busy check times following a Stop_Restar
+  26:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+  27:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** union I2C_statusReg I2C_statusReg = {0};      // I2C_statusReg is defined in i2cMultiMaster.h
+  28:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+  29:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** /* Private Functions */
+  30:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+  31:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** static inline uint8_t I2C_Transceiver_Busy( void );
+  32:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+  33:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** /****************************************************************************
+  34:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****  * Call this function to set up the TWI slave to its initial standby state.
+  35:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****  * Remember to enable interrupts from the main application after initialising the TWI.
+  36:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****  * Pass both the slave address and the requirements for triggering on a general call in the
+  37:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****  * same byte. Use e.g. this notation when calling this function:
+  38:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****  * I2C_Slave_Initialise( (I2C_slaveAddress<<I2C_ADR_BITS) | (TRUE<<I2C_GEN_BIT) );
+  39:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****  * The TWI module is configured to NACK on any requests. Use a I2C_Slave_Start_Transceiver
+  40:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****  * function to start the TWI.
+  41:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****  *****************************************************************************/
+  42:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** void I2C_Slave_Initialise( uint8_t I2C_ownAddress )
+  43:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** {
+ 136               	.LM0:
+ 137               	.LFBB1:
+ 138 0000 CF93      		push r28
+ 139               	/* prologue: function */
+ 140               	/* frame size = 0 */
+ 141               	/* stack size = 1 */
+ 142               	.L__stack_usage = 1
+ 143 0002 C82F      		mov r28,r24
+  44:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	// The Semaphore has to be created to allow the I2C bus to be shared.
+  45:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	//Assuming the I2C bus will be shared.
+  46:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	vSemaphoreCreateBinary ( xI2CSemaphore ); // binary semaphore for I2C bus
+ 145               	.LM1:
+ 146 0004 43E0      		ldi r20,lo8(3)
+ 147 0006 60E0      		ldi r22,0
+ 148 0008 81E0      		ldi r24,lo8(1)
+ 149 000a 0E94 0000 		call xQueueGenericCreate
+ 150 000e 9093 0000 		sts xI2CSemaphore+1,r25
+ 151 0012 8093 0000 		sts xI2CSemaphore,r24
+ 152 0016 0097      		sbiw r24,0
+ 153 0018 01F0      		breq .L2
+ 155               	.LM2:
+ 156 001a 20E0      		ldi r18,0
+ 157 001c 40E0      		ldi r20,0
+ 158 001e 50E0      		ldi r21,0
+ 159 0020 60E0      		ldi r22,0
+ 160 0022 70E0      		ldi r23,0
+ 161 0024 0E94 0000 		call xQueueGenericSend
+ 162               	.L2:
+  47:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+  48:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	I2C_PORT_DIR &= ~(I2C_BIT_SCL | I2C_BIT_SDA);	// set the I2C SDA & SCL inputs.
+ 164               	.LM3:
+ 165 0028 97B1      		in r25,0x7
+ 166 002a 9F7C      		andi r25,lo8(-49)
+ 167 002c 97B9      		out 0x7,r25
+  49:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+  50:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	TWAR = I2C_ownAddress;                       	// Set own TWI slave address.  Accept TWI General Ca
+ 169               	.LM4:
+ 170 002e C093 BA00 		sts 186,r28
+  51:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	TWDR = 0xff;                                  	// Default content = SDA released.
+ 172               	.LM5:
+ 173 0032 8FEF      		ldi r24,lo8(-1)
+ 174 0034 8093 BB00 		sts 187,r24
+  52:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	TWCR = (1<<TWEN)|                            	// Enable TWI-interface and release TWI pins.
+ 176               	.LM6:
+ 177 0038 84E0      		ldi r24,lo8(4)
+ 178 003a 8093 BC00 		sts 188,r24
+ 179               	/* epilogue start */
+  53:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 		   (0<<TWIE)|(0<<TWINT)|                   	// Disable TWI Interrupt.
+  54:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 		   (0<<TWEA)|(0<<TWSTA)|(0<<TWSTO)|        	// Do not ACK on any requests, yet.
+  55:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 		   (0<<TWWC);
+  56:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** }
+ 181               	.LM7:
+ 182 003e CF91      		pop r28
+ 183 0040 0895      		ret
+ 185               	.Lscope1:
+ 187               		.stabd	78,0,0
+ 190               	.global	I2C_Master_Initialise
+ 192               	I2C_Master_Initialise:
+ 193               		.stabd	46,0,0
+  57:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+  58:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+  59:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** /****************************************************************************
+  60:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** Call this function to set up the TWI master to its initial standby state.
+  61:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** Remember to enable interrupts from the main application after initialising the TWI.
+  62:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** ****************************************************************************/
+  63:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** void I2C_Master_Initialise( uint8_t I2C_ownAddress )
+  64:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** {
+ 195               	.LM8:
+ 196               	.LFBB2:
+ 197 0042 CF93      		push r28
+ 198               	/* prologue: function */
+ 199               	/* frame size = 0 */
+ 200               	/* stack size = 1 */
+ 201               	.L__stack_usage = 1
+ 202 0044 C82F      		mov r28,r24
+  65:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	// The Semaphore has to be created to allow the I2C bus to be shared.
+  66:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	// Assuming the I2C bus will be shared.
+  67:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	// Use this semaphore  (take, give) when calling I2C functions, and it can ensure single access.
+  68:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	vSemaphoreCreateBinary ( xI2CSemaphore ); // binary semaphore for I2C bus
+ 204               	.LM9:
+ 205 0046 43E0      		ldi r20,lo8(3)
+ 206 0048 60E0      		ldi r22,0
+ 207 004a 81E0      		ldi r24,lo8(1)
+ 208 004c 0E94 0000 		call xQueueGenericCreate
+ 209 0050 9093 0000 		sts xI2CSemaphore+1,r25
+ 210 0054 8093 0000 		sts xI2CSemaphore,r24
+ 211 0058 0097      		sbiw r24,0
+ 212 005a 01F0      		breq .L7
+ 214               	.LM10:
+ 215 005c 20E0      		ldi r18,0
+ 216 005e 40E0      		ldi r20,0
+ 217 0060 50E0      		ldi r21,0
+ 218 0062 60E0      		ldi r22,0
+ 219 0064 70E0      		ldi r23,0
+ 220 0066 0E94 0000 		call xQueueGenericSend
+ 221               	.L7:
+  69:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+  70:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	I2C_PORT_DIR &= ~(I2C_BIT_SCL | I2C_BIT_SDA);	// set the I2C SDA & SCL inputs.
+ 223               	.LM11:
+ 224 006a 97B1      		in r25,0x7
+ 225 006c 9F7C      		andi r25,lo8(-49)
+ 226 006e 97B9      		out 0x7,r25
+  71:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 													// Pull up resistors
+  72:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	I2C_PORT |= (I2C_BIT_SCL | I2C_BIT_SDA);		// only need these set at one place, usually Master.
+ 228               	.LM12:
+ 229 0070 98B1      		in r25,0x8
+ 230 0072 9063      		ori r25,lo8(48)
+ 231 0074 98B9      		out 0x8,r25
+  73:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+  74:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 													// Initialise TWI clock
+  75:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****     TWSR = 0;                         				// no prescaler
+ 233               	.LM13:
+ 234 0076 1092 B900 		sts 185,__zero_reg__
+  76:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****     TWBR = ((F_CPU/SCL_CLOCK)-16)/2;  				// must be > 10 for stable operation
+ 236               	.LM14:
+ 237 007a 8CE2      		ldi r24,lo8(44)
+ 238 007c 8093 B800 		sts 184,r24
+  77:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+  78:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	TWAR = I2C_ownAddress;                     		// Set own TWI slave address, in case it is called.
+ 240               	.LM15:
+ 241 0080 C093 BA00 		sts 186,r28
+  79:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 													// Accept TWI General Calls if ODD address.
+  80:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+  81:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	TWDR = 0xff;                               		// Default content = SDA released.
+ 243               	.LM16:
+ 244 0084 8FEF      		ldi r24,lo8(-1)
+ 245 0086 8093 BB00 		sts 187,r24
+  82:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	TWCR = (1<<TWEN)|                           	// Enable TWI-interface and release TWI pins.
+ 247               	.LM17:
+ 248 008a 84E0      		ldi r24,lo8(4)
+ 249 008c 8093 BC00 		sts 188,r24
+ 250               	/* epilogue start */
+  83:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 		   (0<<TWIE)|(0<<TWINT)|                	// Disable Interrupt.
+  84:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 		   (0<<TWEA)|(0<<TWSTA)|(0<<TWSTO)|     	// No Signal requests.
+  85:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 		   (0<<TWWC);
+  86:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** }
+ 252               	.LM18:
+ 253 0090 CF91      		pop r28
+ 254 0092 0895      		ret
+ 256               	.Lscope2:
+ 258               		.stabd	78,0,0
+ 260               	.global	I2C_Slave_Start_Transceiver
+ 262               	I2C_Slave_Start_Transceiver:
+ 263               		.stabd	46,0,0
+  87:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+  88:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** /****************************************************************************
+  89:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****  * Call this function to start the Transceiver without specifying new transmission data.
+  90:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****  * Useful for restarting a transmission, or just starting the transceiver for reception.
+  91:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****  * The driver will reuse the data previously put in the transceiver buffers. The function will
+  92:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****  * hold execution (loop) until the I2C_ISR has completed with the  previous operation, then
+  93:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****  * Initialise the next operation and return.
+  94:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** ****************************************************************************/
+  95:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** void I2C_Slave_Start_Transceiver(void)
+  96:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** {
+ 265               	.LM19:
+ 266               	.LFBB3:
+ 267               	/* prologue: function */
+ 268               	/* frame size = 0 */
+ 269               	/* stack size = 0 */
+ 270               	.L__stack_usage = 0
+ 271               	.L12:
+ 272               	.LBB20:
+ 273               	.LBB21:
+  97:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****   while ( I2C_Transceiver_Busy() );             // Wait until TWI is ready for next transmission.
+  98:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****   I2C_statusReg.all = 0;
+  99:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****   I2C_state         = I2C_NO_STATE ;
+ 100:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****   TWCR = (1<<TWEN)|                             // TWI Interface enabled.
+ 101:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****          (1<<TWIE)|(1<<TWINT)|                  // Enable TWI Interrupt and clear the flag.
+ 102:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****          (1<<TWEA)|(0<<TWSTA)|(0<<TWSTO)|       // Prepare to ACK next time the Slave is addressed.
+ 103:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****          (0<<TWWC);                             //
+ 104:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** }
+ 105:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 106:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** /****************************************************************************
+ 107:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** Call this function to re-send the last message. The driver will reuse the data previously
+ 108:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** put in the transceiver buffers. The function will hold execution (loop) until the I2C_ISR
+ 109:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** has completed with the previous operation, then initialise the next operation and return.
+ 110:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** ****************************************************************************/
+ 111:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** void I2C_Master_Start_Transceiver(void)
+ 112:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** {
+ 113:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****   while ( I2C_Transceiver_Busy() );             // Wait until TWI is ready for next transmission.
+ 114:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****   I2C_statusReg.all = 0;
+ 115:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****   I2C_state         = I2C_NO_STATE ;
+ 116:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****   TWCR = (1<<TWEN)|                             // TWI Interface enabled.
+ 117:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****          (1<<TWIE)|(1<<TWINT)|                  // Enable TWI Interrupt and clear the flag.
+ 118:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****          (1<<TWEA)|(1<<TWSTA)|(0<<TWSTO)|       // Initiate a START condition.
+ 119:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****          (0<<TWWC);                             //
+ 120:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** }
+ 121:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 122:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 123:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** /*****************************************************************************
+ 124:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****  * Call this function to send a prepared message, or start the Transceiver for reception. Include
+ 125:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****  * a pointer to the data to be sent if a SLA+W is received. The data will be copied to the TWI
+ 126:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****  * buffer.  Also include how many bytes that should be sent. Note that unlike the similar Master
+ 127:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****  * function, the Address byte is not included in the message buffers.
+ 128:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****  * The function will hold execution (loop) until the I2C_ISR has completed with the previous operat
+ 129:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****  * then initialize the next operation and return.
+ 130:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****  ******************************************************************************/
+ 131:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** void I2C_Slave_Start_Transceiver_With_Data( uint8_t *msg, uint8_t msgSize )
+ 132:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** {
+ 133:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 134:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****     while ( I2C_Transceiver_Busy() );	// Wait until TWI is ready for next transmission.
+ 135:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 136:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****     I2C_msgSize = msgSize;				// Number of bytes to transmit.
+ 137:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 138:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****     // Copy data that may be transmitted if the TWI Master requests data.
+ 139:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****     for ( uint8_t i = 0; i < msgSize; i++ )
+ 140:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****         I2C_buf[ i ] = msg[ i ];
+ 141:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 142:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****     I2C_statusReg.all = 0;
+ 143:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****     I2C_state         = I2C_NO_STATE ;
+ 144:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****     TWCR = (1<<TWEN)|                             // TWI Interface enabled.
+ 145:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****            (1<<TWIE)|(1<<TWINT)|                  // Enable TWI Interrupt and clear the flag.
+ 146:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****            (1<<TWEA)|(0<<TWSTA)|(0<<TWSTO)|       // Prepare to ACK next time the Slave is addresse
+ 147:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****            (0<<TWWC);                             //
+ 148:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** }
+ 149:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 150:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** /****************************************************************************
+ 151:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** Call this function to send a prepared message. The first byte must contain the slave address and th
+ 152:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** read/write bit. Consecutive bytes contain the data to be sent, or empty locations for data to be re
+ 153:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** from the slave. Also include how many bytes that should be sent/read including the address byte.
+ 154:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** The function will hold execution (loop) until the I2C_ISR has completed with the previous operation
+ 155:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** then initialise the next operation and return.
+ 156:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** ****************************************************************************/
+ 157:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** void I2C_Master_Start_Transceiver_With_Data( uint8_t *msg, uint8_t msgSize )
+ 158:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** {
+ 159:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	while ( I2C_Transceiver_Busy() );             // Wait until TWI is ready for next transmission.
+ 160:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 161:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	I2C_msgSize = msgSize;                        // Number of data to transmit.
+ 162:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	I2C_buf[0]  = msg[0];                         // Store slave address with R/W setting.
+ 163:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 164:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	if (( msg[0] & (true<<I2C_READ_BIT) ) == false)       // If it is a write operation, then also cop
+ 165:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 		for ( uint8_t i = 1; i < msgSize; i++ )
+ 166:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 			I2C_buf[ i ] = msg[ i ];
+ 167:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 168:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 169:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	I2C_statusReg.all = 0;
+ 170:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	I2C_state         = I2C_NO_STATE ;
+ 171:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	TWCR = (1<<TWEN)|                           // TWI Interface enabled.
+ 172:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 		   (1<<TWIE)|(1<<TWINT)|                // Enable TWI Interrupt and clear the flag.
+ 173:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 		   (0<<TWEA)|(1<<TWSTA)|(0<<TWSTO)|     // Initiate a START condition.
+ 174:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 		   (0<<TWWC);                           //
+ 175:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** }
+ 176:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 177:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 178:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 179:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 180:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** /****************************************************************************
+ 181:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****  * Call this function to read out the received data from the TWI transceiver buffer. I.e. first
+ 182:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****  * call I2C_Start_Transceiver to get the TWI Transceiver to fetch data. Then Run this function to
+ 183:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****  * collect the data when they have arrived. Include a pointer to where to place the data and
+ 184:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****  * the number of bytes to fetch in the function call. The function will hold execution (loop)
+ 185:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****  * until the I2C_ISR has completed with the previous operation, before reading out the data
+ 186:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****  * and returning. If there was an error in the previous transmission the function will return
+ 187:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****  * the TWI State code.
+ 188:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****  *****************************************************************************/
+ 189:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** uint8_t I2C_Slave_Get_Data_From_Transceiver( uint8_t *msg, uint8_t msgSize )
+ 190:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** {
+ 191:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 192:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****     while ( I2C_Transceiver_Busy() );    // Wait until TWI finished with the transmission.
+ 193:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 194:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****     if( I2C_statusReg.lastTransOK )    	// Last transmission completed successfully.
+ 195:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****     {
+ 196:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****         for ( uint8_t i=0; i<msgSize; i++ )        // Copy data from Transceiver buffer.
+ 197:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****             msg[i] = I2C_buf[i];
+ 198:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 199:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****         I2C_statusReg.RxDataInBuf = false;        // Slave Receive data has been read from buffer.
+ 200:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****     }
+ 201:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****     return I2C_statusReg.lastTransOK;
+ 202:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** }
+ 203:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 204:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 205:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** /****************************************************************************
+ 206:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** Call this function to read out the requested data from the TWI transceiver buffer. I.e. first call
+ 207:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** I2C_Start_Transceiver to send a request for data to the slave. Then Run this function to collect th
+ 208:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** data when they have arrived. Include a pointer to where to place the data and the number of bytes
+ 209:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** requested (including the address field) in the function call. The function will hold execution (loo
+ 210:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** until the I2C_ISR has completed with the previous operation, before reading out the data and return
+ 211:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** If there was an error in the previous transmission the function will return the TWI error code.
+ 212:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** ****************************************************************************/
+ 213:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** uint8_t I2C_Master_Get_Data_From_Transceiver( uint8_t *msg, uint8_t msgSize )
+ 214:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** {
+ 215:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 216:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****   while ( I2C_Transceiver_Busy() );             // Wait until TWI is ready for next transmission.
+ 217:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 218:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****   if( I2C_statusReg.lastTransOK )               // Last transmission completed successfully.
+ 219:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****     for ( uint8_t i=0; i<msgSize; i++ )                 // Copy data from Transceiver buffer.
+ 220:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 			msg[ i ] = I2C_buf[ i ];
+ 221:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 222:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****   return( I2C_statusReg.lastTransOK );
+ 223:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** }
+ 224:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 225:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 226:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** /****************************************************************************
+ 227:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** Call this function to test if the I2C_ISR is busy transmitting.
+ 228:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** ****************************************************************************/
+ 229:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** uint8_t I2C_Transceiver_Busy(void)
+ 230:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** {
+ 231:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****   return ( TWCR & (1<<TWIE) );                  // IF TWI Interrupt is enabled then the Transceiver
+ 275               	.LM20:
+ 276 0094 8091 BC00 		lds r24,188
+ 277               	.LBE21:
+ 278               	.LBE20:
+  97:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****   while ( I2C_Transceiver_Busy() );             // Wait until TWI is ready for next transmission.
+ 280               	.LM21:
+ 281 0098 80FD      		sbrc r24,0
+ 282 009a 00C0      		rjmp .L12
+  98:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****   I2C_statusReg.all = 0;
+ 284               	.LM22:
+ 285 009c 1092 0000 		sts I2C_statusReg,__zero_reg__
+  99:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****   I2C_state         = I2C_NO_STATE ;
+ 287               	.LM23:
+ 288 00a0 88EF      		ldi r24,lo8(-8)
+ 289 00a2 8093 0000 		sts I2C_state,r24
+ 100:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****   TWCR = (1<<TWEN)|                             // TWI Interface enabled.
+ 291               	.LM24:
+ 292 00a6 85EC      		ldi r24,lo8(-59)
+ 293 00a8 8093 BC00 		sts 188,r24
+ 294 00ac 0895      		ret
+ 296               	.Lscope3:
+ 298               		.stabd	78,0,0
+ 300               	.global	I2C_Master_Start_Transceiver
+ 302               	I2C_Master_Start_Transceiver:
+ 303               		.stabd	46,0,0
+ 112:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** {
+ 305               	.LM25:
+ 306               	.LFBB4:
+ 307               	/* prologue: function */
+ 308               	/* frame size = 0 */
+ 309               	/* stack size = 0 */
+ 310               	.L__stack_usage = 0
+ 311               	.L15:
+ 312               	.LBB22:
+ 313               	.LBB23:
+ 315               	.LM26:
+ 316 00ae 8091 BC00 		lds r24,188
+ 317               	.LBE23:
+ 318               	.LBE22:
+ 113:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****   while ( I2C_Transceiver_Busy() );             // Wait until TWI is ready for next transmission.
+ 320               	.LM27:
+ 321 00b2 80FD      		sbrc r24,0
+ 322 00b4 00C0      		rjmp .L15
+ 114:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****   I2C_statusReg.all = 0;
+ 324               	.LM28:
+ 325 00b6 1092 0000 		sts I2C_statusReg,__zero_reg__
+ 115:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****   I2C_state         = I2C_NO_STATE ;
+ 327               	.LM29:
+ 328 00ba 88EF      		ldi r24,lo8(-8)
+ 329 00bc 8093 0000 		sts I2C_state,r24
+ 116:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****   TWCR = (1<<TWEN)|                             // TWI Interface enabled.
+ 331               	.LM30:
+ 332 00c0 85EE      		ldi r24,lo8(-27)
+ 333 00c2 8093 BC00 		sts 188,r24
+ 334 00c6 0895      		ret
+ 336               	.Lscope4:
+ 338               		.stabd	78,0,0
+ 341               	.global	I2C_Slave_Start_Transceiver_With_Data
+ 343               	I2C_Slave_Start_Transceiver_With_Data:
+ 344               		.stabd	46,0,0
+ 132:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** {
+ 346               	.LM31:
+ 347               	.LFBB5:
+ 348               	/* prologue: function */
+ 349               	/* frame size = 0 */
+ 350               	/* stack size = 0 */
+ 351               	.L__stack_usage = 0
+ 352               	.L18:
+ 353               	.LBB24:
+ 354               	.LBB25:
+ 356               	.LM32:
+ 357 00c8 2091 BC00 		lds r18,188
+ 358               	.LBE25:
+ 359               	.LBE24:
+ 134:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****     while ( I2C_Transceiver_Busy() );	// Wait until TWI is ready for next transmission.
+ 361               	.LM33:
+ 362 00cc 20FD      		sbrc r18,0
+ 363 00ce 00C0      		rjmp .L18
+ 136:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****     I2C_msgSize = msgSize;				// Number of bytes to transmit.
+ 365               	.LM34:
+ 366 00d0 6093 0000 		sts I2C_msgSize,r22
+ 367 00d4 FC01      		movw r30,r24
+ 368 00d6 80E0      		ldi r24,lo8(I2C_buf)
+ 369 00d8 90E0      		ldi r25,hi8(I2C_buf)
+ 370               	.LBB26:
+ 139:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****     for ( uint8_t i = 0; i < msgSize; i++ )
+ 372               	.LM35:
+ 373 00da DC01      		movw r26,r24
+ 374 00dc 00C0      		rjmp .L19
+ 375               	.L20:
+ 140:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****         I2C_buf[ i ] = msg[ i ];
+ 377               	.LM36:
+ 378 00de 2191      		ld r18,Z+
+ 379 00e0 2D93      		st X+,r18
+ 380               	.L19:
+ 139:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****     for ( uint8_t i = 0; i < msgSize; i++ )
+ 382               	.LM37:
+ 383 00e2 2A2F      		mov r18,r26
+ 384 00e4 281B      		sub r18,r24
+ 385 00e6 2617      		cp r18,r22
+ 386 00e8 00F0      		brlo .L20
+ 387               	.LBE26:
+ 142:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****     I2C_statusReg.all = 0;
+ 389               	.LM38:
+ 390 00ea 1092 0000 		sts I2C_statusReg,__zero_reg__
+ 143:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****     I2C_state         = I2C_NO_STATE ;
+ 392               	.LM39:
+ 393 00ee 88EF      		ldi r24,lo8(-8)
+ 394 00f0 8093 0000 		sts I2C_state,r24
+ 144:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****     TWCR = (1<<TWEN)|                             // TWI Interface enabled.
+ 396               	.LM40:
+ 397 00f4 85EC      		ldi r24,lo8(-59)
+ 398 00f6 8093 BC00 		sts 188,r24
+ 399 00fa 0895      		ret
+ 401               	.Lscope5:
+ 403               		.stabd	78,0,0
+ 407               	.global	I2C_Master_Start_Transceiver_With_Data
+ 409               	I2C_Master_Start_Transceiver_With_Data:
+ 410               		.stabd	46,0,0
+ 158:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** {
+ 412               	.LM41:
+ 413               	.LFBB6:
+ 414               	/* prologue: function */
+ 415               	/* frame size = 0 */
+ 416               	/* stack size = 0 */
+ 417               	.L__stack_usage = 0
+ 418               	.L23:
+ 419               	.LBB27:
+ 420               	.LBB28:
+ 422               	.LM42:
+ 423 00fc 2091 BC00 		lds r18,188
+ 424               	.LBE28:
+ 425               	.LBE27:
+ 159:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	while ( I2C_Transceiver_Busy() );             // Wait until TWI is ready for next transmission.
+ 427               	.LM43:
+ 428 0100 20FD      		sbrc r18,0
+ 429 0102 00C0      		rjmp .L23
+ 161:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	I2C_msgSize = msgSize;                        // Number of data to transmit.
+ 431               	.LM44:
+ 432 0104 6093 0000 		sts I2C_msgSize,r22
+ 162:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	I2C_buf[0]  = msg[0];                         // Store slave address with R/W setting.
+ 434               	.LM45:
+ 435 0108 FC01      		movw r30,r24
+ 436 010a 2081      		ld r18,Z
+ 437 010c 2093 0000 		sts I2C_buf,r18
+ 164:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	if (( msg[0] & (true<<I2C_READ_BIT) ) == false)       // If it is a write operation, then also cop
+ 439               	.LM46:
+ 440 0110 2081      		ld r18,Z
+ 441 0112 20FF      		sbrs r18,0
+ 442 0114 00C0      		rjmp .L24
+ 443               	.L27:
+ 169:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	I2C_statusReg.all = 0;
+ 445               	.LM47:
+ 446 0116 1092 0000 		sts I2C_statusReg,__zero_reg__
+ 170:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	I2C_state         = I2C_NO_STATE ;
+ 448               	.LM48:
+ 449 011a 88EF      		ldi r24,lo8(-8)
+ 450 011c 8093 0000 		sts I2C_state,r24
+ 171:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	TWCR = (1<<TWEN)|                           // TWI Interface enabled.
+ 452               	.LM49:
+ 453 0120 85EA      		ldi r24,lo8(-91)
+ 454 0122 8093 BC00 		sts 188,r24
+ 455 0126 0895      		ret
+ 456               	.L24:
+ 157:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** void I2C_Master_Start_Transceiver_With_Data( uint8_t *msg, uint8_t msgSize )
+ 458               	.LM50:
+ 459 0128 DC01      		movw r26,r24
+ 460 012a 1196      		adiw r26,1
+ 461 012c E0E0      		ldi r30,lo8(I2C_buf+1)
+ 462 012e F0E0      		ldi r31,hi8(I2C_buf+1)
+ 463               	.LBB29:
+ 464 0130 81E0      		ldi r24,lo8(1)
+ 465 0132 8E1B      		sub r24,r30
+ 466 0134 00C0      		rjmp .L25
+ 467               	.L26:
+ 166:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 			I2C_buf[ i ] = msg[ i ];
+ 469               	.LM51:
+ 470 0136 9D91      		ld r25,X+
+ 471 0138 9193      		st Z+,r25
+ 472               	.L25:
+ 165:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 		for ( uint8_t i = 1; i < msgSize; i++ )
+ 474               	.LM52:
+ 475 013a 982F      		mov r25,r24
+ 476 013c 9E0F      		add r25,r30
+ 477 013e 9617      		cp r25,r22
+ 478 0140 00F0      		brlo .L26
+ 479 0142 00C0      		rjmp .L27
+ 480               	.LBE29:
+ 482               	.Lscope6:
+ 484               		.stabd	78,0,0
+ 487               	.global	I2C_Slave_Get_Data_From_Transceiver
+ 489               	I2C_Slave_Get_Data_From_Transceiver:
+ 490               		.stabd	46,0,0
+ 190:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** {
+ 492               	.LM53:
+ 493               	.LFBB7:
+ 494               	/* prologue: function */
+ 495               	/* frame size = 0 */
+ 496               	/* stack size = 0 */
+ 497               	.L__stack_usage = 0
+ 498               	.L31:
+ 499               	.LBB30:
+ 500               	.LBB31:
+ 502               	.LM54:
+ 503 0144 2091 BC00 		lds r18,188
+ 504               	.LBE31:
+ 505               	.LBE30:
+ 192:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****     while ( I2C_Transceiver_Busy() );    // Wait until TWI finished with the transmission.
+ 507               	.LM55:
+ 508 0148 20FD      		sbrc r18,0
+ 509 014a 00C0      		rjmp .L31
+ 194:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****     if( I2C_statusReg.lastTransOK )    	// Last transmission completed successfully.
+ 511               	.LM56:
+ 512 014c 2091 0000 		lds r18,I2C_statusReg
+ 513 0150 20FF      		sbrs r18,0
+ 514 0152 00C0      		rjmp .L32
+ 515 0154 20E0      		ldi r18,lo8(I2C_buf)
+ 516 0156 30E0      		ldi r19,hi8(I2C_buf)
+ 517 0158 FC01      		movw r30,r24
+ 518 015a D901      		movw r26,r18
+ 519 015c 00C0      		rjmp .L33
+ 520               	.L34:
+ 521               	.LBB32:
+ 197:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****             msg[i] = I2C_buf[i];
+ 523               	.LM57:
+ 524 015e 8D91      		ld r24,X+
+ 525 0160 8193      		st Z+,r24
+ 526               	.L33:
+ 196:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****         for ( uint8_t i=0; i<msgSize; i++ )        // Copy data from Transceiver buffer.
+ 528               	.LM58:
+ 529 0162 8A2F      		mov r24,r26
+ 530 0164 821B      		sub r24,r18
+ 531 0166 8617      		cp r24,r22
+ 532 0168 00F0      		brlo .L34
+ 533               	.LBE32:
+ 199:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****         I2C_statusReg.RxDataInBuf = false;        // Slave Receive data has been read from buffer.
+ 535               	.LM59:
+ 536 016a 8091 0000 		lds r24,I2C_statusReg
+ 537 016e 8D7F      		andi r24,lo8(~(1<<1))
+ 538 0170 8093 0000 		sts I2C_statusReg,r24
+ 539               	.L32:
+ 201:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****     return I2C_statusReg.lastTransOK;
+ 541               	.LM60:
+ 542 0174 8091 0000 		lds r24,I2C_statusReg
+ 202:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** }
+ 544               	.LM61:
+ 545 0178 8170      		andi r24,lo8(1)
+ 546 017a 0895      		ret
+ 548               	.Lscope7:
+ 550               		.stabd	78,0,0
+ 553               	.global	I2C_Master_Get_Data_From_Transceiver
+ 555               	I2C_Master_Get_Data_From_Transceiver:
+ 556               		.stabd	46,0,0
+ 214:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** {
+ 558               	.LM62:
+ 559               	.LFBB8:
+ 560               	/* prologue: function */
+ 561               	/* frame size = 0 */
+ 562               	/* stack size = 0 */
+ 563               	.L__stack_usage = 0
+ 564               	.L40:
+ 565               	.LBB33:
+ 566               	.LBB34:
+ 568               	.LM63:
+ 569 017c 2091 BC00 		lds r18,188
+ 570               	.LBE34:
+ 571               	.LBE33:
+ 216:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****   while ( I2C_Transceiver_Busy() );             // Wait until TWI is ready for next transmission.
+ 573               	.LM64:
+ 574 0180 20FD      		sbrc r18,0
+ 575 0182 00C0      		rjmp .L40
+ 218:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****   if( I2C_statusReg.lastTransOK )               // Last transmission completed successfully.
+ 577               	.LM65:
+ 578 0184 2091 0000 		lds r18,I2C_statusReg
+ 579 0188 20FD      		sbrc r18,0
+ 580 018a 00C0      		rjmp .L41
+ 581               	.L44:
+ 222:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****   return( I2C_statusReg.lastTransOK );
+ 583               	.LM66:
+ 584 018c 8091 0000 		lds r24,I2C_statusReg
+ 585 0190 8170      		andi r24,1
+ 586 0192 0895      		ret
+ 587               	.L41:
+ 588 0194 20E0      		ldi r18,lo8(I2C_buf)
+ 589 0196 30E0      		ldi r19,hi8(I2C_buf)
+ 590 0198 FC01      		movw r30,r24
+ 218:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****   if( I2C_statusReg.lastTransOK )               // Last transmission completed successfully.
+ 592               	.LM67:
+ 593 019a D901      		movw r26,r18
+ 594 019c 00C0      		rjmp .L42
+ 595               	.L43:
+ 596               	.LBB35:
+ 220:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 			msg[ i ] = I2C_buf[ i ];
+ 598               	.LM68:
+ 599 019e 8D91      		ld r24,X+
+ 600 01a0 8193      		st Z+,r24
+ 601               	.L42:
+ 219:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****     for ( uint8_t i=0; i<msgSize; i++ )                 // Copy data from Transceiver buffer.
+ 603               	.LM69:
+ 604 01a2 8A2F      		mov r24,r26
+ 605 01a4 821B      		sub r24,r18
+ 606 01a6 8617      		cp r24,r22
+ 607 01a8 00F0      		brlo .L43
+ 608 01aa 00C0      		rjmp .L44
+ 609               	.LBE35:
+ 611               	.Lscope8:
+ 613               		.stabd	78,0,0
+ 615               	.global	I2C_Check_Free_After_Stop
+ 617               	I2C_Check_Free_After_Stop:
+ 618               		.stabd	46,0,0
+ 232:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** }
+ 233:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 234:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 235:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** /****************************************************************************
+ 236:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****  * Manual Bus Check: Add this in your idle code, before issuing a start transceiver command.
+ 237:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****  * Used only for multi-master operation.
+ 238:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** ******************************************************************************/
+ 239:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** uint8_t I2C_Check_Free_After_Stop(void) //
+ 240:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** {
+ 620               	.LM70:
+ 621               	.LFBB9:
+ 622               	/* prologue: function */
+ 623               	/* frame size = 0 */
+ 624               	/* stack size = 0 */
+ 625               	.L__stack_usage = 0
+ 241:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** //	I2C_checkBusyAfterStop = I2C_HOW_MANY_BUSY_CHECKS_AFTER_STOP;
+ 242:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 243:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	while ( I2C_checkBusyAfterStop > 0 )	// Call repeatedly
+ 244:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	{
+ 245:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 		if((~(I2C_PORT_STATUS) && (I2C_BIT_SCL | I2C_BIT_SDA)) == 0) // both SCL and SDA should be high o
+ 246:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 			 // Good. The bus is quiet. Count down!
+ 247:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 			 --I2C_checkBusyAfterStop;
+ 248:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 		 else
+ 249:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 			 // Bus is busy. Start the count down all over again.
+ 250:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 			 I2C_checkBusyAfterStop = I2C_HOW_MANY_BUSY_CHECKS_AFTER_STOP;
+ 627               	.LM71:
+ 628 01ac 94E0      		ldi r25,lo8(4)
+ 243:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	while ( I2C_checkBusyAfterStop > 0 )	// Call repeatedly
+ 630               	.LM72:
+ 631 01ae 00C0      		rjmp .L48
+ 632               	.L49:
+ 245:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 		if((~(I2C_PORT_STATUS) && (I2C_BIT_SCL | I2C_BIT_SDA)) == 0) // both SCL and SDA should be high o
+ 634               	.LM73:
+ 635 01b0 86B1      		in r24,0x6
+ 637               	.LM74:
+ 638 01b2 9093 0000 		sts I2C_checkBusyAfterStop,r25
+ 639               	.L48:
+ 243:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	while ( I2C_checkBusyAfterStop > 0 )	// Call repeatedly
+ 641               	.LM75:
+ 642 01b6 8091 0000 		lds r24,I2C_checkBusyAfterStop
+ 643 01ba 8111      		cpse r24,__zero_reg__
+ 644 01bc 00C0      		rjmp .L49
+ 251:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	}
+ 252:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	return true;
+ 253:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** }
+ 646               	.LM76:
+ 647 01be 81E0      		ldi r24,lo8(1)
+ 648 01c0 0895      		ret
+ 650               	.Lscope9:
+ 652               		.stabd	78,0,0
+ 654               	.global	I2C_Get_State_Info
+ 656               	I2C_Get_State_Info:
+ 657               		.stabd	46,0,0
+ 254:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 255:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** /****************************************************************************
+ 256:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** Call this function to fetch the state information of the previous operation. The function will hold
+ 257:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** until the TWI_ISR has completed with the previous operation. If there was an error, then the functi
+ 258:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** will return the TWI State code.
+ 259:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** ****************************************************************************/
+ 260:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** uint8_t I2C_Get_State_Info(void)
+ 261:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** {
+ 659               	.LM77:
+ 660               	.LFBB10:
+ 661               	/* prologue: function */
+ 662               	/* frame size = 0 */
+ 663               	/* stack size = 0 */
+ 664               	.L__stack_usage = 0
+ 665               	.L51:
+ 666               	.LBB36:
+ 667               	.LBB37:
+ 231:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****   return ( TWCR & (1<<TWIE) );                  // IF TWI Interrupt is enabled then the Transceiver
+ 669               	.LM78:
+ 670 01c2 8091 BC00 		lds r24,188
+ 671               	.LBE37:
+ 672               	.LBE36:
+ 262:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****   while ( I2C_Transceiver_Busy() );             // Wait until I2C has completed the transmission.
+ 674               	.LM79:
+ 675 01c6 80FD      		sbrc r24,0
+ 676 01c8 00C0      		rjmp .L51
+ 263:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****   return ( I2C_state );                         // Return error state.
+ 264:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** }
+ 678               	.LM80:
+ 679 01ca 8091 0000 		lds r24,I2C_state
+ 680 01ce 0895      		ret
+ 682               	.Lscope10:
+ 684               		.stabd	78,0,0
+ 686               	.global	__vector_24
+ 688               	__vector_24:
+ 689               		.stabd	46,0,0
+ 265:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 266:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 267:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 268:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** // ********** Interrupt Handler ********** //
+ 269:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** /****************************************************************************
+ 270:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** This function is the Interrupt Service Routine (ISR), and called when the TWI interrupt is triggere
+ 271:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** that is whenever a TWI event has occurred. This function should not be called directly from the mai
+ 272:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** application.
+ 273:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** ****************************************************************************/
+ 274:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** ISR(TWI_vect)
+ 275:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** {
+ 691               	.LM81:
+ 692               	.LFBB11:
+ 693 01d0 1F92      		push r1
+ 694 01d2 0F92      		push r0
+ 695 01d4 0FB6      		in r0,__SREG__
+ 696 01d6 0F92      		push r0
+ 697 01d8 1124      		clr __zero_reg__
+ 698 01da 2F93      		push r18
+ 699 01dc 3F93      		push r19
+ 700 01de 8F93      		push r24
+ 701 01e0 9F93      		push r25
+ 702 01e2 EF93      		push r30
+ 703 01e4 FF93      		push r31
+ 704               	/* prologue: Signal */
+ 705               	/* frame size = 0 */
+ 706               	/* stack size = 9 */
+ 707               	.L__stack_usage = 9
+ 276:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****   static uint8_t I2C_bufPtr;
+ 277:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 278:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****   switch (TWSR)
+ 709               	.LM82:
+ 710 01e6 8091 B900 		lds r24,185
+ 711 01ea 8836      		cpi r24,lo8(104)
+ 712 01ec 01F4      		brne .+2
+ 713 01ee 00C0      		rjmp .L63
+ 714 01f0 00F4      		brsh .L72
+ 715 01f2 8033      		cpi r24,lo8(48)
+ 716 01f4 01F4      		brne .+2
+ 717 01f6 00C0      		rjmp .L57
+ 718 01f8 00F4      		brsh .L73
+ 719 01fa 8831      		cpi r24,lo8(24)
+ 720 01fc 01F4      		brne .+2
+ 721 01fe 00C0      		rjmp .L56
+ 722 0200 00F4      		brsh .L74
+ 723 0202 8830      		cpi r24,lo8(8)
+ 724 0204 01F4      		brne .+2
+ 725 0206 00C0      		rjmp .L55
+ 726 0208 8031      		cpi r24,lo8(16)
+ 727 020a 01F0      		breq .+2
+ 728 020c 00C0      		rjmp .L54
+ 729 020e 00C0      		rjmp .L55
+ 730               	.L74:
+ 731 0210 8032      		cpi r24,lo8(32)
+ 732 0212 01F4      		brne .+2
+ 733 0214 00C0      		rjmp .L57
+ 734 0216 8832      		cpi r24,lo8(40)
+ 735 0218 01F0      		breq .+2
+ 736 021a 00C0      		rjmp .L54
+ 737 021c 00C0      		rjmp .L56
+ 738               	.L73:
+ 739 021e 8834      		cpi r24,lo8(72)
+ 740 0220 01F4      		brne .+2
+ 741 0222 00C0      		rjmp .L54
+ 742 0224 00F4      		brsh .L75
+ 743 0226 8833      		cpi r24,lo8(56)
+ 744 0228 01F4      		brne .+2
+ 745 022a 00C0      		rjmp .L58
+ 746 022c 8034      		cpi r24,lo8(64)
+ 747 022e 01F0      		breq .+2
+ 748 0230 00C0      		rjmp .L54
+ 749 0232 00C0      		rjmp .L59
+ 750               	.L75:
+ 751 0234 8835      		cpi r24,lo8(88)
+ 752 0236 01F4      		brne .+2
+ 753 0238 00C0      		rjmp .L62
+ 754 023a 8036      		cpi r24,lo8(96)
+ 755 023c 01F4      		brne .+2
+ 756 023e 00C0      		rjmp .L63
+ 757 0240 8035      		cpi r24,lo8(80)
+ 758 0242 01F0      		breq .+2
+ 759 0244 00C0      		rjmp .L54
+ 760 0246 00C0      		rjmp .L61
+ 761               	.L72:
+ 762 0248 8839      		cpi r24,lo8(-104)
+ 763 024a 01F4      		brne .+2
+ 764 024c 00C0      		rjmp .L66
+ 765 024e 00F4      		brsh .L76
+ 766 0250 8038      		cpi r24,lo8(-128)
+ 767 0252 01F4      		brne .+2
+ 768 0254 00C0      		rjmp .L65
+ 769 0256 00F4      		brsh .L77
+ 770 0258 8037      		cpi r24,lo8(112)
+ 771 025a 01F4      		brne .+2
+ 772 025c 00C0      		rjmp .L64
+ 773 025e 8837      		cpi r24,lo8(120)
+ 774 0260 01F0      		breq .+2
+ 775 0262 00C0      		rjmp .L54
+ 776 0264 00C0      		rjmp .L64
+ 777               	.L77:
+ 778 0266 8838      		cpi r24,lo8(-120)
+ 779 0268 01F4      		brne .+2
+ 780 026a 00C0      		rjmp .L66
+ 781 026c 8039      		cpi r24,lo8(-112)
+ 782 026e 01F0      		breq .+2
+ 783 0270 00C0      		rjmp .L54
+ 784 0272 00C0      		rjmp .L65
+ 785               	.L76:
+ 786 0274 803B      		cpi r24,lo8(-80)
+ 787 0276 01F4      		brne .+2
+ 788 0278 00C0      		rjmp .L68
+ 789 027a 00F4      		brsh .L78
+ 790 027c 803A      		cpi r24,lo8(-96)
+ 791 027e 01F4      		brne .+2
+ 792 0280 00C0      		rjmp .L67
+ 793 0282 883A      		cpi r24,lo8(-88)
+ 794 0284 01F0      		breq .+2
+ 795 0286 00C0      		rjmp .L54
+ 796 0288 00C0      		rjmp .L68
+ 797               	.L78:
+ 798 028a 803C      		cpi r24,lo8(-64)
+ 799 028c 01F4      		brne .+2
+ 800 028e 00C0      		rjmp .L70
+ 801 0290 883C      		cpi r24,lo8(-56)
+ 802 0292 01F4      		brne .+2
+ 803 0294 00C0      		rjmp .L139
+ 804 0296 883B      		cpi r24,lo8(-72)
+ 805 0298 01F0      		breq .+2
+ 806 029a 00C0      		rjmp .L54
+ 807 029c 00C0      		rjmp .L69
+ 808               	.L55:
+ 279:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****   {
+ 280:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 281:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****     case I2C_START:             // START has been transmitted
+ 282:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****     case I2C_REP_START:         // Repeated START has been transmitted
+ 283:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 		I2C_bufPtr = 0;         // Set buffer pointer to the TWI Address location
+ 810               	.LM83:
+ 811 029e 1092 0000 		sts I2C_bufPtr.1934,__zero_reg__
+ 812               	.L56:
+ 284:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 285:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 286:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** // Master Transmitter
+ 287:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 288:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****     case I2C_MTX_ADR_ACK:       // SLA+W has been transmitted and ACK received
+ 289:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****     case I2C_MTX_DATA_ACK:      // Data byte has been transmitted and ACK received
+ 290:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 		if (I2C_bufPtr < I2C_msgSize)
+ 814               	.LM84:
+ 815 02a2 8091 0000 		lds r24,I2C_bufPtr.1934
+ 816 02a6 9091 0000 		lds r25,I2C_msgSize
+ 817 02aa 8917      		cp r24,r25
+ 818 02ac 00F4      		brsh .L79
+ 291:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 		{
+ 292:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 			TWDR = I2C_buf[I2C_bufPtr++];
+ 820               	.LM85:
+ 821 02ae E82F      		mov r30,r24
+ 822 02b0 F0E0      		ldi r31,0
+ 823 02b2 E050      		subi r30,lo8(-(I2C_buf))
+ 824 02b4 F040      		sbci r31,hi8(-(I2C_buf))
+ 825 02b6 9081      		ld r25,Z
+ 826 02b8 9093 BB00 		sts 187,r25
+ 827 02bc 8F5F      		subi r24,lo8(-(1))
+ 828 02be 8093 0000 		sts I2C_bufPtr.1934,r24
+ 829 02c2 00C0      		rjmp .L66
+ 830               	.L79:
+ 293:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 			TWCR = (1<<TWEN)|                                 // TWI Interface enabled
+ 294:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 				   (1<<TWIE)|(1<<TWINT)|                      // Enable TWI Interrupt and clear the flag to sen
+ 295:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 				   (0<<TWEA)|(0<<TWSTA)|(0<<TWSTO)|           //
+ 296:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 				   (0<<TWWC);                                 //
+ 297:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 		}else                    // Send STOP after last byte
+ 298:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 		{
+ 299:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 		I2C_statusReg.lastTransOK = true;                 // Set status bits to completed successfully.
+ 832               	.LM86:
+ 833 02c4 8091 0000 		lds r24,I2C_statusReg
+ 834 02c8 8160      		ori r24,lo8(1<<0)
+ 835 02ca 8093 0000 		sts I2C_statusReg,r24
+ 300:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 			TWCR = (1<<TWEN)|                                 // TWI Interface enabled
+ 837               	.LM87:
+ 838 02ce 84E9      		ldi r24,lo8(-108)
+ 839 02d0 00C0      		rjmp .L138
+ 840               	.L57:
+ 301:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 				   (0<<TWIE)|(1<<TWINT)|                      // Disable TWI Interrupt and clear the flag
+ 302:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 				   (0<<TWEA)|(0<<TWSTA)|(1<<TWSTO)|           // Initiate a STOP condition.
+ 303:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 				   (0<<TWWC);                                 //
+ 304:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 		}
+ 305:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 		break;
+ 306:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 307:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****     case I2C_MTX_ADR_NACK:      // SLA+W has been transmitted and NACK received
+ 308:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****     case I2C_MTX_DATA_NACK:     // Data byte has been transmitted and NACK received
+ 309:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	    I2C_state = TWSR;                                 // Store TWSR and automatically sets clears 
+ 842               	.LM88:
+ 843 02d2 8091 B900 		lds r24,185
+ 844 02d6 8093 0000 		sts I2C_state,r24
+ 845 02da 00C0      		rjmp .L58
+ 846               	.L61:
+ 310:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	    // Reset TWI Interface and send START.
+ 311:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 		TWCR = 	(1<<TWEN)|                          		// Enable TWI-interface and release TWI pins
+ 312:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 				(1<<TWIE)|(1<<TWINT)|               		// Enable TWI Interrupt and clear the flag
+ 313:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 				(1<<TWEA)|(1<<TWSTA)|(0<<TWSTO)|    		// Send Start.
+ 314:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 				(0<<TWWC);
+ 315:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 		break;
+ 316:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 317:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 318:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** // Master Receiver
+ 319:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 320:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****     case I2C_MRX_DATA_ACK:      // Data byte has been received and ACK transmitted
+ 321:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 		I2C_buf[I2C_bufPtr++] = TWDR;
+ 848               	.LM89:
+ 849 02dc 8091 0000 		lds r24,I2C_bufPtr.1934
+ 850 02e0 9091 BB00 		lds r25,187
+ 851 02e4 E82F      		mov r30,r24
+ 852 02e6 F0E0      		ldi r31,0
+ 853 02e8 E050      		subi r30,lo8(-(I2C_buf))
+ 854 02ea F040      		sbci r31,hi8(-(I2C_buf))
+ 855 02ec 9083      		st Z,r25
+ 856 02ee 8F5F      		subi r24,lo8(-(1))
+ 857 02f0 8093 0000 		sts I2C_bufPtr.1934,r24
+ 858               	.L59:
+ 322:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 323:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****     case I2C_MRX_ADR_ACK:       // SLA+R has been transmitted and ACK received
+ 324:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 		if (I2C_bufPtr < (I2C_msgSize-1) )                  // Detect the last byte to NACK it.
+ 860               	.LM90:
+ 861 02f4 2091 0000 		lds r18,I2C_bufPtr.1934
+ 862 02f8 30E0      		ldi r19,0
+ 863 02fa 8091 0000 		lds r24,I2C_msgSize
+ 864 02fe 90E0      		ldi r25,0
+ 865 0300 0197      		sbiw r24,1
+ 866 0302 2817      		cp r18,r24
+ 867 0304 3907      		cpc r19,r25
+ 868 0306 04F0      		brlt .+2
+ 869 0308 00C0      		rjmp .L66
+ 870 030a 00C0      		rjmp .L139
+ 871               	.L62:
+ 325:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 		{
+ 326:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 			TWCR = (1<<TWEN)|                                 // TWI Interface enabled
+ 327:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 				   (1<<TWIE)|(1<<TWINT)|                      // Enable TWI Interrupt and clear the flag to rea
+ 328:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 				   (1<<TWEA)|(0<<TWSTA)|(0<<TWSTO)|           // Send ACK after reception
+ 329:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 				   (0<<TWWC);                                 //
+ 330:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 		}else                    // Send NACK after next reception
+ 331:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 		{
+ 332:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 			TWCR = (1<<TWEN)|                                 // TWI Interface enabled
+ 333:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 				   (1<<TWIE)|(1<<TWINT)|                      // Enable TWI Interrupt and clear the flag to rea
+ 334:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 				   (0<<TWEA)|(0<<TWSTA)|(0<<TWSTO)|           // Send NACK after reception
+ 335:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 				   (0<<TWWC);                                 //
+ 336:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 		}
+ 337:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 		break;
+ 338:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 339:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****     case I2C_MRX_DATA_NACK:     // Data byte has been received and NACK transmitted
+ 340:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 		I2C_buf[I2C_bufPtr] = TWDR;
+ 873               	.LM91:
+ 874 030c 8091 BB00 		lds r24,187
+ 875 0310 E091 0000 		lds r30,I2C_bufPtr.1934
+ 876 0314 F0E0      		ldi r31,0
+ 877 0316 E050      		subi r30,lo8(-(I2C_buf))
+ 878 0318 F040      		sbci r31,hi8(-(I2C_buf))
+ 879 031a 8083      		st Z,r24
+ 341:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 		I2C_statusReg.lastTransOK = true;                 // Set status bits to completed successfully.
+ 881               	.LM92:
+ 882 031c 8091 0000 		lds r24,I2C_statusReg
+ 883 0320 8160      		ori r24,lo8(1<<0)
+ 884 0322 8093 0000 		sts I2C_statusReg,r24
+ 342:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 		TWCR = (1<<TWEN)|                                 // TWI Interface enabled
+ 886               	.LM93:
+ 887 0326 84ED      		ldi r24,lo8(-44)
+ 888 0328 00C0      		rjmp .L138
+ 889               	.L68:
+ 343:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 			   (0<<TWIE)|(1<<TWINT)|                      // Disable TWI Interrupt and clear the flag
+ 344:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 			   (1<<TWEA)|(0<<TWSTA)|(1<<TWSTO)|           // Initiate a STOP condition.
+ 345:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 			   (0<<TWWC);                                 //
+ 346:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 		break;
+ 347:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 348:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 349:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 350:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****     case I2C_MRX_ADR_NACK:      // SLA+R has been transmitted and NACK received
+ 351:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****  	    I2C_state = TWSR;                                 // Store TWSR and automatically sets clears
+ 352:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 		// Reset TWI Interface and send STOP.
+ 353:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 		TWCR = 	(1<<TWEN)|                          		// Enable TWI-interface and release TWI pins
+ 354:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 				(1<<TWIE)|(1<<TWINT)|               		// Enable TWI Interrupt and clear the flag
+ 355:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 				(1<<TWEA)|(0<<TWSTA)|(1<<TWSTO)|    		// Send stop.
+ 356:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 				(0<<TWWC);
+ 357:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 		break;
+ 358:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 359:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** // Slave Transmitter
+ 360:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 361:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	case I2C_STX_ADR_ACK:			// Own SLA+R has been received; ACK has been returned
+ 362:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	case I2C_STX_ADR_ACK_M_ARB_LOST:// Arbitration lost in SLA+R/W as Master; own SLA+R has
+ 363:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 									// been received; ACK has been returned
+ 364:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	    I2C_bufPtr   = 0;	    	// Set buffer pointer to first data location
+ 891               	.LM94:
+ 892 032a 1092 0000 		sts I2C_bufPtr.1934,__zero_reg__
+ 893               	.L69:
+ 365:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 366:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 367:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	case I2C_STX_DATA_ACK:		// Data byte in TWDR has been transmitted; ACK has been received
+ 368:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	    TWDR = I2C_buf[I2C_bufPtr++];
+ 895               	.LM95:
+ 896 032e 8091 0000 		lds r24,I2C_bufPtr.1934
+ 897 0332 E82F      		mov r30,r24
+ 898 0334 F0E0      		ldi r31,0
+ 899 0336 E050      		subi r30,lo8(-(I2C_buf))
+ 900 0338 F040      		sbci r31,hi8(-(I2C_buf))
+ 901 033a 9081      		ld r25,Z
+ 902 033c 9093 BB00 		sts 187,r25
+ 903 0340 8F5F      		subi r24,lo8(-(1))
+ 904 0342 8093 0000 		sts I2C_bufPtr.1934,r24
+ 905 0346 00C0      		rjmp .L139
+ 906               	.L70:
+ 369:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	    						// Enable TWI Interrupt and clear the flag to send byte
+ 370:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	    TWCR = 	(1<<TWEN) |
+ 371:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	    		(1<<TWIE)|(1<<TWINT)|
+ 372:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	    		(1<<TWEA)|(0<<TWSTA)|(0<<TWSTO)|
+ 373:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	    		(0<<TWWC);
+ 374:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	    break;
+ 375:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 376:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 377:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	case I2C_STX_DATA_NACK:  	// Data byte in TWDR has been transmitted; NACK has been received.
+ 378:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	    						// I.e. this could be the end of the transmission.
+ 379:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	    if (I2C_bufPtr == I2C_msgSize) 	    // Have we transmitted all expected data?
+ 908               	.LM96:
+ 909 0348 9091 0000 		lds r25,I2C_bufPtr.1934
+ 910 034c 8091 0000 		lds r24,I2C_msgSize
+ 911 0350 9813      		cpse r25,r24
+ 912 0352 00C0      		rjmp .L82
+ 380:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	    {
+ 381:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	        I2C_statusReg.lastTransOK = true; // Set status bits to completed successfully.
+ 914               	.LM97:
+ 915 0354 8091 0000 		lds r24,I2C_statusReg
+ 916 0358 8160      		ori r24,lo8(1<<0)
+ 917 035a 8093 0000 		sts I2C_statusReg,r24
+ 918 035e 00C0      		rjmp .L83
+ 919               	.L82:
+ 382:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	    }
+ 383:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	    else
+ 384:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	    {
+ 385:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	        I2C_state = TWSR;     // Master has sent a NACK before all data where sent, Store I2C Stat
+ 921               	.LM98:
+ 922 0360 8091 B900 		lds r24,185
+ 923 0364 8093 0000 		sts I2C_state,r24
+ 924               	.L83:
+ 386:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	    }
+ 387:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 388:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	    // Put I2C Transceiver in passive mode.
+ 389:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	    // Enable I2C-interface and release I2C pins
+ 390:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	    TWCR = (1<<TWEN)|
+ 926               	.LM99:
+ 927 0368 84E0      		ldi r24,lo8(4)
+ 928 036a 00C0      		rjmp .L138
+ 929               	.L64:
+ 391:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	           (0<<TWIE)|(0<<TWINT)|                // Disable Interrupt
+ 392:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	           (0<<TWEA)|(0<<TWSTA)|(0<<TWSTO)|     // Do not acknowledge on any new requests.
+ 393:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	           (0<<TWWC);
+ 394:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	   break;
+ 395:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 396:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 397:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****     case I2C_STX_DATA_ACK_LAST_BYTE: // Last data byte in TWDR has been transmitted TWEA = ; ACK ha
+ 398:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 399:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****     	// Enable TWI Interrupt and clear the flag to send byte
+ 400:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****         TWCR = (1<<TWEN)|                          // Enable TWI-interface and release TWI pins
+ 401:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****                (1<<TWIE)|(1<<TWINT)|               // Enable TWI Interrupt and clear the flag to se
+ 402:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****                (1<<TWEA)|(0<<TWSTA)|(0<<TWSTO)|    // Acknowledge on any new requests.
+ 403:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****                (0<<TWWC);
+ 404:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 405:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	    break;
+ 406:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 407:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** // Slave Receiver
+ 408:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 409:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	case I2C_SRX_GEN_ACK:				// General call address has been received; ACK has been returned
+ 410:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	case I2C_SRX_GEN_ACK_M_ARB_LOST:	// Arbitration lost in SLA+R/W as Master; General call
+ 411:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 										// address has been received; ACK has been returned
+ 412:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	    I2C_statusReg.genAddressCall = true;
+ 931               	.LM100:
+ 932 036c 8091 0000 		lds r24,I2C_statusReg
+ 933 0370 8460      		ori r24,lo8(1<<2)
+ 934 0372 8093 0000 		sts I2C_statusReg,r24
+ 935               	.L63:
+ 413:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 414:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	case I2C_SRX_ADR_ACK:		// Own SLA+W has been received ACK has been returned
+ 415:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	case I2C_SRX_ADR_ACK_M_ARB_LOST:	// Arbitration lost in SLA+R/W as Master; own SLA+W
+ 416:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 										// has been received; ACK has been returned
+ 417:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 418:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	    I2C_statusReg.RxDataInBuf = true; // Don't need to clear I2C_statusRegister.generalAddressCall
+ 937               	.LM101:
+ 938 0376 8091 0000 		lds r24,I2C_statusReg
+ 939 037a 8260      		ori r24,lo8(1<<1)
+ 940 037c 8093 0000 		sts I2C_statusReg,r24
+ 419:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 420:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	    I2C_bufPtr   = 0;	    // Set buffer pointer to first data location
+ 942               	.LM102:
+ 943 0380 1092 0000 		sts I2C_bufPtr.1934,__zero_reg__
+ 944 0384 00C0      		rjmp .L139
+ 945               	.L65:
+ 421:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 422:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	    // Reset the TWI Interrupt to wait for a new event.
+ 423:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 424:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	    // TWI Interface enabled
+ 425:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	    // Enable TWI Interrupt and clear the flag to send byte
+ 426:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	    // Expect ACK on this transmission
+ 427:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	    TWCR =  (1<<TWEN)|
+ 428:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	    		(1<<TWIE)|(1<<TWINT)|
+ 429:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	    		(1<<TWEA)|(0<<TWSTA)|(0<<TWSTO)|
+ 430:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	    		(0<<TWWC);
+ 431:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 		break;
+ 432:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 433:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	case I2C_SRX_ADR_DATA_ACK:	// Previously addressed with own SLA+W; data has been received; ACK has
+ 434:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 	case I2C_SRX_GEN_DATA_ACK:	// Previously addressed with general call; data has been received; ACK 
+ 435:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 436:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 		I2C_buf[I2C_bufPtr++] = TWDR;
+ 947               	.LM103:
+ 948 0386 8091 0000 		lds r24,I2C_bufPtr.1934
+ 949 038a 9091 BB00 		lds r25,187
+ 950 038e E82F      		mov r30,r24
+ 951 0390 F0E0      		ldi r31,0
+ 952 0392 E050      		subi r30,lo8(-(I2C_buf))
+ 953 0394 F040      		sbci r31,hi8(-(I2C_buf))
+ 954 0396 9083      		st Z,r25
+ 955 0398 8F5F      		subi r24,lo8(-(1))
+ 956 039a 8093 0000 		sts I2C_bufPtr.1934,r24
+ 437:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 438:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 		I2C_statusReg.lastTransOK = true;		// Set flag transmission successful.
+ 958               	.LM104:
+ 959 039e 8091 0000 		lds r24,I2C_statusReg
+ 960 03a2 8160      		ori r24,lo8(1<<0)
+ 961 03a4 8093 0000 		sts I2C_statusReg,r24
+ 962               	.L139:
+ 439:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 440:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 		// Reset the TWI Interrupt to wait for a new event.
+ 441:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 		TWCR = (1<<TWEN)|                          // TWI Interface enabled
+ 964               	.LM105:
+ 965 03a8 85EC      		ldi r24,lo8(-59)
+ 966 03aa 00C0      		rjmp .L138
+ 967               	.L66:
+ 442:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 		       (1<<TWIE)|(1<<TWINT)|               // Enable TWI Interrupt and clear the flag to send byt
+ 443:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 		       (1<<TWEA)|(0<<TWSTA)|(0<<TWSTO)|    // Send ACK after next reception
+ 444:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 		       (0<<TWWC);
+ 445:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 		break;
+ 446:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 447:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 448:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****     case I2C_SRX_ADR_DATA_NACK: // Previously addressed with own SLA+W; data has been received; NOT
+ 449:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****     case I2C_SRX_GEN_DATA_NACK: // Previously addressed with general call; data has been received; 
+ 450:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 451:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****     	// NOT ACK back at the Master
+ 452:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****         TWCR = (1<<TWEN)|                          // Enable TWI-interface and release TWI pins
+ 969               	.LM106:
+ 970 03ac 85E8      		ldi r24,lo8(-123)
+ 971 03ae 00C0      		rjmp .L138
+ 972               	.L67:
+ 453:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****                (1<<TWIE)|(1<<TWINT)|               // Enable TWI Interrupt and clear the flag to se
+ 454:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****                (0<<TWEA)|(0<<TWSTA)|(0<<TWSTO)|    // Do not acknowledge on any new requests.
+ 455:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****                (0<<TWWC);
+ 456:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 		break;
+ 457:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 458:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****     case I2C_SRX_STOP_RESTART:  // A STOP condition or repeated START condition has been received w
+ 459:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 460:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****     	I2C_checkBusyAfterStop = I2C_HOW_MANY_BUSY_CHECKS_AFTER_STOP; // do some busy checks before hi
+ 974               	.LM107:
+ 975 03b0 84E0      		ldi r24,lo8(4)
+ 976 03b2 8093 0000 		sts I2C_checkBusyAfterStop,r24
+ 977 03b6 00C0      		rjmp .L138
+ 978               	.L58:
+ 461:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 462:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****         // Put TWI Transceiver in passive mode.
+ 463:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****         TWCR = (1<<TWEN)|                          // Enable TWI-interface and release TWI pins
+ 464:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****                (0<<TWIE)|(0<<TWINT)|               // Disable Interrupt
+ 465:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****                (0<<TWEA)|(0<<TWSTA)|(0<<TWSTO)|    // Do not acknowledge on any new requests.
+ 466:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****                (0<<TWWC);
+ 467:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****         break;
+ 468:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 469:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 470:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** // ERRORS AND FAULT CONDITIONS
+ 471:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 472:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****     case I2C_ARB_LOST:          						// Arbitration lost
+ 473:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 		TWCR = (1<<TWEN)|                               // TWI Interface enabled
+ 980               	.LM108:
+ 981 03b8 85EE      		ldi r24,lo8(-27)
+ 982 03ba 00C0      		rjmp .L138
+ 983               	.L54:
+ 474:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 			   (1<<TWIE)|(1<<TWINT)|                    // Enable TWI Interrupt and clear the flag
+ 475:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 			   (1<<TWEA)|(1<<TWSTA)|(0<<TWSTO)|         // Initiate a (RE)START condition.
+ 476:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 			   (0<<TWWC);                               //
+ 477:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 		break;
+ 478:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 479:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 480:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****     case I2C_BUS_ERROR:         // Bus error due to an illegal START or STOP condition
+ 481:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****     case I2C_NO_STATE:          // No relevant state information available TWINT = 0
+ 482:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 483:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****     default:
+ 484:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 		I2C_state = TWSR;                               // Store TWSR and automatically sets clears noErr
+ 985               	.LM109:
+ 986 03bc 8091 B900 		lds r24,185
+ 987 03c0 8093 0000 		sts I2C_state,r24
+ 485:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 
+ 486:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 														// Reset TWI Interface
+ 487:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 		TWCR = (1<<TWEN)|                          		// Enable TWI-interface and release TWI pins
+ 989               	.LM110:
+ 990 03c4 85ED      		ldi r24,lo8(-43)
+ 991               	.L138:
+ 992 03c6 8093 BC00 		sts 188,r24
+ 993               	/* epilogue start */
+ 488:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 			 (1<<TWIE)|(1<<TWINT)|               		// Enable TWI Interrupt and clear the flag
+ 489:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 			 (1<<TWEA)|(0<<TWSTA)|(1<<TWSTO)|    		// Acknowledge on any new requests. Send stop.
+ 490:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** 			 (0<<TWWC);                               	//
+ 491:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****       	break;
+ 492:../freeRTOS750/lib_i2c/i2cMultiMaster.c ****   }
+ 493:../freeRTOS750/lib_i2c/i2cMultiMaster.c **** }
+ 995               	.LM111:
+ 996 03ca FF91      		pop r31
+ 997 03cc EF91      		pop r30
+ 998 03ce 9F91      		pop r25
+ 999 03d0 8F91      		pop r24
+ 1000 03d2 3F91      		pop r19
+ 1001 03d4 2F91      		pop r18
+ 1002 03d6 0F90      		pop r0
+ 1003 03d8 0FBE      		out __SREG__,r0
+ 1004 03da 0F90      		pop r0
+ 1005 03dc 1F90      		pop r1
+ 1006 03de 1895      		reti
+ 1011               	.Lscope11:
+ 1013               		.stabd	78,0,0
+ 1014               	.global	I2C_statusReg
+ 1015               		.section .bss
+ 1018               	I2C_statusReg:
+ 1019 0000 00        		.zero	1
+ 1020               		.comm	xI2CSemaphore,2,1
+ 1021               		.data
+ 1024               	I2C_state:
+ 1025 0000 F8        		.byte	-8
+ 1026               		.local	I2C_msgSize
+ 1027               		.comm	I2C_msgSize,1,1
+ 1028               		.local	I2C_buf
+ 1029               		.comm	I2C_buf,16,1
+ 1030               		.local	I2C_checkBusyAfterStop
+ 1031               		.comm	I2C_checkBusyAfterStop,1,1
+ 1032               		.local	I2C_bufPtr.1934
+ 1033               		.comm	I2C_bufPtr.1934,1,1
+ 1040               		.text
+ 1042               	.Letext0:
+ 1043               		.ident	"GCC: (GNU) 4.7.2"
+ 1044               	.global __do_copy_data
+ 1045               	.global __do_clear_bss
+DEFINED SYMBOLS
+                            *ABS*:00000000 i2cMultiMaster.c
+     /tmp/ccxlX12s.s:2      *ABS*:0000003e __SP_H__
+     /tmp/ccxlX12s.s:3      *ABS*:0000003d __SP_L__
+     /tmp/ccxlX12s.s:4      *ABS*:0000003f __SREG__
+     /tmp/ccxlX12s.s:5      *ABS*:00000000 __tmp_reg__
+     /tmp/ccxlX12s.s:6      *ABS*:00000001 __zero_reg__
+     /tmp/ccxlX12s.s:133    .text:00000000 I2C_Slave_Initialise
+                            *COM*:00000002 xI2CSemaphore
+     /tmp/ccxlX12s.s:192    .text:00000042 I2C_Master_Initialise
+     /tmp/ccxlX12s.s:262    .text:00000094 I2C_Slave_Start_Transceiver
+     /tmp/ccxlX12s.s:1018   .bss:00000000 I2C_statusReg
+     /tmp/ccxlX12s.s:1024   .data:00000000 I2C_state
+     /tmp/ccxlX12s.s:302    .text:000000ae I2C_Master_Start_Transceiver
+     /tmp/ccxlX12s.s:343    .text:000000c8 I2C_Slave_Start_Transceiver_With_Data
+                             .bss:00000001 I2C_msgSize
+     /tmp/ccxlX12s.s:1027   .bss:00000002 I2C_buf
+     /tmp/ccxlX12s.s:409    .text:000000fc I2C_Master_Start_Transceiver_With_Data
+     /tmp/ccxlX12s.s:489    .text:00000144 I2C_Slave_Get_Data_From_Transceiver
+     /tmp/ccxlX12s.s:555    .text:0000017c I2C_Master_Get_Data_From_Transceiver
+     /tmp/ccxlX12s.s:617    .text:000001ac I2C_Check_Free_After_Stop
+     /tmp/ccxlX12s.s:1029   .bss:00000012 I2C_checkBusyAfterStop
+     /tmp/ccxlX12s.s:656    .text:000001c2 I2C_Get_State_Info
+     /tmp/ccxlX12s.s:688    .text:000001d0 __vector_24
+     /tmp/ccxlX12s.s:1031   .bss:00000013 I2C_bufPtr.1934
+
+UNDEFINED SYMBOLS
+xQueueGenericCreate
+xQueueGenericSend
+__do_copy_data
+__do_clear_bss

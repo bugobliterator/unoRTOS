@@ -1,0 +1,233 @@
+   1               		.file	"heap_3.c"
+   2               	__SP_H__ = 0x3e
+   3               	__SP_L__ = 0x3d
+   4               	__SREG__ = 0x3f
+   5               	__tmp_reg__ = 0
+   6               	__zero_reg__ = 1
+   9               		.text
+  10               	.Ltext0:
+ 120               	.global	pvPortMalloc
+ 122               	pvPortMalloc:
+ 123               		.stabd	46,0,0
+   1:../freeRTOS750/MemMang/heap_3.c **** /*
+   2:../freeRTOS750/MemMang/heap_3.c ****     FreeRTOS V7.5.0 - Copyright (C) 2013 Real Time Engineers Ltd.
+   3:../freeRTOS750/MemMang/heap_3.c **** 
+   4:../freeRTOS750/MemMang/heap_3.c ****     VISIT http://www.FreeRTOS.org TO ENSURE YOU ARE USING THE LATEST VERSION.
+   5:../freeRTOS750/MemMang/heap_3.c **** 
+   6:../freeRTOS750/MemMang/heap_3.c ****     ***************************************************************************
+   7:../freeRTOS750/MemMang/heap_3.c ****      *                                                                       *
+   8:../freeRTOS750/MemMang/heap_3.c ****      *    FreeRTOS provides completely free yet professionally developed,    *
+   9:../freeRTOS750/MemMang/heap_3.c ****      *    robust, strictly quality controlled, supported, and cross          *
+  10:../freeRTOS750/MemMang/heap_3.c ****      *    platform software that has become a de facto standard.             *
+  11:../freeRTOS750/MemMang/heap_3.c ****      *                                                                       *
+  12:../freeRTOS750/MemMang/heap_3.c ****      *    Help yourself get started quickly and support the FreeRTOS         *
+  13:../freeRTOS750/MemMang/heap_3.c ****      *    project by purchasing a FreeRTOS tutorial book, reference          *
+  14:../freeRTOS750/MemMang/heap_3.c ****      *    manual, or both from: http://www.FreeRTOS.org/Documentation        *
+  15:../freeRTOS750/MemMang/heap_3.c ****      *                                                                       *
+  16:../freeRTOS750/MemMang/heap_3.c ****      *    Thank you!                                                         *
+  17:../freeRTOS750/MemMang/heap_3.c ****      *                                                                       *
+  18:../freeRTOS750/MemMang/heap_3.c ****     ***************************************************************************
+  19:../freeRTOS750/MemMang/heap_3.c **** 
+  20:../freeRTOS750/MemMang/heap_3.c ****     This file is part of the FreeRTOS distribution.
+  21:../freeRTOS750/MemMang/heap_3.c **** 
+  22:../freeRTOS750/MemMang/heap_3.c ****     FreeRTOS is free software; you can redistribute it and/or modify it under
+  23:../freeRTOS750/MemMang/heap_3.c ****     the terms of the GNU General Public License (version 2) as published by the
+  24:../freeRTOS750/MemMang/heap_3.c ****     Free Software Foundation >>!AND MODIFIED BY!<< the FreeRTOS exception.
+  25:../freeRTOS750/MemMang/heap_3.c **** 
+  26:../freeRTOS750/MemMang/heap_3.c ****     >>! NOTE: The modification to the GPL is included to allow you to distribute
+  27:../freeRTOS750/MemMang/heap_3.c ****     >>! a combined work that includes FreeRTOS without being obliged to provide
+  28:../freeRTOS750/MemMang/heap_3.c ****     >>! the source code for proprietary components outside of the FreeRTOS
+  29:../freeRTOS750/MemMang/heap_3.c ****     >>! kernel.
+  30:../freeRTOS750/MemMang/heap_3.c **** 
+  31:../freeRTOS750/MemMang/heap_3.c ****     FreeRTOS is distributed in the hope that it will be useful, but WITHOUT ANY
+  32:../freeRTOS750/MemMang/heap_3.c ****     WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+  33:../freeRTOS750/MemMang/heap_3.c ****     FOR A PARTICULAR PURPOSE.  Full license text is available from the following
+  34:../freeRTOS750/MemMang/heap_3.c ****     link: http://www.freertos.org/a00114.html
+  35:../freeRTOS750/MemMang/heap_3.c **** 
+  36:../freeRTOS750/MemMang/heap_3.c ****     1 tab == 4 spaces!
+  37:../freeRTOS750/MemMang/heap_3.c **** 
+  38:../freeRTOS750/MemMang/heap_3.c ****     ***************************************************************************
+  39:../freeRTOS750/MemMang/heap_3.c ****      *                                                                       *
+  40:../freeRTOS750/MemMang/heap_3.c ****      *    Having a problem?  Start by reading the FAQ "My application does   *
+  41:../freeRTOS750/MemMang/heap_3.c ****      *    not run, what could be wrong?"                                     *
+  42:../freeRTOS750/MemMang/heap_3.c ****      *                                                                       *
+  43:../freeRTOS750/MemMang/heap_3.c ****      *    http://www.FreeRTOS.org/FAQHelp.html                               *
+  44:../freeRTOS750/MemMang/heap_3.c ****      *                                                                       *
+  45:../freeRTOS750/MemMang/heap_3.c ****     ***************************************************************************
+  46:../freeRTOS750/MemMang/heap_3.c **** 
+  47:../freeRTOS750/MemMang/heap_3.c ****     http://www.FreeRTOS.org - Documentation, books, training, latest versions,
+  48:../freeRTOS750/MemMang/heap_3.c ****     license and Real Time Engineers Ltd. contact details.
+  49:../freeRTOS750/MemMang/heap_3.c **** 
+  50:../freeRTOS750/MemMang/heap_3.c ****     http://www.FreeRTOS.org/plus - A selection of FreeRTOS ecosystem products,
+  51:../freeRTOS750/MemMang/heap_3.c ****     including FreeRTOS+Trace - an indispensable productivity tool, a DOS
+  52:../freeRTOS750/MemMang/heap_3.c ****     compatible FAT file system, and our tiny thread aware UDP/IP stack.
+  53:../freeRTOS750/MemMang/heap_3.c **** 
+  54:../freeRTOS750/MemMang/heap_3.c ****     http://www.OpenRTOS.com - Real Time Engineers ltd license FreeRTOS to High
+  55:../freeRTOS750/MemMang/heap_3.c ****     Integrity Systems to sell under the OpenRTOS brand.  Low cost OpenRTOS
+  56:../freeRTOS750/MemMang/heap_3.c ****     licenses offer ticketed support, indemnification and middleware.
+  57:../freeRTOS750/MemMang/heap_3.c **** 
+  58:../freeRTOS750/MemMang/heap_3.c ****     http://www.SafeRTOS.com - High Integrity Systems also provide a safety
+  59:../freeRTOS750/MemMang/heap_3.c ****     engineered and independently SIL3 certified version for use in safety and
+  60:../freeRTOS750/MemMang/heap_3.c ****     mission critical applications that require provable dependability.
+  61:../freeRTOS750/MemMang/heap_3.c **** 
+  62:../freeRTOS750/MemMang/heap_3.c ****     1 tab == 4 spaces!
+  63:../freeRTOS750/MemMang/heap_3.c **** */
+  64:../freeRTOS750/MemMang/heap_3.c **** 
+  65:../freeRTOS750/MemMang/heap_3.c **** 
+  66:../freeRTOS750/MemMang/heap_3.c **** /*
+  67:../freeRTOS750/MemMang/heap_3.c ****  * Implementation of pvPortMalloc() and vPortFree() that relies on the
+  68:../freeRTOS750/MemMang/heap_3.c ****  * compilers own malloc() and free() implementations.
+  69:../freeRTOS750/MemMang/heap_3.c ****  *
+  70:../freeRTOS750/MemMang/heap_3.c ****  * This file can only be used if the linker is configured to to generate
+  71:../freeRTOS750/MemMang/heap_3.c ****  * a heap memory area.
+  72:../freeRTOS750/MemMang/heap_3.c ****  *
+  73:../freeRTOS750/MemMang/heap_3.c ****  * See heap_1.c, heap_2.c and heap_4.c for alternative implementations, and the 
+  74:../freeRTOS750/MemMang/heap_3.c ****  * memory management pages of http://www.FreeRTOS.org for more information.
+  75:../freeRTOS750/MemMang/heap_3.c ****  */
+  76:../freeRTOS750/MemMang/heap_3.c **** 
+  77:../freeRTOS750/MemMang/heap_3.c **** #include <stdlib.h>
+  78:../freeRTOS750/MemMang/heap_3.c **** 
+  79:../freeRTOS750/MemMang/heap_3.c **** /* Defining MPU_WRAPPERS_INCLUDED_FROM_API_FILE prevents task.h from redefining
+  80:../freeRTOS750/MemMang/heap_3.c **** all the API functions to use the MPU wrappers.  That should only be done when
+  81:../freeRTOS750/MemMang/heap_3.c **** task.h is included from an application file. */
+  82:../freeRTOS750/MemMang/heap_3.c **** #define MPU_WRAPPERS_INCLUDED_FROM_API_FILE
+  83:../freeRTOS750/MemMang/heap_3.c **** 
+  84:../freeRTOS750/MemMang/heap_3.c **** #include "FreeRTOS.h"
+  85:../freeRTOS750/MemMang/heap_3.c **** #include "task.h"
+  86:../freeRTOS750/MemMang/heap_3.c **** 
+  87:../freeRTOS750/MemMang/heap_3.c **** #undef MPU_WRAPPERS_INCLUDED_FROM_API_FILE
+  88:../freeRTOS750/MemMang/heap_3.c **** 
+  89:../freeRTOS750/MemMang/heap_3.c **** /*-----------------------------------------------------------*/
+  90:../freeRTOS750/MemMang/heap_3.c **** 
+  91:../freeRTOS750/MemMang/heap_3.c **** void *pvPortMalloc( size_t xWantedSize )
+  92:../freeRTOS750/MemMang/heap_3.c **** {
+ 125               	.LM0:
+ 126               	.LFBB1:
+ 127 0000 1F93      		push r17
+ 128 0002 CF93      		push r28
+ 129 0004 DF93      		push r29
+ 130 0006 00D0      		rcall .
+ 131 0008 CDB7      		in r28,__SP_L__
+ 132 000a DEB7      		in r29,__SP_H__
+ 133               	/* prologue: function */
+ 134               	/* frame size = 2 */
+ 135               	/* stack size = 5 */
+ 136               	.L__stack_usage = 5
+  93:../freeRTOS750/MemMang/heap_3.c **** void *pvReturn;
+  94:../freeRTOS750/MemMang/heap_3.c **** 
+  95:../freeRTOS750/MemMang/heap_3.c **** 	vTaskSuspendAll();
+ 138               	.LM1:
+ 139 000c 8983      		std Y+1,r24
+ 140 000e 9A83      		std Y+2,r25
+ 141 0010 0E94 0000 		call vTaskSuspendAll
+  96:../freeRTOS750/MemMang/heap_3.c **** 	{
+  97:../freeRTOS750/MemMang/heap_3.c **** 		pvReturn = malloc( xWantedSize );
+ 143               	.LM2:
+ 144 0014 8981      		ldd r24,Y+1
+ 145 0016 9A81      		ldd r25,Y+2
+ 146 0018 0E94 0000 		call malloc
+ 147 001c 182F      		mov r17,r24
+  98:../freeRTOS750/MemMang/heap_3.c **** 	}
+  99:../freeRTOS750/MemMang/heap_3.c **** 	xTaskResumeAll();
+ 149               	.LM3:
+ 150 001e 9A83      		std Y+2,r25
+ 151 0020 0E94 0000 		call xTaskResumeAll
+ 100:../freeRTOS750/MemMang/heap_3.c **** 
+ 101:../freeRTOS750/MemMang/heap_3.c **** 	#if( configUSE_MALLOC_FAILED_HOOK == 1 )
+ 102:../freeRTOS750/MemMang/heap_3.c **** 	{
+ 103:../freeRTOS750/MemMang/heap_3.c **** 		if( pvReturn == NULL )
+ 104:../freeRTOS750/MemMang/heap_3.c **** 		{
+ 105:../freeRTOS750/MemMang/heap_3.c **** 			extern void vApplicationMallocFailedHook( void );
+ 106:../freeRTOS750/MemMang/heap_3.c **** 			vApplicationMallocFailedHook();
+ 107:../freeRTOS750/MemMang/heap_3.c **** 		}
+ 108:../freeRTOS750/MemMang/heap_3.c **** 	}
+ 109:../freeRTOS750/MemMang/heap_3.c **** 	#endif
+ 110:../freeRTOS750/MemMang/heap_3.c **** 	
+ 111:../freeRTOS750/MemMang/heap_3.c **** 	return pvReturn;
+ 112:../freeRTOS750/MemMang/heap_3.c **** }
+ 153               	.LM4:
+ 154 0024 812F      		mov r24,r17
+ 155 0026 9A81      		ldd r25,Y+2
+ 156               	/* epilogue start */
+ 157 0028 0F90      		pop __tmp_reg__
+ 158 002a 0F90      		pop __tmp_reg__
+ 159 002c DF91      		pop r29
+ 160 002e CF91      		pop r28
+ 161 0030 1F91      		pop r17
+ 162 0032 0895      		ret
+ 164               	.Lscope1:
+ 166               		.stabd	78,0,0
+ 169               	.global	vPortFree
+ 171               	vPortFree:
+ 172               		.stabd	46,0,0
+ 113:../freeRTOS750/MemMang/heap_3.c **** /*-----------------------------------------------------------*/
+ 114:../freeRTOS750/MemMang/heap_3.c **** 
+ 115:../freeRTOS750/MemMang/heap_3.c **** void vPortFree( void *pv )
+ 116:../freeRTOS750/MemMang/heap_3.c **** {
+ 174               	.LM5:
+ 175               	.LFBB2:
+ 176 0034 CF93      		push r28
+ 177 0036 DF93      		push r29
+ 178 0038 00D0      		rcall .
+ 179 003a CDB7      		in r28,__SP_L__
+ 180 003c DEB7      		in r29,__SP_H__
+ 181               	/* prologue: function */
+ 182               	/* frame size = 2 */
+ 183               	/* stack size = 4 */
+ 184               	.L__stack_usage = 4
+ 117:../freeRTOS750/MemMang/heap_3.c **** 	if( pv )
+ 186               	.LM6:
+ 187 003e 0097      		sbiw r24,0
+ 188 0040 01F0      		breq .L2
+ 118:../freeRTOS750/MemMang/heap_3.c **** 	{
+ 119:../freeRTOS750/MemMang/heap_3.c **** 		vTaskSuspendAll();
+ 190               	.LM7:
+ 191 0042 8983      		std Y+1,r24
+ 192 0044 9A83      		std Y+2,r25
+ 193 0046 0E94 0000 		call vTaskSuspendAll
+ 120:../freeRTOS750/MemMang/heap_3.c **** 		{
+ 121:../freeRTOS750/MemMang/heap_3.c **** 			free( pv );
+ 195               	.LM8:
+ 196 004a 8981      		ldd r24,Y+1
+ 197 004c 9A81      		ldd r25,Y+2
+ 198 004e 0E94 0000 		call free
+ 199               	/* epilogue start */
+ 122:../freeRTOS750/MemMang/heap_3.c **** 		}
+ 123:../freeRTOS750/MemMang/heap_3.c **** 		xTaskResumeAll();
+ 124:../freeRTOS750/MemMang/heap_3.c **** 	}
+ 125:../freeRTOS750/MemMang/heap_3.c **** }
+ 201               	.LM9:
+ 202 0052 0F90      		pop __tmp_reg__
+ 203 0054 0F90      		pop __tmp_reg__
+ 204 0056 DF91      		pop r29
+ 205 0058 CF91      		pop r28
+ 123:../freeRTOS750/MemMang/heap_3.c **** 		xTaskResumeAll();
+ 207               	.LM10:
+ 208 005a 0C94 0000 		jmp xTaskResumeAll
+ 209               	.L2:
+ 210               	/* epilogue start */
+ 212               	.LM11:
+ 213 005e 0F90      		pop __tmp_reg__
+ 214 0060 0F90      		pop __tmp_reg__
+ 215 0062 DF91      		pop r29
+ 216 0064 CF91      		pop r28
+ 217 0066 0895      		ret
+ 219               	.Lscope2:
+ 221               		.stabd	78,0,0
+ 223               	.Letext0:
+ 224               		.ident	"GCC: (GNU) 4.7.2"
+DEFINED SYMBOLS
+                            *ABS*:00000000 heap_3.c
+     /tmp/ccPV527P.s:2      *ABS*:0000003e __SP_H__
+     /tmp/ccPV527P.s:3      *ABS*:0000003d __SP_L__
+     /tmp/ccPV527P.s:4      *ABS*:0000003f __SREG__
+     /tmp/ccPV527P.s:5      *ABS*:00000000 __tmp_reg__
+     /tmp/ccPV527P.s:6      *ABS*:00000001 __zero_reg__
+     /tmp/ccPV527P.s:122    .text:00000000 pvPortMalloc
+     /tmp/ccPV527P.s:171    .text:00000034 vPortFree
+
+UNDEFINED SYMBOLS
+vTaskSuspendAll
+malloc
+xTaskResumeAll
+free

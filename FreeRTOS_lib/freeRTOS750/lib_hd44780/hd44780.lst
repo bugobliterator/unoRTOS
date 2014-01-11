@@ -1,0 +1,19 @@
+   1               		.file	"hd44780.c"
+   2               	__SP_H__ = 0x3e
+   3               	__SP_L__ = 0x3d
+   4               	__SREG__ = 0x3f
+   5               	__tmp_reg__ = 0
+   6               	__zero_reg__ = 1
+   9               		.text
+  10               	.Ltext0:
+  94               	.Letext0:
+  95               		.ident	"GCC: (GNU) 4.7.2"
+DEFINED SYMBOLS
+                            *ABS*:00000000 hd44780.c
+     /tmp/ccrN5yoH.s:2      *ABS*:0000003e __SP_H__
+     /tmp/ccrN5yoH.s:3      *ABS*:0000003d __SP_L__
+     /tmp/ccrN5yoH.s:4      *ABS*:0000003f __SREG__
+     /tmp/ccrN5yoH.s:5      *ABS*:00000000 __tmp_reg__
+     /tmp/ccrN5yoH.s:6      *ABS*:00000001 __zero_reg__
+
+NO UNDEFINED SYMBOLS

@@ -1,0 +1,3304 @@
+   1               		.file	"dhcp.c"
+   2               	__SP_H__ = 0x3e
+   3               	__SP_L__ = 0x3d
+   4               	__SREG__ = 0x3f
+   5               	__tmp_reg__ = 0
+   6               	__zero_reg__ = 1
+   9               		.text
+  10               	.Ltext0:
+ 161               	proc_ip_conflict:
+ 162               		.stabd	46,0,0
+   1:../freeRTOS750/lib_inet/dhcp.c **** /**
+   2:../freeRTOS750/lib_inet/dhcp.c ****  * @file	dhcp.c
+   3:../freeRTOS750/lib_inet/dhcp.c ****  * @brief 	functions relevant to dhcp
+   4:../freeRTOS750/lib_inet/dhcp.c ****  */
+   5:../freeRTOS750/lib_inet/dhcp.c **** 
+   6:../freeRTOS750/lib_inet/dhcp.c **** #include <string.h>
+   7:../freeRTOS750/lib_inet/dhcp.c **** #include <util/delay.h>
+   8:../freeRTOS750/lib_inet/dhcp.c **** 
+   9:../freeRTOS750/lib_inet/dhcp.c **** /* Scheduler include files. */
+  10:../freeRTOS750/lib_inet/dhcp.c **** #include <FreeRTOS.h>
+  11:../freeRTOS750/lib_inet/dhcp.c **** #include <task.h>
+  12:../freeRTOS750/lib_inet/dhcp.c **** #include <queue.h>
+  13:../freeRTOS750/lib_inet/dhcp.c **** #include <semphr.h>
+  14:../freeRTOS750/lib_inet/dhcp.c **** 
+  15:../freeRTOS750/lib_inet/dhcp.c **** #include <lib_serial.h>
+  16:../freeRTOS750/lib_inet/dhcp.c **** 
+  17:../freeRTOS750/lib_inet/dhcp.c **** #include <socket.h>
+  18:../freeRTOS750/lib_inet/dhcp.c **** #include <inet.h>
+  19:../freeRTOS750/lib_inet/dhcp.c **** 
+  20:../freeRTOS750/lib_inet/dhcp.c **** un_l2cval get_sn_mask;						/**< Subnet mask received from the DHCP server */
+  21:../freeRTOS750/lib_inet/dhcp.c **** uint8_t get_gw_ip[4];						/**< Gateway ip address received from the DHCP server */
+  22:../freeRTOS750/lib_inet/dhcp.c **** uint8_t get_dns_ip[4] = "\x00\x00\x00\x00";	/**< DNS server ip address received from the DHCP serve
+  23:../freeRTOS750/lib_inet/dhcp.c **** uint8_t get_source_ip[4] = {0,};			/**< source ip address received from the DHCP server */
+  24:../freeRTOS750/lib_inet/dhcp.c **** 
+  25:../freeRTOS750/lib_inet/dhcp.c **** static uint8_t dhcp_sip[4] = {0,};			/**< DHCP server ip address is discovered */
+  26:../freeRTOS750/lib_inet/dhcp.c **** static uint8_t dhcp_real_sip[4] = {0,};		/**< For extract my DHCP server in a few DHCP servers */
+  27:../freeRTOS750/lib_inet/dhcp.c **** static uint8_t old_sip[4];					/**< Previous local ip address received from DHCP server */
+  28:../freeRTOS750/lib_inet/dhcp.c **** 
+  29:../freeRTOS750/lib_inet/dhcp.c **** static uint8_t dhcp_state;					/**< DHCP client status */
+  30:../freeRTOS750/lib_inet/dhcp.c **** static uint8_t retry_count;					/**< retry count */
+  31:../freeRTOS750/lib_inet/dhcp.c **** 
+  32:../freeRTOS750/lib_inet/dhcp.c **** static uint8_t DHCP_timeout;				/**< DHCP Timeout flag */
+  33:../freeRTOS750/lib_inet/dhcp.c **** static un_l2cval lease_time;				/**< Leased time */
+  34:../freeRTOS750/lib_inet/dhcp.c **** static portTickType start_dhcp_time, next_dhcp_time;	/**< DHCP Timer tick count */
+  35:../freeRTOS750/lib_inet/dhcp.c **** 
+  36:../freeRTOS750/lib_inet/dhcp.c **** static uint32_t DHCP_XID;
+  37:../freeRTOS750/lib_inet/dhcp.c **** static SOCKET DHCPC_SOCK;					/**< Socket for the DHCP client */
+  38:../freeRTOS750/lib_inet/dhcp.c **** static RIP_MSG *pRIPMSG;					/**< Pointer for the DHCP message */
+  39:../freeRTOS750/lib_inet/dhcp.c **** 
+  40:../freeRTOS750/lib_inet/dhcp.c **** #ifdef portW5200
+  41:../freeRTOS750/lib_inet/dhcp.c **** // TX MEM SIZE- SOCKET 0:8KB, SOCKET 1:2KB, SOCKET2-7:1KB
+  42:../freeRTOS750/lib_inet/dhcp.c **** // RX MEM SIZE- SOCKET 0:8KB, SOCKET 1:2KB, SOCKET2-7:1KB
+  43:../freeRTOS750/lib_inet/dhcp.c **** extern uint8_t txsize[MAX_SOCK_NUM];
+  44:../freeRTOS750/lib_inet/dhcp.c **** extern uint8_t rxsize[MAX_SOCK_NUM];
+  45:../freeRTOS750/lib_inet/dhcp.c **** #endif
+  46:../freeRTOS750/lib_inet/dhcp.c **** 
+  47:../freeRTOS750/lib_inet/dhcp.c **** 
+  48:../freeRTOS750/lib_inet/dhcp.c **** void (*dhcp_ip_update)(void) = 0;			/**< handler to be called when the IP address from DHCP server 
+  49:../freeRTOS750/lib_inet/dhcp.c **** void (*dhcp_ip_conflict)(void) = 0;			/**< handler to be called when the IP address from DHCP serve
+  50:../freeRTOS750/lib_inet/dhcp.c **** 
+  51:../freeRTOS750/lib_inet/dhcp.c **** uint8_t	init_dhcpc_ch(SOCKET s);			// Initialise the socket for DHCP client
+  52:../freeRTOS750/lib_inet/dhcp.c **** 
+  53:../freeRTOS750/lib_inet/dhcp.c **** static void send_DHCP_DISCOVER(SOCKET s);	/* Send the discovery message to the DHCP server */
+  54:../freeRTOS750/lib_inet/dhcp.c **** static void send_DHCP_REQUEST(SOCKET s);	/* Send the request message to the DHCP server */
+  55:../freeRTOS750/lib_inet/dhcp.c **** static void send_DHCP_RELEASE_DECLINE(SOCKET s,char msgtype);		/**< send the release message to the
+  56:../freeRTOS750/lib_inet/dhcp.c **** static uint8_t parseDHCPMSG(SOCKET s, uint16_t length);	/* Receive the message from DHCP server and
+  57:../freeRTOS750/lib_inet/dhcp.c **** static void reset_DHCP_time(void);			/* Initialise DHCP Timer */
+  58:../freeRTOS750/lib_inet/dhcp.c **** static uint8_t check_leasedIP(void);			/* Check the leased IP address	*/
+  59:../freeRTOS750/lib_inet/dhcp.c **** static void check_DHCP_Timeout(void);		/* Check DHCP Timeout  */
+  60:../freeRTOS750/lib_inet/dhcp.c **** static void set_DHCP_network(void);			/* Apply the leased IP address to EtherMega */
+  61:../freeRTOS750/lib_inet/dhcp.c **** static void proc_ip_conflict(void);			/* called when the leased IP address is conflict */
+  62:../freeRTOS750/lib_inet/dhcp.c **** 
+  63:../freeRTOS750/lib_inet/dhcp.c **** 
+  64:../freeRTOS750/lib_inet/dhcp.c **** SOCKET	get_DHCP_socket(void)				// Get the socket assigned for DHCP
+  65:../freeRTOS750/lib_inet/dhcp.c **** {
+  66:../freeRTOS750/lib_inet/dhcp.c **** 	return DHCPC_SOCK;
+  67:../freeRTOS750/lib_inet/dhcp.c **** }
+  68:../freeRTOS750/lib_inet/dhcp.c **** 
+  69:../freeRTOS750/lib_inet/dhcp.c **** /**
+  70:../freeRTOS750/lib_inet/dhcp.c ****  * @brief		reset timeout value and retry count
+  71:../freeRTOS750/lib_inet/dhcp.c ****  */
+  72:../freeRTOS750/lib_inet/dhcp.c **** static void reset_DHCP_time(void)
+  73:../freeRTOS750/lib_inet/dhcp.c **** {
+  74:../freeRTOS750/lib_inet/dhcp.c **** 	start_dhcp_time  = xTaskGetTickCount();
+  75:../freeRTOS750/lib_inet/dhcp.c **** 	next_dhcp_time = start_dhcp_time + DHCP_WAIT_TIME * 1000 / portTICK_RATE_MS;
+  76:../freeRTOS750/lib_inet/dhcp.c **** 
+  77:../freeRTOS750/lib_inet/dhcp.c **** 	retry_count = 0;
+  78:../freeRTOS750/lib_inet/dhcp.c **** }
+  79:../freeRTOS750/lib_inet/dhcp.c **** 
+  80:../freeRTOS750/lib_inet/dhcp.c **** 
+  81:../freeRTOS750/lib_inet/dhcp.c **** /**
+  82:../freeRTOS750/lib_inet/dhcp.c ****  * @brief		This function sends DHCP DISCOVER message to DHCP server.
+  83:../freeRTOS750/lib_inet/dhcp.c ****  */
+  84:../freeRTOS750/lib_inet/dhcp.c **** static void send_DHCP_DISCOVER(
+  85:../freeRTOS750/lib_inet/dhcp.c **** 	SOCKET s	/**< a socket number. */
+  86:../freeRTOS750/lib_inet/dhcp.c **** 	)
+  87:../freeRTOS750/lib_inet/dhcp.c **** {
+  88:../freeRTOS750/lib_inet/dhcp.c **** 	uint8_t ip[4];
+  89:../freeRTOS750/lib_inet/dhcp.c **** 	uint8_t i;
+  90:../freeRTOS750/lib_inet/dhcp.c **** 
+  91:../freeRTOS750/lib_inet/dhcp.c **** 	i = 0;
+  92:../freeRTOS750/lib_inet/dhcp.c **** 
+  93:../freeRTOS750/lib_inet/dhcp.c **** 	*((uint32_t*)dhcp_sip) = 0;
+  94:../freeRTOS750/lib_inet/dhcp.c **** 	*((uint32_t*)dhcp_real_sip) = 0;
+  95:../freeRTOS750/lib_inet/dhcp.c **** 
+  96:../freeRTOS750/lib_inet/dhcp.c **** 	memset((void*)pRIPMSG,0,sizeof(RIP_MSG));
+  97:../freeRTOS750/lib_inet/dhcp.c **** 
+  98:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->op = DHCP_BOOTREQUEST;
+  99:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->htype = DHCP_HTYPE_10MB;
+ 100:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->hlen = DHCP_HLEN_ETHERNET;
+ 101:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->hops = DHCP_HOPS;
+ 102:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->xid = htonl(DHCP_XID);
+ 103:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->secs = htons(DHCP_SECS);
+ 104:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->flags = htons(DHCP_FLAGSBROADCAST);
+ 105:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->chaddr[0] = src_mac_addr[0];
+ 106:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->chaddr[1] = src_mac_addr[1];
+ 107:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->chaddr[2] = src_mac_addr[2];
+ 108:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->chaddr[3] = src_mac_addr[3];
+ 109:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->chaddr[4] = src_mac_addr[4];
+ 110:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->chaddr[5] = src_mac_addr[5];
+ 111:../freeRTOS750/lib_inet/dhcp.c **** 
+ 112:../freeRTOS750/lib_inet/dhcp.c **** 	/* MAGIC_COOKIE */
+ 113:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = (uint8_t)((MAGIC_COOKIE >> 24)& 0xFF);
+ 114:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = (uint8_t)((MAGIC_COOKIE >> 16)& 0xFF);
+ 115:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = (uint8_t)((MAGIC_COOKIE >> 8)& 0xFF);
+ 116:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = (uint8_t)(MAGIC_COOKIE& 0xFF);
+ 117:../freeRTOS750/lib_inet/dhcp.c **** 
+ 118:../freeRTOS750/lib_inet/dhcp.c **** 	/* Option Request Param. */
+ 119:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = dhcpMessageType;
+ 120:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = 0x01;
+ 121:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = DHCP_DISCOVER;
+ 122:../freeRTOS750/lib_inet/dhcp.c **** 
+ 123:../freeRTOS750/lib_inet/dhcp.c **** 	// Client identifier
+ 124:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = dhcpClientIdentifier;
+ 125:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = 0x07;
+ 126:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = 0x01;
+ 127:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = src_mac_addr[0];
+ 128:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = src_mac_addr[1];
+ 129:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = src_mac_addr[2];
+ 130:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = src_mac_addr[3];
+ 131:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = src_mac_addr[4];
+ 132:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = src_mac_addr[5];
+ 133:../freeRTOS750/lib_inet/dhcp.c **** 
+ 134:../freeRTOS750/lib_inet/dhcp.c **** 	// host name
+ 135:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = hostName;
+ 136:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = strlen(HOST_NAME)+3; // length of hostname + 3, to add 3 MAC bytes
+ 137:../freeRTOS750/lib_inet/dhcp.c **** 	strcpy((char*)&(pRIPMSG->OPT[i]),HOST_NAME);
+ 138:../freeRTOS750/lib_inet/dhcp.c **** 
+ 139:../freeRTOS750/lib_inet/dhcp.c **** 	i+=strlen(HOST_NAME);
+ 140:../freeRTOS750/lib_inet/dhcp.c **** 
+ 141:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = src_mac_addr[3];
+ 142:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = src_mac_addr[4];
+ 143:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = src_mac_addr[5];
+ 144:../freeRTOS750/lib_inet/dhcp.c **** 
+ 145:../freeRTOS750/lib_inet/dhcp.c **** 
+ 146:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = dhcpParamRequest;
+ 147:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = 0x06;
+ 148:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = subnetMask;
+ 149:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = routersOnSubnet;
+ 150:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = dns;
+ 151:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = domainName;
+ 152:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = dhcpT1value;
+ 153:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = dhcpT2value;
+ 154:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = endOption;
+ 155:../freeRTOS750/lib_inet/dhcp.c **** 
+ 156:../freeRTOS750/lib_inet/dhcp.c **** 	/* send broadcast packet */
+ 157:../freeRTOS750/lib_inet/dhcp.c **** 	ip[0] = 255;
+ 158:../freeRTOS750/lib_inet/dhcp.c **** 	ip[1] = 255;
+ 159:../freeRTOS750/lib_inet/dhcp.c **** 	ip[2] = 255;
+ 160:../freeRTOS750/lib_inet/dhcp.c **** 	ip[3] = 255;
+ 161:../freeRTOS750/lib_inet/dhcp.c **** 
+ 162:../freeRTOS750/lib_inet/dhcp.c **** 	if(0 == sendto(s, (uint8_t *)pRIPMSG, sizeof(RIP_MSG), ip, IP_PORT_DHCP_SERVER))
+ 163:../freeRTOS750/lib_inet/dhcp.c **** 	{
+ 164:../freeRTOS750/lib_inet/dhcp.c **** 		xSerialPrint_P(PSTR("\r\nDHCP: Fatal Error(0)."));
+ 165:../freeRTOS750/lib_inet/dhcp.c **** 		if ( dhcp_ip_conflict != 0 )
+ 166:../freeRTOS750/lib_inet/dhcp.c **** 			(*dhcp_ip_conflict)();
+ 167:../freeRTOS750/lib_inet/dhcp.c **** 	}
+ 168:../freeRTOS750/lib_inet/dhcp.c **** 
+ 169:../freeRTOS750/lib_inet/dhcp.c **** 	xSerialPrint_P(PSTR("\r\nsent DHCP_DISCOVER\r\n"));
+ 170:../freeRTOS750/lib_inet/dhcp.c **** }
+ 171:../freeRTOS750/lib_inet/dhcp.c **** 
+ 172:../freeRTOS750/lib_inet/dhcp.c **** 
+ 173:../freeRTOS750/lib_inet/dhcp.c **** /**
+ 174:../freeRTOS750/lib_inet/dhcp.c ****  * @brief		This function sends DHCP REQUEST message to DHCP server.
+ 175:../freeRTOS750/lib_inet/dhcp.c ****  */
+ 176:../freeRTOS750/lib_inet/dhcp.c **** static void send_DHCP_REQUEST(
+ 177:../freeRTOS750/lib_inet/dhcp.c **** 	SOCKET s	/**<  socket number */
+ 178:../freeRTOS750/lib_inet/dhcp.c **** 	)
+ 179:../freeRTOS750/lib_inet/dhcp.c **** {
+ 180:../freeRTOS750/lib_inet/dhcp.c **** 	un_l2cval ip;
+ 181:../freeRTOS750/lib_inet/dhcp.c **** 	uint16_t i;
+ 182:../freeRTOS750/lib_inet/dhcp.c **** 
+ 183:../freeRTOS750/lib_inet/dhcp.c **** 	i = 0;
+ 184:../freeRTOS750/lib_inet/dhcp.c **** 
+ 185:../freeRTOS750/lib_inet/dhcp.c **** 	memset((void*)pRIPMSG,0,sizeof(RIP_MSG));
+ 186:../freeRTOS750/lib_inet/dhcp.c **** 
+ 187:../freeRTOS750/lib_inet/dhcp.c **** 
+ 188:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->op = DHCP_BOOTREQUEST;
+ 189:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->htype = DHCP_HTYPE_10MB;
+ 190:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->hlen = DHCP_HLEN_ETHERNET;
+ 191:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->hops = DHCP_HOPS;
+ 192:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->xid = htonl(DHCP_XID);
+ 193:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->secs = htons(DHCP_SECS);
+ 194:../freeRTOS750/lib_inet/dhcp.c **** 
+ 195:../freeRTOS750/lib_inet/dhcp.c **** 	if(dhcp_state < DHCP_STATE_LEASED)
+ 196:../freeRTOS750/lib_inet/dhcp.c **** 		pRIPMSG->flags = htons(DHCP_FLAGSBROADCAST);
+ 197:../freeRTOS750/lib_inet/dhcp.c **** 	else
+ 198:../freeRTOS750/lib_inet/dhcp.c **** 	{
+ 199:../freeRTOS750/lib_inet/dhcp.c **** 		pRIPMSG->flags = 0;		// For Unicast
+ 200:../freeRTOS750/lib_inet/dhcp.c **** 		pRIPMSG->ciaddr[0] = get_source_ip[0];
+ 201:../freeRTOS750/lib_inet/dhcp.c **** 		pRIPMSG->ciaddr[1] = get_source_ip[1];
+ 202:../freeRTOS750/lib_inet/dhcp.c **** 		pRIPMSG->ciaddr[2] = get_source_ip[2];
+ 203:../freeRTOS750/lib_inet/dhcp.c **** 		pRIPMSG->ciaddr[3] = get_source_ip[3];
+ 204:../freeRTOS750/lib_inet/dhcp.c **** 	}
+ 205:../freeRTOS750/lib_inet/dhcp.c **** 
+ 206:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->chaddr[0] = src_mac_addr[0];
+ 207:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->chaddr[1] = src_mac_addr[1];
+ 208:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->chaddr[2] = src_mac_addr[2];
+ 209:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->chaddr[3] = src_mac_addr[3];
+ 210:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->chaddr[4] = src_mac_addr[4];
+ 211:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->chaddr[5] = src_mac_addr[5];
+ 212:../freeRTOS750/lib_inet/dhcp.c **** 
+ 213:../freeRTOS750/lib_inet/dhcp.c **** 	/* MAGIC_COOKIE */
+ 214:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = (uint8_t)((MAGIC_COOKIE >> 24) & 0xFF);
+ 215:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = (uint8_t)((MAGIC_COOKIE >> 16) & 0xFF);
+ 216:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = (uint8_t)((MAGIC_COOKIE >> 8) & 0xFF);
+ 217:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = (uint8_t)(MAGIC_COOKIE & 0xFF);
+ 218:../freeRTOS750/lib_inet/dhcp.c **** 
+ 219:../freeRTOS750/lib_inet/dhcp.c **** 	/* Option Request Param. */
+ 220:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = dhcpMessageType;
+ 221:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = 0x01;
+ 222:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = DHCP_REQUEST;
+ 223:../freeRTOS750/lib_inet/dhcp.c **** 
+ 224:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = dhcpClientIdentifier;
+ 225:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = 0x07;
+ 226:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = 0x01;
+ 227:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = src_mac_addr[0];
+ 228:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = src_mac_addr[1];
+ 229:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = src_mac_addr[2];
+ 230:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = src_mac_addr[3];
+ 231:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = src_mac_addr[4];
+ 232:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = src_mac_addr[5];
+ 233:../freeRTOS750/lib_inet/dhcp.c **** 
+ 234:../freeRTOS750/lib_inet/dhcp.c **** 	if(dhcp_state < DHCP_STATE_LEASED)
+ 235:../freeRTOS750/lib_inet/dhcp.c **** 	{
+ 236:../freeRTOS750/lib_inet/dhcp.c **** 		pRIPMSG->OPT[i++] = dhcpRequestedIPaddr;
+ 237:../freeRTOS750/lib_inet/dhcp.c **** 		pRIPMSG->OPT[i++] = 0x04;
+ 238:../freeRTOS750/lib_inet/dhcp.c **** 		pRIPMSG->OPT[i++] = get_source_ip[0];
+ 239:../freeRTOS750/lib_inet/dhcp.c **** 		pRIPMSG->OPT[i++] = get_source_ip[1];
+ 240:../freeRTOS750/lib_inet/dhcp.c **** 		pRIPMSG->OPT[i++] = get_source_ip[2];
+ 241:../freeRTOS750/lib_inet/dhcp.c **** 		pRIPMSG->OPT[i++] = get_source_ip[3];
+ 242:../freeRTOS750/lib_inet/dhcp.c **** 
+ 243:../freeRTOS750/lib_inet/dhcp.c **** 		pRIPMSG->OPT[i++] = dhcpServerIdentifier;
+ 244:../freeRTOS750/lib_inet/dhcp.c **** 		pRIPMSG->OPT[i++] = 0x04;
+ 245:../freeRTOS750/lib_inet/dhcp.c **** 		pRIPMSG->OPT[i++] = dhcp_sip[0];
+ 246:../freeRTOS750/lib_inet/dhcp.c **** 		pRIPMSG->OPT[i++] = dhcp_sip[1];
+ 247:../freeRTOS750/lib_inet/dhcp.c **** 		pRIPMSG->OPT[i++] = dhcp_sip[2];
+ 248:../freeRTOS750/lib_inet/dhcp.c **** 		pRIPMSG->OPT[i++] = dhcp_sip[3];
+ 249:../freeRTOS750/lib_inet/dhcp.c **** 	}
+ 250:../freeRTOS750/lib_inet/dhcp.c **** 
+ 251:../freeRTOS750/lib_inet/dhcp.c **** 	// host name
+ 252:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = hostName;
+ 253:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = strlen(HOST_NAME)+3; // length of hostname + 3
+ 254:../freeRTOS750/lib_inet/dhcp.c **** 	strcpy((char*)&(pRIPMSG->OPT[i]),HOST_NAME);
+ 255:../freeRTOS750/lib_inet/dhcp.c **** 
+ 256:../freeRTOS750/lib_inet/dhcp.c **** 	i+=strlen(HOST_NAME);
+ 257:../freeRTOS750/lib_inet/dhcp.c **** 
+ 258:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = src_mac_addr[3];
+ 259:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = src_mac_addr[4];
+ 260:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = src_mac_addr[5];
+ 261:../freeRTOS750/lib_inet/dhcp.c **** 
+ 262:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = dhcpParamRequest;
+ 263:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = 0x08;
+ 264:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = subnetMask;
+ 265:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = routersOnSubnet;
+ 266:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = dns;
+ 267:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = domainName;
+ 268:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = dhcpT1value;
+ 269:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = dhcpT2value;
+ 270:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = performRouterDiscovery;
+ 271:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = staticRoute;
+ 272:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = endOption;
+ 273:../freeRTOS750/lib_inet/dhcp.c **** 
+ 274:../freeRTOS750/lib_inet/dhcp.c **** 	/* send broadcast packet */
+ 275:../freeRTOS750/lib_inet/dhcp.c **** 	if(dhcp_state < DHCP_STATE_LEASED)
+ 276:../freeRTOS750/lib_inet/dhcp.c **** 	{
+ 277:../freeRTOS750/lib_inet/dhcp.c **** 		ip.lVal = 0xffffffff;
+ 278:../freeRTOS750/lib_inet/dhcp.c **** 	}
+ 279:../freeRTOS750/lib_inet/dhcp.c **** 	else
+ 280:../freeRTOS750/lib_inet/dhcp.c **** 	{
+ 281:../freeRTOS750/lib_inet/dhcp.c **** 		ip.cVal[0] = dhcp_sip[0];
+ 282:../freeRTOS750/lib_inet/dhcp.c **** 		ip.cVal[1] = dhcp_sip[1];
+ 283:../freeRTOS750/lib_inet/dhcp.c **** 		ip.cVal[2] = dhcp_sip[2];
+ 284:../freeRTOS750/lib_inet/dhcp.c **** 		ip.cVal[3] = dhcp_sip[3];
+ 285:../freeRTOS750/lib_inet/dhcp.c **** 	}
+ 286:../freeRTOS750/lib_inet/dhcp.c **** 
+ 287:../freeRTOS750/lib_inet/dhcp.c **** 	if(0 == sendto(s, (uint8_t*)pRIPMSG, sizeof(RIP_MSG), ip.cVal, IP_PORT_DHCP_SERVER))
+ 288:../freeRTOS750/lib_inet/dhcp.c **** 	{
+ 289:../freeRTOS750/lib_inet/dhcp.c **** 		xSerialPrint_P(PSTR("\r\nDHCP: Fatal Error(1)."));
+ 290:../freeRTOS750/lib_inet/dhcp.c **** 		if ( dhcp_ip_conflict != 0 )
+ 291:../freeRTOS750/lib_inet/dhcp.c **** 			(*dhcp_ip_conflict)();
+ 292:../freeRTOS750/lib_inet/dhcp.c **** 	}
+ 293:../freeRTOS750/lib_inet/dhcp.c **** 
+ 294:../freeRTOS750/lib_inet/dhcp.c **** 	xSerialPrint_P(PSTR("\r\nsent DHCP_REQUEST\r\n"));
+ 295:../freeRTOS750/lib_inet/dhcp.c **** 
+ 296:../freeRTOS750/lib_inet/dhcp.c **** }
+ 297:../freeRTOS750/lib_inet/dhcp.c **** 
+ 298:../freeRTOS750/lib_inet/dhcp.c **** 
+ 299:../freeRTOS750/lib_inet/dhcp.c **** /**
+ 300:../freeRTOS750/lib_inet/dhcp.c ****  * @brief		This function sends DHCP RELEASE message to DHCP server.
+ 301:../freeRTOS750/lib_inet/dhcp.c ****  */
+ 302:../freeRTOS750/lib_inet/dhcp.c **** static void send_DHCP_RELEASE_DECLINE(
+ 303:../freeRTOS750/lib_inet/dhcp.c **** 	SOCKET s,		/**< socket number */
+ 304:../freeRTOS750/lib_inet/dhcp.c **** 	char msgtype	/**< 0 : RELEASE, Not Zero : DECLINE */
+ 305:../freeRTOS750/lib_inet/dhcp.c **** 	)
+ 306:../freeRTOS750/lib_inet/dhcp.c **** {
+ 307:../freeRTOS750/lib_inet/dhcp.c **** 	un_l2cval ip;
+ 308:../freeRTOS750/lib_inet/dhcp.c **** 	uint16_t i;
+ 309:../freeRTOS750/lib_inet/dhcp.c **** 
+ 310:../freeRTOS750/lib_inet/dhcp.c **** 	i = 0;
+ 311:../freeRTOS750/lib_inet/dhcp.c **** 
+ 312:../freeRTOS750/lib_inet/dhcp.c **** 	memset((void*)pRIPMSG,0,sizeof(RIP_MSG));
+ 313:../freeRTOS750/lib_inet/dhcp.c **** 
+ 314:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->op = DHCP_BOOTREQUEST;
+ 315:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->htype = DHCP_HTYPE_10MB;
+ 316:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->hlen = DHCP_HLEN_ETHERNET;
+ 317:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->hops = DHCP_HOPS;
+ 318:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->xid = htonl(DHCP_XID);
+ 319:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->secs = htons(DHCP_SECS);
+ 320:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->flags = 0;	//DHCP_FLAGSBROADCAST;
+ 321:../freeRTOS750/lib_inet/dhcp.c **** 
+ 322:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->chaddr[0] = src_mac_addr[0];
+ 323:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->chaddr[1] = src_mac_addr[1];
+ 324:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->chaddr[2] = src_mac_addr[2];
+ 325:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->chaddr[3] = src_mac_addr[3];
+ 326:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->chaddr[4] = src_mac_addr[4];
+ 327:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->chaddr[5] = src_mac_addr[5];
+ 328:../freeRTOS750/lib_inet/dhcp.c **** 
+ 329:../freeRTOS750/lib_inet/dhcp.c **** 
+ 330:../freeRTOS750/lib_inet/dhcp.c **** 	/* MAGIC_COOKIE */
+ 331:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = (uint8_t)((MAGIC_COOKIE >> 24) & 0xFF);
+ 332:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = (uint8_t)((MAGIC_COOKIE >> 16) & 0xFF);
+ 333:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = (uint8_t)((MAGIC_COOKIE >> 8) & 0xFF);
+ 334:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = (uint8_t)(MAGIC_COOKIE & 0xFF);
+ 335:../freeRTOS750/lib_inet/dhcp.c **** 
+ 336:../freeRTOS750/lib_inet/dhcp.c **** 	/* Option Request Param. */
+ 337:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = dhcpMessageType;
+ 338:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = 0x01;
+ 339:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = ((!msgtype) ? DHCP_RELEASE : DHCP_DECLINE);
+ 340:../freeRTOS750/lib_inet/dhcp.c **** 
+ 341:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = dhcpClientIdentifier;
+ 342:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = 0x07;
+ 343:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = 0x01;
+ 344:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = src_mac_addr[0];
+ 345:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = src_mac_addr[1];
+ 346:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = src_mac_addr[2];
+ 347:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = src_mac_addr[3];
+ 348:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = src_mac_addr[4];
+ 349:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = src_mac_addr[5];
+ 350:../freeRTOS750/lib_inet/dhcp.c **** 
+ 351:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = dhcpServerIdentifier;
+ 352:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = 0x04;
+ 353:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = dhcp_sip[0];
+ 354:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = dhcp_sip[1];
+ 355:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = dhcp_sip[2];
+ 356:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = dhcp_sip[3];
+ 357:../freeRTOS750/lib_inet/dhcp.c **** 
+ 358:../freeRTOS750/lib_inet/dhcp.c **** 	if(msgtype)
+ 359:../freeRTOS750/lib_inet/dhcp.c **** 	{
+ 360:../freeRTOS750/lib_inet/dhcp.c **** 		pRIPMSG->OPT[i++] = dhcpRequestedIPaddr;
+ 361:../freeRTOS750/lib_inet/dhcp.c **** 		pRIPMSG->OPT[i++] = 0x04;
+ 362:../freeRTOS750/lib_inet/dhcp.c **** 		pRIPMSG->OPT[i++] = get_source_ip[0];
+ 363:../freeRTOS750/lib_inet/dhcp.c **** 		pRIPMSG->OPT[i++] = get_source_ip[1];
+ 364:../freeRTOS750/lib_inet/dhcp.c **** 		pRIPMSG->OPT[i++] = get_source_ip[2];
+ 365:../freeRTOS750/lib_inet/dhcp.c **** 		pRIPMSG->OPT[i++] = get_source_ip[3];
+ 366:../freeRTOS750/lib_inet/dhcp.c **** 		pRIPMSG->OPT[i++] = endOption;
+ 367:../freeRTOS750/lib_inet/dhcp.c **** 		xSerialPrint_P(PSTR("\r\nsent DHCP_DECLINE\r\n"));
+ 368:../freeRTOS750/lib_inet/dhcp.c **** 	}
+ 369:../freeRTOS750/lib_inet/dhcp.c **** 	else
+ 370:../freeRTOS750/lib_inet/dhcp.c **** 	{
+ 371:../freeRTOS750/lib_inet/dhcp.c **** 		pRIPMSG->OPT[i++] = endOption;
+ 372:../freeRTOS750/lib_inet/dhcp.c **** 		xSerialPrint_P(PSTR("\r\nsent DHCP_RELEASE\r\n"));
+ 373:../freeRTOS750/lib_inet/dhcp.c **** 	}
+ 374:../freeRTOS750/lib_inet/dhcp.c **** 
+ 375:../freeRTOS750/lib_inet/dhcp.c **** 	if(!msgtype)
+ 376:../freeRTOS750/lib_inet/dhcp.c **** 	{
+ 377:../freeRTOS750/lib_inet/dhcp.c **** 		ip.cVal[0] = dhcp_sip[0];
+ 378:../freeRTOS750/lib_inet/dhcp.c **** 		ip.cVal[1] = dhcp_sip[1];
+ 379:../freeRTOS750/lib_inet/dhcp.c **** 		ip.cVal[2] = dhcp_sip[2];
+ 380:../freeRTOS750/lib_inet/dhcp.c **** 		ip.cVal[3] = dhcp_sip[3];
+ 381:../freeRTOS750/lib_inet/dhcp.c **** 	}
+ 382:../freeRTOS750/lib_inet/dhcp.c **** 	else
+ 383:../freeRTOS750/lib_inet/dhcp.c **** 	{
+ 384:../freeRTOS750/lib_inet/dhcp.c **** 		ip.lVal = 0xffffffff;
+ 385:../freeRTOS750/lib_inet/dhcp.c **** 	}
+ 386:../freeRTOS750/lib_inet/dhcp.c **** 
+ 387:../freeRTOS750/lib_inet/dhcp.c **** 	if(0 == sendto(s, (uint8_t *)pRIPMSG, sizeof(RIP_MSG), ip.cVal, IP_PORT_DHCP_SERVER))
+ 388:../freeRTOS750/lib_inet/dhcp.c **** 	{
+ 389:../freeRTOS750/lib_inet/dhcp.c **** 		xSerialPrint_P(PSTR("\r\nDHCP: Fatal Error(2)."));
+ 390:../freeRTOS750/lib_inet/dhcp.c **** 		if ( dhcp_ip_conflict != 0 )
+ 391:../freeRTOS750/lib_inet/dhcp.c **** 			(*dhcp_ip_conflict)();
+ 392:../freeRTOS750/lib_inet/dhcp.c **** 	}
+ 393:../freeRTOS750/lib_inet/dhcp.c **** 
+ 394:../freeRTOS750/lib_inet/dhcp.c **** }
+ 395:../freeRTOS750/lib_inet/dhcp.c **** 
+ 396:../freeRTOS750/lib_inet/dhcp.c **** 
+ 397:../freeRTOS750/lib_inet/dhcp.c **** /**
+ 398:../freeRTOS750/lib_inet/dhcp.c ****  * @brief		This function parses the reply message from DHCP server.
+ 399:../freeRTOS750/lib_inet/dhcp.c ****  * @return	success - return type, fail - 0
+ 400:../freeRTOS750/lib_inet/dhcp.c ****  */
+ 401:../freeRTOS750/lib_inet/dhcp.c **** static uint8_t parseDHCPMSG(
+ 402:../freeRTOS750/lib_inet/dhcp.c **** 	SOCKET s, 	/**< socket number */
+ 403:../freeRTOS750/lib_inet/dhcp.c **** 	uint16_t length	/**< a size data to receive. */
+ 404:../freeRTOS750/lib_inet/dhcp.c **** 	)
+ 405:../freeRTOS750/lib_inet/dhcp.c **** {
+ 406:../freeRTOS750/lib_inet/dhcp.c **** 	uint8_t svr_addr[6];
+ 407:../freeRTOS750/lib_inet/dhcp.c **** 	uint16_t  svr_port;
+ 408:../freeRTOS750/lib_inet/dhcp.c **** 
+ 409:../freeRTOS750/lib_inet/dhcp.c **** 	uint16_t len;
+ 410:../freeRTOS750/lib_inet/dhcp.c **** 	uint8_t * p;
+ 411:../freeRTOS750/lib_inet/dhcp.c **** 	uint8_t * e;
+ 412:../freeRTOS750/lib_inet/dhcp.c **** 	uint8_t type, opt_len=0;
+ 413:../freeRTOS750/lib_inet/dhcp.c **** 
+ 414:../freeRTOS750/lib_inet/dhcp.c **** 	len = recvfrom(s, (uint8_t *)pRIPMSG, length, svr_addr, &svr_port);
+ 415:../freeRTOS750/lib_inet/dhcp.c **** 
+ 416:../freeRTOS750/lib_inet/dhcp.c **** #ifdef DHCP_DEBUG
+ 417:../freeRTOS750/lib_inet/dhcp.c **** 	xSerialPrintf_P(PSTR("\r\ndhcp_sip: %d.%d.%d.%d"),dhcp_sip[0],dhcp_sip[1],dhcp_sip[2],dhcp_sip[3])
+ 418:../freeRTOS750/lib_inet/dhcp.c **** 	xSerialPrintf_P(PSTR("\r\nDHCP_RIP: %d.%d.%d.%d"),dhcp_real_sip[0],dhcp_real_sip[1],dhcp_real_sip[
+ 419:../freeRTOS750/lib_inet/dhcp.c **** 	xSerialPrintf_P(PSTR("\r\nsvr_addr: %d.%d.%d.%d"),svr_addr[0],svr_addr[1],svr_addr[2],svr_addr[3])
+ 420:../freeRTOS750/lib_inet/dhcp.c **** #endif
+ 421:../freeRTOS750/lib_inet/dhcp.c **** 
+ 422:../freeRTOS750/lib_inet/dhcp.c **** 	if(pRIPMSG->op != DHCP_BOOTREPLY)
+ 423:../freeRTOS750/lib_inet/dhcp.c **** 	{
+ 424:../freeRTOS750/lib_inet/dhcp.c **** 		xSerialPrint_P(PSTR("\r\nDHCP : NO DHCP MSG"));
+ 425:../freeRTOS750/lib_inet/dhcp.c **** 	}
+ 426:../freeRTOS750/lib_inet/dhcp.c **** 	else
+ 427:../freeRTOS750/lib_inet/dhcp.c **** 	{
+ 428:../freeRTOS750/lib_inet/dhcp.c **** 		if (svr_port == IP_PORT_DHCP_SERVER)
+ 429:../freeRTOS750/lib_inet/dhcp.c **** 		{
+ 430:../freeRTOS750/lib_inet/dhcp.c **** 			if(memcmp(pRIPMSG->chaddr,src_mac_addr,6) != 0 || pRIPMSG->xid != htonl(DHCP_XID))
+ 431:../freeRTOS750/lib_inet/dhcp.c **** 			{
+ 432:../freeRTOS750/lib_inet/dhcp.c **** #ifdef DHCP_DEBUG
+ 433:../freeRTOS750/lib_inet/dhcp.c **** 				xSerialPrint_P(PSTR("\r\nNot my DHCP Message. This message is ignored..."));
+ 434:../freeRTOS750/lib_inet/dhcp.c **** 
+ 435:../freeRTOS750/lib_inet/dhcp.c **** 				xSerialPrintf_P(PSTR("\tsrc_mac_addr(%02X.%02X.%02X."),src_mac_addr[0],src_mac_addr[1],src_mac_
+ 436:../freeRTOS750/lib_inet/dhcp.c **** 				xSerialPrintf_P(PSTR("%02X.%02X.%02X)"),src_mac_addr[3],src_mac_addr[4],src_mac_addr[5]);
+ 437:../freeRTOS750/lib_inet/dhcp.c **** 				xSerialPrintf_P(PSTR(", pRIPMSG->chaddr(%02X.%02X.%02X."),pRIPMSG->chaddr[0],pRIPMSG->chaddr[1]
+ 438:../freeRTOS750/lib_inet/dhcp.c **** 				xSerialPrintf_P(PSTR("\r\n%02X.%02X.%02X)"),pRIPMSG->chaddr[3],pRIPMSG->chaddr[4],pRIPMSG->chad
+ 439:../freeRTOS750/lib_inet/dhcp.c **** 				xSerialPrintf_P(PSTR("\r\n\tpRIPMSG->xid(%08lX), DHCP_XID(%08lX)"),pRIPMSG->xid,htonl(DHCP_XID)
+ 440:../freeRTOS750/lib_inet/dhcp.c **** 				xSerialPrintf_P(PSTR("\r\n\tpRIMPMSG->yiaddr:%d.%d.%d.%d"),pRIPMSG->yiaddr[0],pRIPMSG->yiaddr[1
+ 441:../freeRTOS750/lib_inet/dhcp.c **** #endif
+ 442:../freeRTOS750/lib_inet/dhcp.c **** 				return 0;
+ 443:../freeRTOS750/lib_inet/dhcp.c **** 			}
+ 444:../freeRTOS750/lib_inet/dhcp.c **** 
+ 445:../freeRTOS750/lib_inet/dhcp.c **** 			if( *((uint32_t*)dhcp_sip) != 0x00000000 )
+ 446:../freeRTOS750/lib_inet/dhcp.c **** 			{
+ 447:../freeRTOS750/lib_inet/dhcp.c **** 				if( *((uint32_t*)dhcp_real_sip) != *((uint32_t*)svr_addr) &&
+ 448:../freeRTOS750/lib_inet/dhcp.c **** 					*((uint32_t*)dhcp_sip) != *((uint32_t*)svr_addr) )
+ 449:../freeRTOS750/lib_inet/dhcp.c **** 				{
+ 450:../freeRTOS750/lib_inet/dhcp.c **** #ifdef DHCP_DEBUG
+ 451:../freeRTOS750/lib_inet/dhcp.c **** 					xSerialPrint_P(PSTR("\r\nAnother DHCP sever send a response message. This is ignored."));
+ 452:../freeRTOS750/lib_inet/dhcp.c **** 					xSerialPrintf_P(PSTR("\r\n\tIP:%d.%d.%d.%d"),svr_addr[0],svr_addr[1],svr_addr[2],svr_addr[3]);
+ 453:../freeRTOS750/lib_inet/dhcp.c **** #endif
+ 454:../freeRTOS750/lib_inet/dhcp.c **** 					return 0;
+ 455:../freeRTOS750/lib_inet/dhcp.c **** 				}
+ 456:../freeRTOS750/lib_inet/dhcp.c **** 			}
+ 457:../freeRTOS750/lib_inet/dhcp.c **** 
+ 458:../freeRTOS750/lib_inet/dhcp.c **** 			memcpy(get_source_ip,pRIPMSG->yiaddr,4);
+ 459:../freeRTOS750/lib_inet/dhcp.c **** 
+ 460:../freeRTOS750/lib_inet/dhcp.c **** 			xSerialPrint_P(PSTR("\r\nDHCP MSG received..."));
+ 461:../freeRTOS750/lib_inet/dhcp.c **** 
+ 462:../freeRTOS750/lib_inet/dhcp.c **** 			type = 0;
+ 463:../freeRTOS750/lib_inet/dhcp.c **** 			p = (uint8_t *)(&pRIPMSG->op);
+ 464:../freeRTOS750/lib_inet/dhcp.c **** 			p = p + 240;
+ 465:../freeRTOS750/lib_inet/dhcp.c **** 			e = p + (len - 240);
+ 466:../freeRTOS750/lib_inet/dhcp.c **** 
+ 467:../freeRTOS750/lib_inet/dhcp.c **** #ifdef DHCP_DEBUG
+ 468:../freeRTOS750/lib_inet/dhcp.c **** 			xSerialPrintf_P(PSTR("\r\nyiaddr : %d.%d.%d.%d"),get_source_ip[0],get_source_ip[1],get_source_ip
+ 469:../freeRTOS750/lib_inet/dhcp.c **** 			xSerialPrintf_P(PSTR("\r\np: 0x%08X  e: 0x%08X  len: %d\r\n"), (uint16_t)p, (uint16_t)e, len);
+ 470:../freeRTOS750/lib_inet/dhcp.c **** #endif
+ 471:../freeRTOS750/lib_inet/dhcp.c **** 			while ( p < e )
+ 472:../freeRTOS750/lib_inet/dhcp.c **** 			{
+ 473:../freeRTOS750/lib_inet/dhcp.c **** 				switch ( *p++ )
+ 474:../freeRTOS750/lib_inet/dhcp.c **** 				{
+ 475:../freeRTOS750/lib_inet/dhcp.c **** 				case endOption :
+ 476:../freeRTOS750/lib_inet/dhcp.c **** 				 	return type;
+ 477:../freeRTOS750/lib_inet/dhcp.c **** 					break;
+ 478:../freeRTOS750/lib_inet/dhcp.c **** 	       			case padOption :
+ 479:../freeRTOS750/lib_inet/dhcp.c **** 					break;
+ 480:../freeRTOS750/lib_inet/dhcp.c **** 				case dhcpMessageType :
+ 481:../freeRTOS750/lib_inet/dhcp.c **** 					opt_len = *p++;
+ 482:../freeRTOS750/lib_inet/dhcp.c **** 					type = *p;
+ 483:../freeRTOS750/lib_inet/dhcp.c **** #ifdef DHCP_DEBUG
+ 484:../freeRTOS750/lib_inet/dhcp.c **** 					xSerialPrintf_P(PSTR("\r\ndhcpMessageType: %x"), type);
+ 485:../freeRTOS750/lib_inet/dhcp.c **** #endif
+ 486:../freeRTOS750/lib_inet/dhcp.c **** 					break;
+ 487:../freeRTOS750/lib_inet/dhcp.c **** 				case subnetMask :
+ 488:../freeRTOS750/lib_inet/dhcp.c **** 					opt_len =* p++;
+ 489:../freeRTOS750/lib_inet/dhcp.c **** 					memcpy(&get_sn_mask,p,4);
+ 490:../freeRTOS750/lib_inet/dhcp.c **** #ifdef DHCP_DEBUG
+ 491:../freeRTOS750/lib_inet/dhcp.c **** 					xSerialPrint_P(PSTR("\r\nsubnetMask: "));
+ 492:../freeRTOS750/lib_inet/dhcp.c **** 					xSerialPrintf_P(PSTR("\r\n%d.%d.%d.%d"),get_sn_mask[0],get_sn_mask[1],get_sn_mask[2],get_sn_ma
+ 493:../freeRTOS750/lib_inet/dhcp.c **** #endif
+ 494:../freeRTOS750/lib_inet/dhcp.c **** 					break;
+ 495:../freeRTOS750/lib_inet/dhcp.c **** 				case routersOnSubnet :
+ 496:../freeRTOS750/lib_inet/dhcp.c **** 					opt_len = *p++;
+ 497:../freeRTOS750/lib_inet/dhcp.c **** 					memcpy(get_gw_ip,p,4);
+ 498:../freeRTOS750/lib_inet/dhcp.c **** #ifdef DHCP_DEBUG
+ 499:../freeRTOS750/lib_inet/dhcp.c **** 					xSerialPrint_P(PSTR("\r\nroutersOnSubnet: "));
+ 500:../freeRTOS750/lib_inet/dhcp.c **** 					xSerialPrintf_P(PSTR("\r\n%d.%d.%d.%d"),get_gw_ip[0],get_gw_ip[1],get_gw_ip[2],get_gw_ip[3]);
+ 501:../freeRTOS750/lib_inet/dhcp.c **** #endif
+ 502:../freeRTOS750/lib_inet/dhcp.c **** 					break;
+ 503:../freeRTOS750/lib_inet/dhcp.c **** 				case dns :
+ 504:../freeRTOS750/lib_inet/dhcp.c **** 					opt_len = *p++;
+ 505:../freeRTOS750/lib_inet/dhcp.c **** 					memcpy(get_dns_ip,p,4);
+ 506:../freeRTOS750/lib_inet/dhcp.c **** 					break;
+ 507:../freeRTOS750/lib_inet/dhcp.c **** 				case dhcpIPaddrLeaseTime :
+ 508:../freeRTOS750/lib_inet/dhcp.c **** 					opt_len = *p++;
+ 509:../freeRTOS750/lib_inet/dhcp.c **** 					lease_time.lVal = ntohl(*((uint32_t*)p));
+ 510:../freeRTOS750/lib_inet/dhcp.c **** #ifdef DHCP_DEBUG
+ 511:../freeRTOS750/lib_inet/dhcp.c **** 					xSerialPrintf_P(PSTR("\r\ndhcpIPaddrLeaseTime: %08lX"), lease_time.lVal);
+ 512:../freeRTOS750/lib_inet/dhcp.c **** #endif
+ 513:../freeRTOS750/lib_inet/dhcp.c **** 					break;
+ 514:../freeRTOS750/lib_inet/dhcp.c **** 
+ 515:../freeRTOS750/lib_inet/dhcp.c **** 				case dhcpServerIdentifier :
+ 516:../freeRTOS750/lib_inet/dhcp.c **** 					opt_len = *p++;
+ 517:../freeRTOS750/lib_inet/dhcp.c **** #ifdef DHCP_DEBUG
+ 518:../freeRTOS750/lib_inet/dhcp.c **** 					xSerialPrintf_P(PSTR("\r\ndhcp_sip: %d.%d.%d.%d"), dhcp_sip[0], dhcp_sip[1], dhcp_sip[2], dhcp
+ 519:../freeRTOS750/lib_inet/dhcp.c **** #endif
+ 520:../freeRTOS750/lib_inet/dhcp.c **** 					if( *((uint32_t*)dhcp_sip) == 0 ||
+ 521:../freeRTOS750/lib_inet/dhcp.c **** 					    *((uint32_t*)dhcp_real_sip) == *((uint32_t*)svr_addr) ||
+ 522:../freeRTOS750/lib_inet/dhcp.c **** 					    *((uint32_t*)dhcp_sip) == *((uint32_t*)svr_addr) )
+ 523:../freeRTOS750/lib_inet/dhcp.c **** 					{
+ 524:../freeRTOS750/lib_inet/dhcp.c **** 						memcpy(dhcp_sip,p,4);
+ 525:../freeRTOS750/lib_inet/dhcp.c **** 						memcpy(dhcp_real_sip,svr_addr,4);	// Copy the real ip address of my DHCP server
+ 526:../freeRTOS750/lib_inet/dhcp.c **** #ifdef DHCP_DEBUG
+ 527:../freeRTOS750/lib_inet/dhcp.c **** 						xSerialPrint_P(PSTR("\r\nMy dhcpServerIdentifier: "));
+ 528:../freeRTOS750/lib_inet/dhcp.c **** 						xSerialPrintf_P(PSTR("\r\n%d.%d.%d.%d"), dhcp_sip[0], dhcp_sip[1], dhcp_sip[2], dhcp_sip[3]);
+ 529:../freeRTOS750/lib_inet/dhcp.c **** 						xSerialPrint_P(PSTR("\r\nMy DHCP server real IP address: "));
+ 530:../freeRTOS750/lib_inet/dhcp.c **** 						xSerialPrintf_P(PSTR("\r\n%d.%d.%d.%d"), dhcp_real_sip[0], dhcp_real_sip[1], dhcp_real_sip[2]
+ 531:../freeRTOS750/lib_inet/dhcp.c **** #endif
+ 532:../freeRTOS750/lib_inet/dhcp.c **** 					}
+ 533:../freeRTOS750/lib_inet/dhcp.c **** 					else
+ 534:../freeRTOS750/lib_inet/dhcp.c **** 					{
+ 535:../freeRTOS750/lib_inet/dhcp.c **** #ifdef DHCP_DEBUG
+ 536:../freeRTOS750/lib_inet/dhcp.c **** 						xSerialPrint_P(PSTR("\r\nAnother dhcpServerIdentifier: "));
+ 537:../freeRTOS750/lib_inet/dhcp.c **** 						xSerialPrintf_P(PSTR("\r\n\tMY(%d.%d.%d.%d) "), dhcp_sip[0], dhcp_sip[1], dhcp_sip[2], dhcp_s
+ 538:../freeRTOS750/lib_inet/dhcp.c **** 						xSerialPrintf_P(PSTR("\r\nAnother(%d.%d.%d.%d): "), svr_addr[0], svr_addr[1], svr_addr[2], sv
+ 539:../freeRTOS750/lib_inet/dhcp.c **** #endif
+ 540:../freeRTOS750/lib_inet/dhcp.c **** 					}
+ 541:../freeRTOS750/lib_inet/dhcp.c **** 
+ 542:../freeRTOS750/lib_inet/dhcp.c **** 					break;
+ 543:../freeRTOS750/lib_inet/dhcp.c **** 				default :
+ 544:../freeRTOS750/lib_inet/dhcp.c **** 					opt_len = *p++;
+ 545:../freeRTOS750/lib_inet/dhcp.c **** #ifdef DHCP_DEBUG
+ 546:../freeRTOS750/lib_inet/dhcp.c **** 					xSerialPrintf_P(PSTR("\r\nopt_len: %d"), opt_len);
+ 547:../freeRTOS750/lib_inet/dhcp.c **** #endif
+ 548:../freeRTOS750/lib_inet/dhcp.c **** 					break;
+ 549:../freeRTOS750/lib_inet/dhcp.c **** 				} // switch
+ 550:../freeRTOS750/lib_inet/dhcp.c **** 				p+=opt_len;
+ 551:../freeRTOS750/lib_inet/dhcp.c **** 			} // while
+ 552:../freeRTOS750/lib_inet/dhcp.c **** 		} // if
+ 553:../freeRTOS750/lib_inet/dhcp.c **** 	}
+ 554:../freeRTOS750/lib_inet/dhcp.c **** 
+ 555:../freeRTOS750/lib_inet/dhcp.c **** 	return 0;
+ 556:../freeRTOS750/lib_inet/dhcp.c **** }
+ 557:../freeRTOS750/lib_inet/dhcp.c **** 
+ 558:../freeRTOS750/lib_inet/dhcp.c **** 
+ 559:../freeRTOS750/lib_inet/dhcp.c **** /**
+ 560:../freeRTOS750/lib_inet/dhcp.c ****  * @brief		This function checks the state of DHCP.
+ 561:../freeRTOS750/lib_inet/dhcp.c ****  */
+ 562:../freeRTOS750/lib_inet/dhcp.c **** void check_DHCP_state(
+ 563:../freeRTOS750/lib_inet/dhcp.c **** 	SOCKET s	/**< socket number */
+ 564:../freeRTOS750/lib_inet/dhcp.c **** 	)
+ 565:../freeRTOS750/lib_inet/dhcp.c **** {
+ 566:../freeRTOS750/lib_inet/dhcp.c **** 	uint16_t len;
+ 567:../freeRTOS750/lib_inet/dhcp.c **** 	uint8_t type;
+ 568:../freeRTOS750/lib_inet/dhcp.c **** 
+ 569:../freeRTOS750/lib_inet/dhcp.c **** 	type = 0;
+ 570:../freeRTOS750/lib_inet/dhcp.c **** 
+ 571:../freeRTOS750/lib_inet/dhcp.c **** 	if( s < MAX_SOCK_NUM && getSn_SR(s)!=SOCK_CLOSED)
+ 572:../freeRTOS750/lib_inet/dhcp.c **** 	{
+ 573:../freeRTOS750/lib_inet/dhcp.c **** 		if ((len = getSn_RX_RSR(s)) > 0)
+ 574:../freeRTOS750/lib_inet/dhcp.c **** 		{
+ 575:../freeRTOS750/lib_inet/dhcp.c **** 			 type = parseDHCPMSG(s, len);
+ 576:../freeRTOS750/lib_inet/dhcp.c **** 		}
+ 577:../freeRTOS750/lib_inet/dhcp.c **** 	}
+ 578:../freeRTOS750/lib_inet/dhcp.c **** 	else if(!socket(s, Sn_MR_UDP, IP_PORT_DHCP_CLIENT, 0x00))
+ 579:../freeRTOS750/lib_inet/dhcp.c **** 	{
+ 580:../freeRTOS750/lib_inet/dhcp.c **** 		xSerialPrint_P(PSTR("\r\nFail to create the DHCPC_SOCK(%d)"));
+ 581:../freeRTOS750/lib_inet/dhcp.c **** 	}
+ 582:../freeRTOS750/lib_inet/dhcp.c **** 
+ 583:../freeRTOS750/lib_inet/dhcp.c **** 
+ 584:../freeRTOS750/lib_inet/dhcp.c **** 	switch ( dhcp_state )
+ 585:../freeRTOS750/lib_inet/dhcp.c **** 	{
+ 586:../freeRTOS750/lib_inet/dhcp.c **** 	case DHCP_STATE_DISCOVER :
+ 587:../freeRTOS750/lib_inet/dhcp.c **** 		if (type == DHCP_OFFER)
+ 588:../freeRTOS750/lib_inet/dhcp.c **** 		{
+ 589:../freeRTOS750/lib_inet/dhcp.c **** 			xSerialPrint_P(PSTR("\r\nstate: DHCP_STATE_REQUEST\r\n"));
+ 590:../freeRTOS750/lib_inet/dhcp.c **** 			dhcp_state = DHCP_STATE_REQUEST;
+ 591:../freeRTOS750/lib_inet/dhcp.c **** 			send_DHCP_REQUEST(s);
+ 592:../freeRTOS750/lib_inet/dhcp.c **** 			reset_DHCP_time();
+ 593:../freeRTOS750/lib_inet/dhcp.c **** 		}
+ 594:../freeRTOS750/lib_inet/dhcp.c **** 		else check_DHCP_Timeout();
+ 595:../freeRTOS750/lib_inet/dhcp.c **** 		break;
+ 596:../freeRTOS750/lib_inet/dhcp.c **** 
+ 597:../freeRTOS750/lib_inet/dhcp.c **** 	case DHCP_STATE_REQUEST :
+ 598:../freeRTOS750/lib_inet/dhcp.c **** 		if (type == DHCP_ACK)
+ 599:../freeRTOS750/lib_inet/dhcp.c **** 		{
+ 600:../freeRTOS750/lib_inet/dhcp.c **** 			reset_DHCP_time();
+ 601:../freeRTOS750/lib_inet/dhcp.c **** 			if (check_leasedIP())
+ 602:../freeRTOS750/lib_inet/dhcp.c **** 			{
+ 603:../freeRTOS750/lib_inet/dhcp.c **** 				xSerialPrint_P(PSTR("\r\nstate: DHCP_STATE_LEASED\r\n"));
+ 604:../freeRTOS750/lib_inet/dhcp.c **** 				dhcp_state = DHCP_STATE_LEASED;
+ 605:../freeRTOS750/lib_inet/dhcp.c **** 				set_DHCP_network();
+ 606:../freeRTOS750/lib_inet/dhcp.c **** 			}
+ 607:../freeRTOS750/lib_inet/dhcp.c **** 			else
+ 608:../freeRTOS750/lib_inet/dhcp.c **** 			{
+ 609:../freeRTOS750/lib_inet/dhcp.c **** 				xSerialPrint_P(PSTR("\r\nstate: DHCP_STATE_DISCOVER\r\n"));
+ 610:../freeRTOS750/lib_inet/dhcp.c **** 				dhcp_state = DHCP_STATE_DISCOVER;
+ 611:../freeRTOS750/lib_inet/dhcp.c **** 			}
+ 612:../freeRTOS750/lib_inet/dhcp.c **** 		}
+ 613:../freeRTOS750/lib_inet/dhcp.c **** 		else if (type == DHCP_NAK)
+ 614:../freeRTOS750/lib_inet/dhcp.c **** 		{
+ 615:../freeRTOS750/lib_inet/dhcp.c **** 			xSerialPrint_P(PSTR("\r\nstate: DHCP_STATE_DISCOVER\r\n"));
+ 616:../freeRTOS750/lib_inet/dhcp.c **** 			dhcp_state = DHCP_STATE_DISCOVER;
+ 617:../freeRTOS750/lib_inet/dhcp.c **** 			reset_DHCP_time();
+ 618:../freeRTOS750/lib_inet/dhcp.c **** 		}
+ 619:../freeRTOS750/lib_inet/dhcp.c **** 		else check_DHCP_Timeout();
+ 620:../freeRTOS750/lib_inet/dhcp.c **** 		break;
+ 621:../freeRTOS750/lib_inet/dhcp.c **** 
+ 622:../freeRTOS750/lib_inet/dhcp.c **** 	case DHCP_STATE_LEASED :
+ 623:../freeRTOS750/lib_inet/dhcp.c **** 		if ((lease_time.lVal != 0xffffffff) && (((lease_time.lVal/2)* 1000 / portTICK_RATE_MS) < (xTaskGe
+ 624:../freeRTOS750/lib_inet/dhcp.c **** 		{
+ 625:../freeRTOS750/lib_inet/dhcp.c **** 			xSerialPrint_P(PSTR("\r\nstate: DHCP_STATE_REREQUEST\r\n"));
+ 626:../freeRTOS750/lib_inet/dhcp.c **** 			type = 0;
+ 627:../freeRTOS750/lib_inet/dhcp.c **** 			memcpy(old_sip,get_source_ip,4);
+ 628:../freeRTOS750/lib_inet/dhcp.c **** 			DHCP_XID++;
+ 629:../freeRTOS750/lib_inet/dhcp.c **** 			dhcp_state = DHCP_STATE_REREQUEST;
+ 630:../freeRTOS750/lib_inet/dhcp.c **** 			send_DHCP_REQUEST(s);
+ 631:../freeRTOS750/lib_inet/dhcp.c **** 			reset_DHCP_time();
+ 632:../freeRTOS750/lib_inet/dhcp.c **** 		}
+ 633:../freeRTOS750/lib_inet/dhcp.c **** 		break;
+ 634:../freeRTOS750/lib_inet/dhcp.c **** 
+ 635:../freeRTOS750/lib_inet/dhcp.c **** 	case DHCP_STATE_REREQUEST :
+ 636:../freeRTOS750/lib_inet/dhcp.c **** 		if (type == DHCP_ACK)
+ 637:../freeRTOS750/lib_inet/dhcp.c **** 		{
+ 638:../freeRTOS750/lib_inet/dhcp.c **** 			if(memcmp(old_sip,get_source_ip,4)!=0)
+ 639:../freeRTOS750/lib_inet/dhcp.c **** 			{
+ 640:../freeRTOS750/lib_inet/dhcp.c **** 				xSerialPrintf_P(PSTR("\r\nold_sip=%s,get_source_ip=%s"),inet_ntoa(ntohl(*((uint32_t*)old_sip)))
+ 641:../freeRTOS750/lib_inet/dhcp.c **** 				if ( dhcp_ip_update != 0 )
+ 642:../freeRTOS750/lib_inet/dhcp.c **** 					(*dhcp_ip_update)();
+ 643:../freeRTOS750/lib_inet/dhcp.c **** 				xSerialPrint_P(PSTR("\r\nThe IP address from the DHCP server is updated."));
+ 644:../freeRTOS750/lib_inet/dhcp.c **** 			}
+ 645:../freeRTOS750/lib_inet/dhcp.c **** 			else
+ 646:../freeRTOS750/lib_inet/dhcp.c **** 			{
+ 647:../freeRTOS750/lib_inet/dhcp.c **** 				xSerialPrint_P(PSTR("\r\nstate: DHCP_STATE_LEASED same IP\r\n"));
+ 648:../freeRTOS750/lib_inet/dhcp.c **** 			}
+ 649:../freeRTOS750/lib_inet/dhcp.c **** 			dhcp_state = DHCP_STATE_LEASED;
+ 650:../freeRTOS750/lib_inet/dhcp.c **** 			reset_DHCP_time();
+ 651:../freeRTOS750/lib_inet/dhcp.c **** 		}
+ 652:../freeRTOS750/lib_inet/dhcp.c **** 		else if (type == DHCP_NAK)
+ 653:../freeRTOS750/lib_inet/dhcp.c **** 		{
+ 654:../freeRTOS750/lib_inet/dhcp.c **** 			xSerialPrint_P(PSTR("\r\nstate: DHCP_STATE_DISCOVER\r\n"));
+ 655:../freeRTOS750/lib_inet/dhcp.c **** 			dhcp_state = DHCP_STATE_DISCOVER;
+ 656:../freeRTOS750/lib_inet/dhcp.c **** 			reset_DHCP_time();
+ 657:../freeRTOS750/lib_inet/dhcp.c **** 		}
+ 658:../freeRTOS750/lib_inet/dhcp.c **** 		else check_DHCP_Timeout();
+ 659:../freeRTOS750/lib_inet/dhcp.c **** 		break;
+ 660:../freeRTOS750/lib_inet/dhcp.c **** 
+ 661:../freeRTOS750/lib_inet/dhcp.c **** 	case DHCP_STATE_RELEASE :
+ 662:../freeRTOS750/lib_inet/dhcp.c **** 		break;
+ 663:../freeRTOS750/lib_inet/dhcp.c **** 	default :
+ 664:../freeRTOS750/lib_inet/dhcp.c **** 		break;
+ 665:../freeRTOS750/lib_inet/dhcp.c **** 	}
+ 666:../freeRTOS750/lib_inet/dhcp.c **** }
+ 667:../freeRTOS750/lib_inet/dhcp.c **** 
+ 668:../freeRTOS750/lib_inet/dhcp.c **** 
+ 669:../freeRTOS750/lib_inet/dhcp.c **** /**
+ 670:../freeRTOS750/lib_inet/dhcp.c ****  * @brief		This function checks the timeout of DHCP in each state.
+ 671:../freeRTOS750/lib_inet/dhcp.c ****  */
+ 672:../freeRTOS750/lib_inet/dhcp.c **** static void check_DHCP_Timeout(void)
+ 673:../freeRTOS750/lib_inet/dhcp.c **** {
+ 674:../freeRTOS750/lib_inet/dhcp.c **** 	if (retry_count < DHCP_MAX_RETRY)
+ 675:../freeRTOS750/lib_inet/dhcp.c **** 	{
+ 676:../freeRTOS750/lib_inet/dhcp.c **** 
+ 677:../freeRTOS750/lib_inet/dhcp.c **** 		if ( next_dhcp_time < xTaskGetTickCount() )
+ 678:../freeRTOS750/lib_inet/dhcp.c **** 		{ // XXX THINK about this some more, TickCount roll over is the potential issue.
+ 679:../freeRTOS750/lib_inet/dhcp.c **** 			start_dhcp_time  = xTaskGetTickCount() ;
+ 680:../freeRTOS750/lib_inet/dhcp.c **** 			next_dhcp_time = start_dhcp_time + DHCP_WAIT_TIME * 1000 / portTICK_RATE_MS;
+ 681:../freeRTOS750/lib_inet/dhcp.c **** 			retry_count++;
+ 682:../freeRTOS750/lib_inet/dhcp.c **** 			switch ( dhcp_state )
+ 683:../freeRTOS750/lib_inet/dhcp.c **** 			{
+ 684:../freeRTOS750/lib_inet/dhcp.c **** 			case DHCP_STATE_DISCOVER :
+ 685:../freeRTOS750/lib_inet/dhcp.c **** 				xSerialPrint_P(PSTR("\r\n<timeout> state: DHCP_STATE_DISCOVER"));
+ 686:../freeRTOS750/lib_inet/dhcp.c **** 				send_DHCP_DISCOVER(DHCPC_SOCK);
+ 687:../freeRTOS750/lib_inet/dhcp.c **** 				break;
+ 688:../freeRTOS750/lib_inet/dhcp.c **** 
+ 689:../freeRTOS750/lib_inet/dhcp.c **** 			case DHCP_STATE_REQUEST :
+ 690:../freeRTOS750/lib_inet/dhcp.c **** 				xSerialPrint_P(PSTR("\r\n<timeout> state: DHCP_STATE_REQUEST"));
+ 691:../freeRTOS750/lib_inet/dhcp.c **** 				send_DHCP_REQUEST(DHCPC_SOCK);
+ 692:../freeRTOS750/lib_inet/dhcp.c **** 				break;
+ 693:../freeRTOS750/lib_inet/dhcp.c **** 
+ 694:../freeRTOS750/lib_inet/dhcp.c **** 			case DHCP_STATE_REREQUEST :
+ 695:../freeRTOS750/lib_inet/dhcp.c **** 				xSerialPrint_P(PSTR("\r\n<timeout> state: DHCP_STATE_REREQUEST"));
+ 696:../freeRTOS750/lib_inet/dhcp.c **** 				send_DHCP_REQUEST(DHCPC_SOCK);
+ 697:../freeRTOS750/lib_inet/dhcp.c **** 				break;
+ 698:../freeRTOS750/lib_inet/dhcp.c **** 
+ 699:../freeRTOS750/lib_inet/dhcp.c **** 			default :
+ 700:../freeRTOS750/lib_inet/dhcp.c **** 				break;
+ 701:../freeRTOS750/lib_inet/dhcp.c **** 			}
+ 702:../freeRTOS750/lib_inet/dhcp.c **** 		}
+ 703:../freeRTOS750/lib_inet/dhcp.c **** 	}
+ 704:../freeRTOS750/lib_inet/dhcp.c **** 	else
+ 705:../freeRTOS750/lib_inet/dhcp.c **** 	{
+ 706:../freeRTOS750/lib_inet/dhcp.c **** 		reset_DHCP_time();
+ 707:../freeRTOS750/lib_inet/dhcp.c **** 		DHCP_timeout = 1;
+ 708:../freeRTOS750/lib_inet/dhcp.c **** 
+ 709:../freeRTOS750/lib_inet/dhcp.c **** 		xSerialPrint_P(PSTR("\r\n<<timeout>> state: DHCP_STATE_DISCOVER"));
+ 710:../freeRTOS750/lib_inet/dhcp.c **** 		dhcp_state = DHCP_STATE_DISCOVER;
+ 711:../freeRTOS750/lib_inet/dhcp.c **** 		send_DHCP_DISCOVER(DHCPC_SOCK);
+ 712:../freeRTOS750/lib_inet/dhcp.c **** 	}
+ 713:../freeRTOS750/lib_inet/dhcp.c **** }
+ 714:../freeRTOS750/lib_inet/dhcp.c **** 
+ 715:../freeRTOS750/lib_inet/dhcp.c **** 
+ 716:../freeRTOS750/lib_inet/dhcp.c **** /**
+ 717:../freeRTOS750/lib_inet/dhcp.c ****  * @brief		This function loads network info to W5100
+ 718:../freeRTOS750/lib_inet/dhcp.c ****  */
+ 719:../freeRTOS750/lib_inet/dhcp.c **** static void set_DHCP_network(void)
+ 720:../freeRTOS750/lib_inet/dhcp.c **** {
+ 721:../freeRTOS750/lib_inet/dhcp.c **** 	IINCHIP_init();
+ 722:../freeRTOS750/lib_inet/dhcp.c **** 
+ 723:../freeRTOS750/lib_inet/dhcp.c **** 	setSHAR(src_mac_addr);
+ 724:../freeRTOS750/lib_inet/dhcp.c **** 	setGAR(get_gw_ip);
+ 725:../freeRTOS750/lib_inet/dhcp.c **** 	saveSUBR(&get_sn_mask);
+ 726:../freeRTOS750/lib_inet/dhcp.c **** 	setSIPR(get_source_ip);
+ 727:../freeRTOS750/lib_inet/dhcp.c **** 
+ 728:../freeRTOS750/lib_inet/dhcp.c **** #ifdef __DEF_IINCHIP_INT__
+ 729:../freeRTOS750/lib_inet/dhcp.c ****         setIMR(0xEF);
+ 730:../freeRTOS750/lib_inet/dhcp.c **** #endif
+ 731:../freeRTOS750/lib_inet/dhcp.c **** 
+ 732:../freeRTOS750/lib_inet/dhcp.c **** #ifdef portW5200
+ 733:../freeRTOS750/lib_inet/dhcp.c ****     IINCHIP_sysinit ((uint8_t *)txsize, (uint8_t *)rxsize);			// set the Tx and Rx buffers
+ 734:../freeRTOS750/lib_inet/dhcp.c **** #else
+ 735:../freeRTOS750/lib_inet/dhcp.c **** 	IINCHIP_sysinit(0x55, 0x55);
+ 736:../freeRTOS750/lib_inet/dhcp.c **** #endif
+ 737:../freeRTOS750/lib_inet/dhcp.c **** 
+ 738:../freeRTOS750/lib_inet/dhcp.c **** 
+ 739:../freeRTOS750/lib_inet/dhcp.c **** 	xSerialPrintf_P(PSTR("\r\nDHCP set IP: %d.%d.%d.%d\r\n"), get_source_ip[0], get_source_ip[1], get_
+ 740:../freeRTOS750/lib_inet/dhcp.c **** }
+ 741:../freeRTOS750/lib_inet/dhcp.c **** 
+ 742:../freeRTOS750/lib_inet/dhcp.c **** 
+ 743:../freeRTOS750/lib_inet/dhcp.c **** /**
+ 744:../freeRTOS750/lib_inet/dhcp.c ****  * @brief		check if a leased IP is valid
+ 745:../freeRTOS750/lib_inet/dhcp.c ****  * @return	0 : conflict, 1 : no conflict
+ 746:../freeRTOS750/lib_inet/dhcp.c ****  */
+ 747:../freeRTOS750/lib_inet/dhcp.c **** static uint8_t check_leasedIP(void)
+ 748:../freeRTOS750/lib_inet/dhcp.c **** {
+ 749:../freeRTOS750/lib_inet/dhcp.c **** 
+ 750:../freeRTOS750/lib_inet/dhcp.c **** //	uint16_t a;
+ 751:../freeRTOS750/lib_inet/dhcp.c **** #ifdef __DEF_IINCHIP_DBG__
+ 752:../freeRTOS750/lib_inet/dhcp.c **** 	xSerialPrint_P(PSTR("\r\n<Check the IP Conflict : <skipped>"));
+ 753:../freeRTOS750/lib_inet/dhcp.c **** #endif
+ 754:../freeRTOS750/lib_inet/dhcp.c **** 	// sendto is complete. that means there is a node which has a same IP.
+ 755:../freeRTOS750/lib_inet/dhcp.c **** 
+ 756:../freeRTOS750/lib_inet/dhcp.c **** 	/* +200801 (hwkim) */
+ 757:../freeRTOS750/lib_inet/dhcp.c **** 	//a = sendto(DHCPC_SOCK, (const uint8_t*)"CHECK_IP_CONFLICT", 17, get_source_ip, 5000);
+ 758:../freeRTOS750/lib_inet/dhcp.c **** 
+ 759:../freeRTOS750/lib_inet/dhcp.c **** /*	a=0; // Skip checking IP Conflict ; W5100 reply itself to ARP request with self-IP in non-switch
+ 760:../freeRTOS750/lib_inet/dhcp.c **** 	if ( a> 0)
+ 761:../freeRTOS750/lib_inet/dhcp.c **** 	{
+ 762:../freeRTOS750/lib_inet/dhcp.c **** 		xSerialPrint_P(PSTR(" Conflict>\r\n"));
+ 763:../freeRTOS750/lib_inet/dhcp.c **** 		send_DHCP_RELEASE_DECLINE(DHCPC_SOCK,1);
+ 764:../freeRTOS750/lib_inet/dhcp.c **** 		if ( dhcp_ip_conflict != 0 )
+ 765:../freeRTOS750/lib_inet/dhcp.c **** 			(*dhcp_ip_conflict)();
+ 766:../freeRTOS750/lib_inet/dhcp.c **** 		return 0;
+ 767:../freeRTOS750/lib_inet/dhcp.c **** 	} // */
+ 768:../freeRTOS750/lib_inet/dhcp.c **** #ifdef __DEF_IINCHIP_DBG__
+ 769:../freeRTOS750/lib_inet/dhcp.c **** 	xSerialPrint_P(PSTR(" No Conflict>\r\n"));
+ 770:../freeRTOS750/lib_inet/dhcp.c **** #endif
+ 771:../freeRTOS750/lib_inet/dhcp.c **** 	return 1;
+ 772:../freeRTOS750/lib_inet/dhcp.c **** 
+ 773:../freeRTOS750/lib_inet/dhcp.c **** }
+ 774:../freeRTOS750/lib_inet/dhcp.c **** 
+ 775:../freeRTOS750/lib_inet/dhcp.c **** 
+ 776:../freeRTOS750/lib_inet/dhcp.c **** /**
+ 777:../freeRTOS750/lib_inet/dhcp.c ****  * @brief		Get an IP from the DHCP server.
+ 778:../freeRTOS750/lib_inet/dhcp.c ****  * @return	0 : timeout, 1 : got dhcp ip
+ 779:../freeRTOS750/lib_inet/dhcp.c ****  */
+ 780:../freeRTOS750/lib_inet/dhcp.c **** uint8_t getIP_DHCPS()
+ 781:../freeRTOS750/lib_inet/dhcp.c **** {
+ 782:../freeRTOS750/lib_inet/dhcp.c **** 	send_DHCP_DISCOVER(DHCPC_SOCK);
+ 783:../freeRTOS750/lib_inet/dhcp.c **** 	dhcp_state = DHCP_STATE_DISCOVER;
+ 784:../freeRTOS750/lib_inet/dhcp.c **** 
+ 785:../freeRTOS750/lib_inet/dhcp.c **** 	reset_DHCP_time();
+ 786:../freeRTOS750/lib_inet/dhcp.c **** 	DHCP_timeout = 0;
+ 787:../freeRTOS750/lib_inet/dhcp.c **** 
+ 788:../freeRTOS750/lib_inet/dhcp.c **** 	while (dhcp_state != DHCP_STATE_LEASED)
+ 789:../freeRTOS750/lib_inet/dhcp.c **** 	{
+ 790:../freeRTOS750/lib_inet/dhcp.c **** 		if (DHCP_timeout == 1)
+ 791:../freeRTOS750/lib_inet/dhcp.c **** 		{
+ 792:../freeRTOS750/lib_inet/dhcp.c **** 			return 0;
+ 793:../freeRTOS750/lib_inet/dhcp.c **** 		}
+ 794:../freeRTOS750/lib_inet/dhcp.c **** 		check_DHCP_state(DHCPC_SOCK);
+ 795:../freeRTOS750/lib_inet/dhcp.c **** 		vTaskDelay(  100 / portTICK_RATE_MS  );
+ 796:../freeRTOS750/lib_inet/dhcp.c **** 	}
+ 797:../freeRTOS750/lib_inet/dhcp.c **** 	return 1;
+ 798:../freeRTOS750/lib_inet/dhcp.c **** }
+ 799:../freeRTOS750/lib_inet/dhcp.c **** 
+ 800:../freeRTOS750/lib_inet/dhcp.c **** 
+ 801:../freeRTOS750/lib_inet/dhcp.c **** 
+ 802:../freeRTOS750/lib_inet/dhcp.c **** /**
+ 803:../freeRTOS750/lib_inet/dhcp.c ****  * @brief		Get an IP from the DHCP server.
+ 804:../freeRTOS750/lib_inet/dhcp.c ****  */
+ 805:../freeRTOS750/lib_inet/dhcp.c **** void init_DHCP_client(
+ 806:../freeRTOS750/lib_inet/dhcp.c **** 	SOCKET s,				/**< Preferred socket number for the DHCP client */
+ 807:../freeRTOS750/lib_inet/dhcp.c **** 	void(*ip_update)(void),	/**< handler called when the leased IP address is updated */
+ 808:../freeRTOS750/lib_inet/dhcp.c **** 	void(*ip_conflict)(void)	/**< handler called when the leased IP address is conflict */
+ 809:../freeRTOS750/lib_inet/dhcp.c **** 	)
+ 810:../freeRTOS750/lib_inet/dhcp.c **** {
+ 811:../freeRTOS750/lib_inet/dhcp.c **** 
+ 812:../freeRTOS750/lib_inet/dhcp.c **** 	if(!ip_update)	dhcp_ip_update = set_DHCP_network;
+ 813:../freeRTOS750/lib_inet/dhcp.c **** 	else		dhcp_ip_update = ip_update;
+ 814:../freeRTOS750/lib_inet/dhcp.c **** 
+ 815:../freeRTOS750/lib_inet/dhcp.c **** 	if(!ip_conflict) dhcp_ip_conflict = proc_ip_conflict;
+ 816:../freeRTOS750/lib_inet/dhcp.c **** 	else		 dhcp_ip_conflict = ip_conflict;
+ 817:../freeRTOS750/lib_inet/dhcp.c **** 
+ 818:../freeRTOS750/lib_inet/dhcp.c **** 	init_dhcpc_ch(s);
+ 819:../freeRTOS750/lib_inet/dhcp.c **** 
+ 820:../freeRTOS750/lib_inet/dhcp.c **** }
+ 821:../freeRTOS750/lib_inet/dhcp.c **** 
+ 822:../freeRTOS750/lib_inet/dhcp.c **** 
+ 823:../freeRTOS750/lib_inet/dhcp.c **** /**
+ 824:../freeRTOS750/lib_inet/dhcp.c ****  * @brief		Get an IP from the DHCP server.
+ 825:../freeRTOS750/lib_inet/dhcp.c ****  */
+ 826:../freeRTOS750/lib_inet/dhcp.c **** static void proc_ip_conflict(void)
+ 827:../freeRTOS750/lib_inet/dhcp.c **** {
+ 164               	.LM0:
+ 165               	.LFBB1:
+ 166               	/* prologue: function */
+ 167               	/* frame size = 0 */
+ 168               	/* stack size = 0 */
+ 169               	.L__stack_usage = 0
+ 828:../freeRTOS750/lib_inet/dhcp.c **** 	xSerialPrint_P(PSTR("\r\nThe IP Address from DHCP server is CONFLICT!!!\r\n"
+ 171               	.LM1:
+ 172 0000 80E0      		ldi r24,lo8(__c.2803)
+ 173 0002 90E0      		ldi r25,hi8(__c.2803)
+ 174 0004 0C94 0000 		jmp xSerialPrint_P
+ 176               	.Lscope1:
+ 178               		.stabd	78,0,0
+ 181               	set_DHCP_network:
+ 182               		.stabd	46,0,0
+ 720:../freeRTOS750/lib_inet/dhcp.c **** {
+ 184               	.LM2:
+ 185               	.LFBB2:
+ 186               	/* prologue: function */
+ 187               	/* frame size = 0 */
+ 188               	/* stack size = 0 */
+ 189               	.L__stack_usage = 0
+ 721:../freeRTOS750/lib_inet/dhcp.c **** 	IINCHIP_init();
+ 191               	.LM3:
+ 192 0008 0E94 0000 		call IINCHIP_init
+ 723:../freeRTOS750/lib_inet/dhcp.c **** 	setSHAR(src_mac_addr);
+ 194               	.LM4:
+ 195 000c 80E0      		ldi r24,lo8(src_mac_addr)
+ 196 000e 90E0      		ldi r25,hi8(src_mac_addr)
+ 197 0010 0E94 0000 		call setSHAR
+ 724:../freeRTOS750/lib_inet/dhcp.c **** 	setGAR(get_gw_ip);
+ 199               	.LM5:
+ 200 0014 80E0      		ldi r24,lo8(get_gw_ip)
+ 201 0016 90E0      		ldi r25,hi8(get_gw_ip)
+ 202 0018 0E94 0000 		call setGAR
+ 725:../freeRTOS750/lib_inet/dhcp.c **** 	saveSUBR(&get_sn_mask);
+ 204               	.LM6:
+ 205 001c 80E0      		ldi r24,lo8(get_sn_mask)
+ 206 001e 90E0      		ldi r25,hi8(get_sn_mask)
+ 207 0020 0E94 0000 		call saveSUBR
+ 726:../freeRTOS750/lib_inet/dhcp.c **** 	setSIPR(get_source_ip);
+ 209               	.LM7:
+ 210 0024 80E0      		ldi r24,lo8(get_source_ip)
+ 211 0026 90E0      		ldi r25,hi8(get_source_ip)
+ 212 0028 0E94 0000 		call setSIPR
+ 735:../freeRTOS750/lib_inet/dhcp.c **** 	IINCHIP_sysinit(0x55, 0x55);
+ 214               	.LM8:
+ 215 002c 65E5      		ldi r22,lo8(85)
+ 216 002e 85E5      		ldi r24,lo8(85)
+ 217 0030 0E94 0000 		call IINCHIP_sysinit
+ 739:../freeRTOS750/lib_inet/dhcp.c **** 	xSerialPrintf_P(PSTR("\r\nDHCP set IP: %d.%d.%d.%d\r\n"), get_source_ip[0], get_source_ip[1], get_
+ 219               	.LM9:
+ 220 0034 8091 0000 		lds r24,get_source_ip+3
+ 221 0038 1F92      		push __zero_reg__
+ 222 003a 8F93      		push r24
+ 223 003c 8091 0000 		lds r24,get_source_ip+2
+ 224 0040 1F92      		push __zero_reg__
+ 225 0042 8F93      		push r24
+ 226 0044 8091 0000 		lds r24,get_source_ip+1
+ 227 0048 1F92      		push __zero_reg__
+ 228 004a 8F93      		push r24
+ 229 004c 8091 0000 		lds r24,get_source_ip
+ 230 0050 1F92      		push __zero_reg__
+ 231 0052 8F93      		push r24
+ 232 0054 80E0      		ldi r24,lo8(__c.2783)
+ 233 0056 90E0      		ldi r25,hi8(__c.2783)
+ 234 0058 9F93      		push r25
+ 235 005a 8F93      		push r24
+ 236 005c 0E94 0000 		call xSerialPrintf_P
+ 237 0060 8DB7      		in r24,__SP_L__
+ 238 0062 9EB7      		in r25,__SP_H__
+ 239 0064 0A96      		adiw r24,10
+ 240 0066 0FB6      		in __tmp_reg__,__SREG__
+ 241 0068 F894      		cli
+ 242 006a 9EBF      		out __SP_H__,r25
+ 243 006c 0FBE      		out __SREG__,__tmp_reg__
+ 244 006e 8DBF      		out __SP_L__,r24
+ 245 0070 0895      		ret
+ 247               	.Lscope2:
+ 249               		.stabd	78,0,0
+ 250               		.section	.rodata.str1.1,"aMS",@progbits,1
+ 251               	.LC0:
+ 252 0000 476F 6C64 		.string	"Goldilocks"
+ 252      696C 6F63 
+ 252      6B73 00
+ 253               		.text
+ 257               	send_DHCP_DISCOVER:
+ 258               		.stabd	46,0,0
+  87:../freeRTOS750/lib_inet/dhcp.c **** {
+ 260               	.LM10:
+ 261               	.LFBB3:
+ 262 0072 DF92      		push r13
+ 263 0074 EF92      		push r14
+ 264 0076 FF92      		push r15
+ 265 0078 0F93      		push r16
+ 266 007a 1F93      		push r17
+ 267 007c CF93      		push r28
+ 268 007e DF93      		push r29
+ 269 0080 00D0      		rcall .
+ 270 0082 00D0      		rcall .
+ 271 0084 CDB7      		in r28,__SP_L__
+ 272 0086 DEB7      		in r29,__SP_H__
+ 273               	/* prologue: function */
+ 274               	/* frame size = 4 */
+ 275               	/* stack size = 11 */
+ 276               	.L__stack_usage = 11
+ 277 0088 D82E      		mov r13,r24
+  93:../freeRTOS750/lib_inet/dhcp.c **** 	*((uint32_t*)dhcp_sip) = 0;
+ 279               	.LM11:
+ 280 008a 1092 0000 		sts dhcp_sip,__zero_reg__
+ 281 008e 1092 0000 		sts dhcp_sip+1,__zero_reg__
+ 282 0092 1092 0000 		sts dhcp_sip+2,__zero_reg__
+ 283 0096 1092 0000 		sts dhcp_sip+3,__zero_reg__
+  94:../freeRTOS750/lib_inet/dhcp.c **** 	*((uint32_t*)dhcp_real_sip) = 0;
+ 285               	.LM12:
+ 286 009a 1092 0000 		sts dhcp_real_sip,__zero_reg__
+ 287 009e 1092 0000 		sts dhcp_real_sip+1,__zero_reg__
+ 288 00a2 1092 0000 		sts dhcp_real_sip+2,__zero_reg__
+ 289 00a6 1092 0000 		sts dhcp_real_sip+3,__zero_reg__
+  96:../freeRTOS750/lib_inet/dhcp.c **** 	memset((void*)pRIPMSG,0,sizeof(RIP_MSG));
+ 291               	.LM13:
+ 292 00aa E090 0000 		lds r14,pRIPMSG
+ 293 00ae F090 0000 		lds r15,pRIPMSG+1
+ 294 00b2 84E2      		ldi r24,lo8(36)
+ 295 00b4 92E0      		ldi r25,lo8(2)
+ 296 00b6 F701      		movw r30,r14
+ 297 00b8 9C01      		movw r18,r24
+ 298               		0:
+ 299 00ba 1192      		st Z+,__zero_reg__
+ 300 00bc 2150      		subi r18,1
+ 301 00be 3040      		sbci r19,0
+ 302 00c0 01F4      		brne 0b
+  98:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->op = DHCP_BOOTREQUEST;
+ 304               	.LM14:
+ 305 00c2 01E0      		ldi r16,lo8(1)
+ 306 00c4 F701      		movw r30,r14
+ 307 00c6 0083      		st Z,r16
+  99:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->htype = DHCP_HTYPE_10MB;
+ 309               	.LM15:
+ 310 00c8 0183      		std Z+1,r16
+ 100:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->hlen = DHCP_HLEN_ETHERNET;
+ 312               	.LM16:
+ 313 00ca 16E0      		ldi r17,lo8(6)
+ 314 00cc 1283      		std Z+2,r17
+ 101:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->hops = DHCP_HOPS;
+ 316               	.LM17:
+ 317 00ce 1382      		std Z+3,__zero_reg__
+ 102:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->xid = htonl(DHCP_XID);
+ 319               	.LM18:
+ 320 00d0 6091 0000 		lds r22,DHCP_XID
+ 321 00d4 7091 0000 		lds r23,DHCP_XID+1
+ 322 00d8 8091 0000 		lds r24,DHCP_XID+2
+ 323 00dc 9091 0000 		lds r25,DHCP_XID+3
+ 324 00e0 0E94 0000 		call htonl
+ 325 00e4 F701      		movw r30,r14
+ 326 00e6 6483      		std Z+4,r22
+ 327 00e8 7583      		std Z+5,r23
+ 328 00ea 8683      		std Z+6,r24
+ 329 00ec 9783      		std Z+7,r25
+ 103:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->secs = htons(DHCP_SECS);
+ 331               	.LM19:
+ 332 00ee E090 0000 		lds r14,pRIPMSG
+ 333 00f2 F090 0000 		lds r15,pRIPMSG+1
+ 334 00f6 80E0      		ldi r24,0
+ 335 00f8 90E0      		ldi r25,0
+ 336 00fa 0E94 0000 		call htons
+ 337 00fe F701      		movw r30,r14
+ 338 0100 9187      		std Z+9,r25
+ 339 0102 8087      		std Z+8,r24
+ 104:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->flags = htons(DHCP_FLAGSBROADCAST);
+ 341               	.LM20:
+ 342 0104 E090 0000 		lds r14,pRIPMSG
+ 343 0108 F090 0000 		lds r15,pRIPMSG+1
+ 344 010c 80E0      		ldi r24,0
+ 345 010e 90E8      		ldi r25,lo8(-128)
+ 346 0110 0E94 0000 		call htons
+ 347 0114 F701      		movw r30,r14
+ 348 0116 9387      		std Z+11,r25
+ 349 0118 8287      		std Z+10,r24
+ 105:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->chaddr[0] = src_mac_addr[0];
+ 351               	.LM21:
+ 352 011a E090 0000 		lds r14,pRIPMSG
+ 353 011e F090 0000 		lds r15,pRIPMSG+1
+ 354 0122 5091 0000 		lds r21,src_mac_addr
+ 355 0126 F701      		movw r30,r14
+ 356 0128 548F      		std Z+28,r21
+ 106:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->chaddr[1] = src_mac_addr[1];
+ 358               	.LM22:
+ 359 012a 4091 0000 		lds r20,src_mac_addr+1
+ 360 012e 458F      		std Z+29,r20
+ 107:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->chaddr[2] = src_mac_addr[2];
+ 362               	.LM23:
+ 363 0130 3091 0000 		lds r19,src_mac_addr+2
+ 364 0134 368F      		std Z+30,r19
+ 108:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->chaddr[3] = src_mac_addr[3];
+ 366               	.LM24:
+ 367 0136 2091 0000 		lds r18,src_mac_addr+3
+ 368 013a 278F      		std Z+31,r18
+ 109:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->chaddr[4] = src_mac_addr[4];
+ 370               	.LM25:
+ 371 013c 9091 0000 		lds r25,src_mac_addr+4
+ 372 0140 90A3      		std Z+32,r25
+ 110:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->chaddr[5] = src_mac_addr[5];
+ 374               	.LM26:
+ 375 0142 8091 0000 		lds r24,src_mac_addr+5
+ 376 0146 81A3      		std Z+33,r24
+ 113:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = (uint8_t)((MAGIC_COOKIE >> 24)& 0xFF);
+ 378               	.LM27:
+ 379 0148 E451      		subi r30,20
+ 380 014a FF4F      		sbci r31,-1
+ 381 014c 63E6      		ldi r22,lo8(99)
+ 382 014e 6083      		st Z,r22
+ 114:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = (uint8_t)((MAGIC_COOKIE >> 16)& 0xFF);
+ 384               	.LM28:
+ 385 0150 F701      		movw r30,r14
+ 386 0152 E351      		subi r30,19
+ 387 0154 FF4F      		sbci r31,-1
+ 388 0156 72E8      		ldi r23,lo8(-126)
+ 389 0158 7083      		st Z,r23
+ 115:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = (uint8_t)((MAGIC_COOKIE >> 8)& 0xFF);
+ 391               	.LM29:
+ 392 015a F701      		movw r30,r14
+ 393 015c E251      		subi r30,18
+ 394 015e FF4F      		sbci r31,-1
+ 395 0160 73E5      		ldi r23,lo8(83)
+ 396 0162 7083      		st Z,r23
+ 116:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = (uint8_t)(MAGIC_COOKIE& 0xFF);
+ 398               	.LM30:
+ 399 0164 F701      		movw r30,r14
+ 400 0166 E151      		subi r30,17
+ 401 0168 FF4F      		sbci r31,-1
+ 402 016a 6083      		st Z,r22
+ 119:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = dhcpMessageType;
+ 404               	.LM31:
+ 405 016c F701      		movw r30,r14
+ 406 016e E051      		subi r30,16
+ 407 0170 FF4F      		sbci r31,-1
+ 408 0172 65E3      		ldi r22,lo8(53)
+ 409 0174 6083      		st Z,r22
+ 120:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = 0x01;
+ 411               	.LM32:
+ 412 0176 F701      		movw r30,r14
+ 413 0178 EF50      		subi r30,15
+ 414 017a FF4F      		sbci r31,-1
+ 415 017c 0083      		st Z,r16
+ 121:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = DHCP_DISCOVER;
+ 417               	.LM33:
+ 418 017e F701      		movw r30,r14
+ 419 0180 EE50      		subi r30,14
+ 420 0182 FF4F      		sbci r31,-1
+ 421 0184 0083      		st Z,r16
+ 124:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = dhcpClientIdentifier;
+ 423               	.LM34:
+ 424 0186 F701      		movw r30,r14
+ 425 0188 ED50      		subi r30,13
+ 426 018a FF4F      		sbci r31,-1
+ 427 018c 6DE3      		ldi r22,lo8(61)
+ 428 018e 6083      		st Z,r22
+ 125:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = 0x07;
+ 430               	.LM35:
+ 431 0190 F701      		movw r30,r14
+ 432 0192 EC50      		subi r30,12
+ 433 0194 FF4F      		sbci r31,-1
+ 434 0196 67E0      		ldi r22,lo8(7)
+ 435 0198 6083      		st Z,r22
+ 126:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = 0x01;
+ 437               	.LM36:
+ 438 019a F701      		movw r30,r14
+ 439 019c EB50      		subi r30,11
+ 440 019e FF4F      		sbci r31,-1
+ 441 01a0 0083      		st Z,r16
+ 127:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = src_mac_addr[0];
+ 443               	.LM37:
+ 444 01a2 F701      		movw r30,r14
+ 445 01a4 EA50      		subi r30,10
+ 446 01a6 FF4F      		sbci r31,-1
+ 447 01a8 5083      		st Z,r21
+ 128:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = src_mac_addr[1];
+ 449               	.LM38:
+ 450 01aa F701      		movw r30,r14
+ 451 01ac E950      		subi r30,9
+ 452 01ae FF4F      		sbci r31,-1
+ 453 01b0 4083      		st Z,r20
+ 129:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = src_mac_addr[2];
+ 455               	.LM39:
+ 456 01b2 F701      		movw r30,r14
+ 457 01b4 E850      		subi r30,8
+ 458 01b6 FF4F      		sbci r31,-1
+ 459 01b8 3083      		st Z,r19
+ 130:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = src_mac_addr[3];
+ 461               	.LM40:
+ 462 01ba F701      		movw r30,r14
+ 463 01bc E750      		subi r30,7
+ 464 01be FF4F      		sbci r31,-1
+ 465 01c0 2083      		st Z,r18
+ 131:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = src_mac_addr[4];
+ 467               	.LM41:
+ 468 01c2 F701      		movw r30,r14
+ 469 01c4 E650      		subi r30,6
+ 470 01c6 FF4F      		sbci r31,-1
+ 471 01c8 9083      		st Z,r25
+ 132:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = src_mac_addr[5];
+ 473               	.LM42:
+ 474 01ca F701      		movw r30,r14
+ 475 01cc E550      		subi r30,5
+ 476 01ce FF4F      		sbci r31,-1
+ 477 01d0 8083      		st Z,r24
+ 135:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = hostName;
+ 479               	.LM43:
+ 480 01d2 F701      		movw r30,r14
+ 481 01d4 E450      		subi r30,4
+ 482 01d6 FF4F      		sbci r31,-1
+ 483 01d8 8CE0      		ldi r24,lo8(12)
+ 484 01da 8083      		st Z,r24
+ 136:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = strlen(HOST_NAME)+3; // length of hostname + 3, to add 3 MAC bytes
+ 486               	.LM44:
+ 487 01dc F701      		movw r30,r14
+ 488 01de E350      		subi r30,3
+ 489 01e0 FF4F      		sbci r31,-1
+ 490 01e2 8DE0      		ldi r24,lo8(13)
+ 491 01e4 8083      		st Z,r24
+ 137:../freeRTOS750/lib_inet/dhcp.c **** 	strcpy((char*)&(pRIPMSG->OPT[i]),HOST_NAME);
+ 493               	.LM45:
+ 494 01e6 60E0      		ldi r22,lo8(.LC0)
+ 495 01e8 70E0      		ldi r23,hi8(.LC0)
+ 496 01ea C701      		movw r24,r14
+ 497 01ec 8250      		subi r24,2
+ 498 01ee 9F4F      		sbci r25,-1
+ 499 01f0 0E94 0000 		call strcpy
+ 141:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = src_mac_addr[3];
+ 501               	.LM46:
+ 502 01f4 F701      		movw r30,r14
+ 503 01f6 E85F      		subi r30,-8
+ 504 01f8 FE4F      		sbci r31,-2
+ 505 01fa 8091 0000 		lds r24,src_mac_addr+3
+ 506 01fe 8083      		st Z,r24
+ 142:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = src_mac_addr[4];
+ 508               	.LM47:
+ 509 0200 F701      		movw r30,r14
+ 510 0202 E75F      		subi r30,-9
+ 511 0204 FE4F      		sbci r31,-2
+ 512 0206 8091 0000 		lds r24,src_mac_addr+4
+ 513 020a 8083      		st Z,r24
+ 143:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = src_mac_addr[5];
+ 515               	.LM48:
+ 516 020c F701      		movw r30,r14
+ 517 020e E65F      		subi r30,-10
+ 518 0210 FE4F      		sbci r31,-2
+ 519 0212 8091 0000 		lds r24,src_mac_addr+5
+ 520 0216 8083      		st Z,r24
+ 146:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = dhcpParamRequest;
+ 522               	.LM49:
+ 523 0218 F701      		movw r30,r14
+ 524 021a E55F      		subi r30,-11
+ 525 021c FE4F      		sbci r31,-2
+ 526 021e 87E3      		ldi r24,lo8(55)
+ 527 0220 8083      		st Z,r24
+ 147:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = 0x06;
+ 529               	.LM50:
+ 530 0222 F701      		movw r30,r14
+ 531 0224 E45F      		subi r30,-12
+ 532 0226 FE4F      		sbci r31,-2
+ 533 0228 1083      		st Z,r17
+ 148:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = subnetMask;
+ 535               	.LM51:
+ 536 022a F701      		movw r30,r14
+ 537 022c E35F      		subi r30,-13
+ 538 022e FE4F      		sbci r31,-2
+ 539 0230 0083      		st Z,r16
+ 149:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = routersOnSubnet;
+ 541               	.LM52:
+ 542 0232 F701      		movw r30,r14
+ 543 0234 E25F      		subi r30,-14
+ 544 0236 FE4F      		sbci r31,-2
+ 545 0238 83E0      		ldi r24,lo8(3)
+ 546 023a 8083      		st Z,r24
+ 150:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = dns;
+ 548               	.LM53:
+ 549 023c F701      		movw r30,r14
+ 550 023e E15F      		subi r30,-15
+ 551 0240 FE4F      		sbci r31,-2
+ 552 0242 1083      		st Z,r17
+ 151:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = domainName;
+ 554               	.LM54:
+ 555 0244 F701      		movw r30,r14
+ 556 0246 E05F      		subi r30,-16
+ 557 0248 FE4F      		sbci r31,-2
+ 558 024a 8FE0      		ldi r24,lo8(15)
+ 559 024c 8083      		st Z,r24
+ 152:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = dhcpT1value;
+ 561               	.LM55:
+ 562 024e F701      		movw r30,r14
+ 563 0250 EF5E      		subi r30,-17
+ 564 0252 FE4F      		sbci r31,-2
+ 565 0254 8AE3      		ldi r24,lo8(58)
+ 566 0256 8083      		st Z,r24
+ 153:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = dhcpT2value;
+ 568               	.LM56:
+ 569 0258 F701      		movw r30,r14
+ 570 025a EE5E      		subi r30,-18
+ 571 025c FE4F      		sbci r31,-2
+ 572 025e 8BE3      		ldi r24,lo8(59)
+ 573 0260 8083      		st Z,r24
+ 154:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = endOption;
+ 575               	.LM57:
+ 576 0262 F701      		movw r30,r14
+ 577 0264 ED5E      		subi r30,-19
+ 578 0266 FE4F      		sbci r31,-2
+ 579 0268 8FEF      		ldi r24,lo8(-1)
+ 580 026a 8083      		st Z,r24
+ 157:../freeRTOS750/lib_inet/dhcp.c **** 	ip[0] = 255;
+ 582               	.LM58:
+ 583 026c 8983      		std Y+1,r24
+ 158:../freeRTOS750/lib_inet/dhcp.c **** 	ip[1] = 255;
+ 585               	.LM59:
+ 586 026e 8A83      		std Y+2,r24
+ 159:../freeRTOS750/lib_inet/dhcp.c **** 	ip[2] = 255;
+ 588               	.LM60:
+ 589 0270 8B83      		std Y+3,r24
+ 160:../freeRTOS750/lib_inet/dhcp.c **** 	ip[3] = 255;
+ 591               	.LM61:
+ 592 0272 8C83      		std Y+4,r24
+ 162:../freeRTOS750/lib_inet/dhcp.c **** 	if(0 == sendto(s, (uint8_t *)pRIPMSG, sizeof(RIP_MSG), ip, IP_PORT_DHCP_SERVER))
+ 594               	.LM62:
+ 595 0274 03E4      		ldi r16,lo8(67)
+ 596 0276 10E0      		ldi r17,0
+ 597 0278 9E01      		movw r18,r28
+ 598 027a 2F5F      		subi r18,-1
+ 599 027c 3F4F      		sbci r19,-1
+ 600 027e 44E2      		ldi r20,lo8(36)
+ 601 0280 52E0      		ldi r21,lo8(2)
+ 602 0282 B701      		movw r22,r14
+ 603 0284 8D2D      		mov r24,r13
+ 604 0286 0E94 0000 		call sendto
+ 605 028a 892B      		or r24,r25
+ 606 028c 01F4      		brne .L5
+ 164:../freeRTOS750/lib_inet/dhcp.c **** 		xSerialPrint_P(PSTR("\r\nDHCP: Fatal Error(0)."));
+ 608               	.LM63:
+ 609 028e 80E0      		ldi r24,lo8(__c.2679)
+ 610 0290 90E0      		ldi r25,hi8(__c.2679)
+ 611 0292 0E94 0000 		call xSerialPrint_P
+ 165:../freeRTOS750/lib_inet/dhcp.c **** 		if ( dhcp_ip_conflict != 0 )
+ 613               	.LM64:
+ 614 0296 E091 0000 		lds r30,dhcp_ip_conflict
+ 615 029a F091 0000 		lds r31,dhcp_ip_conflict+1
+ 616 029e 3097      		sbiw r30,0
+ 617 02a0 01F0      		breq .L5
+ 166:../freeRTOS750/lib_inet/dhcp.c **** 			(*dhcp_ip_conflict)();
+ 619               	.LM65:
+ 620 02a2 0995      		icall
+ 621               	.L5:
+ 169:../freeRTOS750/lib_inet/dhcp.c **** 	xSerialPrint_P(PSTR("\r\nsent DHCP_DISCOVER\r\n"));
+ 623               	.LM66:
+ 624 02a4 80E0      		ldi r24,lo8(__c.2681)
+ 625 02a6 90E0      		ldi r25,hi8(__c.2681)
+ 626 02a8 0E94 0000 		call xSerialPrint_P
+ 627               	/* epilogue start */
+ 170:../freeRTOS750/lib_inet/dhcp.c **** }
+ 629               	.LM67:
+ 630 02ac 0F90      		pop __tmp_reg__
+ 631 02ae 0F90      		pop __tmp_reg__
+ 632 02b0 0F90      		pop __tmp_reg__
+ 633 02b2 0F90      		pop __tmp_reg__
+ 634 02b4 DF91      		pop r29
+ 635 02b6 CF91      		pop r28
+ 636 02b8 1F91      		pop r17
+ 637 02ba 0F91      		pop r16
+ 638 02bc FF90      		pop r15
+ 639 02be EF90      		pop r14
+ 640 02c0 DF90      		pop r13
+ 641 02c2 0895      		ret
+ 646               	.Lscope3:
+ 648               		.stabd	78,0,0
+ 652               	send_DHCP_REQUEST:
+ 653               		.stabd	46,0,0
+ 179:../freeRTOS750/lib_inet/dhcp.c **** {
+ 655               	.LM68:
+ 656               	.LFBB4:
+ 657 02c4 CF92      		push r12
+ 658 02c6 DF92      		push r13
+ 659 02c8 FF92      		push r15
+ 660 02ca 0F93      		push r16
+ 661 02cc 1F93      		push r17
+ 662 02ce CF93      		push r28
+ 663 02d0 DF93      		push r29
+ 664 02d2 00D0      		rcall .
+ 665 02d4 00D0      		rcall .
+ 666 02d6 1F92      		push __zero_reg__
+ 667 02d8 CDB7      		in r28,__SP_L__
+ 668 02da DEB7      		in r29,__SP_H__
+ 669               	/* prologue: function */
+ 670               	/* frame size = 5 */
+ 671               	/* stack size = 12 */
+ 672               	.L__stack_usage = 12
+ 673 02dc F82E      		mov r15,r24
+ 185:../freeRTOS750/lib_inet/dhcp.c **** 	memset((void*)pRIPMSG,0,sizeof(RIP_MSG));
+ 675               	.LM69:
+ 676 02de 0091 0000 		lds r16,pRIPMSG
+ 677 02e2 1091 0000 		lds r17,pRIPMSG+1
+ 678 02e6 84E2      		ldi r24,lo8(36)
+ 679 02e8 92E0      		ldi r25,lo8(2)
+ 680 02ea F801      		movw r30,r16
+ 681 02ec 9C01      		movw r18,r24
+ 682               		0:
+ 683 02ee 1192      		st Z+,__zero_reg__
+ 684 02f0 2150      		subi r18,1
+ 685 02f2 3040      		sbci r19,0
+ 686 02f4 01F4      		brne 0b
+ 188:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->op = DHCP_BOOTREQUEST;
+ 688               	.LM70:
+ 689 02f6 81E0      		ldi r24,lo8(1)
+ 690 02f8 F801      		movw r30,r16
+ 691 02fa 8083      		st Z,r24
+ 189:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->htype = DHCP_HTYPE_10MB;
+ 693               	.LM71:
+ 694 02fc 8183      		std Z+1,r24
+ 190:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->hlen = DHCP_HLEN_ETHERNET;
+ 696               	.LM72:
+ 697 02fe 86E0      		ldi r24,lo8(6)
+ 698 0300 8283      		std Z+2,r24
+ 191:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->hops = DHCP_HOPS;
+ 700               	.LM73:
+ 701 0302 1382      		std Z+3,__zero_reg__
+ 192:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->xid = htonl(DHCP_XID);
+ 703               	.LM74:
+ 704 0304 6091 0000 		lds r22,DHCP_XID
+ 705 0308 7091 0000 		lds r23,DHCP_XID+1
+ 706 030c 8091 0000 		lds r24,DHCP_XID+2
+ 707 0310 9091 0000 		lds r25,DHCP_XID+3
+ 708 0314 0E94 0000 		call htonl
+ 709 0318 F801      		movw r30,r16
+ 710 031a 6483      		std Z+4,r22
+ 711 031c 7583      		std Z+5,r23
+ 712 031e 8683      		std Z+6,r24
+ 713 0320 9783      		std Z+7,r25
+ 193:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->secs = htons(DHCP_SECS);
+ 715               	.LM75:
+ 716 0322 0091 0000 		lds r16,pRIPMSG
+ 717 0326 1091 0000 		lds r17,pRIPMSG+1
+ 718 032a 80E0      		ldi r24,0
+ 719 032c 90E0      		ldi r25,0
+ 720 032e 0E94 0000 		call htons
+ 721 0332 F801      		movw r30,r16
+ 722 0334 9187      		std Z+9,r25
+ 723 0336 8087      		std Z+8,r24
+ 195:../freeRTOS750/lib_inet/dhcp.c **** 	if(dhcp_state < DHCP_STATE_LEASED)
+ 725               	.LM76:
+ 726 0338 8091 0000 		lds r24,dhcp_state
+ 727 033c 0091 0000 		lds r16,pRIPMSG
+ 728 0340 1091 0000 		lds r17,pRIPMSG+1
+ 729 0344 8330      		cpi r24,lo8(3)
+ 730 0346 00F4      		brsh .L11
+ 196:../freeRTOS750/lib_inet/dhcp.c **** 		pRIPMSG->flags = htons(DHCP_FLAGSBROADCAST);
+ 732               	.LM77:
+ 733 0348 80E0      		ldi r24,0
+ 734 034a 90E8      		ldi r25,lo8(-128)
+ 735 034c 0E94 0000 		call htons
+ 736 0350 F801      		movw r30,r16
+ 737 0352 9387      		std Z+11,r25
+ 738 0354 8287      		std Z+10,r24
+ 739 0356 00C0      		rjmp .L12
+ 740               	.L11:
+ 199:../freeRTOS750/lib_inet/dhcp.c **** 		pRIPMSG->flags = 0;		// For Unicast
+ 742               	.LM78:
+ 743 0358 F801      		movw r30,r16
+ 744 035a 1386      		std Z+11,__zero_reg__
+ 745 035c 1286      		std Z+10,__zero_reg__
+ 200:../freeRTOS750/lib_inet/dhcp.c **** 		pRIPMSG->ciaddr[0] = get_source_ip[0];
+ 747               	.LM79:
+ 748 035e 8091 0000 		lds r24,get_source_ip
+ 749 0362 8487      		std Z+12,r24
+ 201:../freeRTOS750/lib_inet/dhcp.c **** 		pRIPMSG->ciaddr[1] = get_source_ip[1];
+ 751               	.LM80:
+ 752 0364 8091 0000 		lds r24,get_source_ip+1
+ 753 0368 8587      		std Z+13,r24
+ 202:../freeRTOS750/lib_inet/dhcp.c **** 		pRIPMSG->ciaddr[2] = get_source_ip[2];
+ 755               	.LM81:
+ 756 036a 8091 0000 		lds r24,get_source_ip+2
+ 757 036e 8687      		std Z+14,r24
+ 203:../freeRTOS750/lib_inet/dhcp.c **** 		pRIPMSG->ciaddr[3] = get_source_ip[3];
+ 759               	.LM82:
+ 760 0370 8091 0000 		lds r24,get_source_ip+3
+ 761 0374 8787      		std Z+15,r24
+ 762               	.L12:
+ 206:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->chaddr[0] = src_mac_addr[0];
+ 764               	.LM83:
+ 765 0376 C090 0000 		lds r12,pRIPMSG
+ 766 037a D090 0000 		lds r13,pRIPMSG+1
+ 767 037e 5091 0000 		lds r21,src_mac_addr
+ 768 0382 F601      		movw r30,r12
+ 769 0384 548F      		std Z+28,r21
+ 207:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->chaddr[1] = src_mac_addr[1];
+ 771               	.LM84:
+ 772 0386 4091 0000 		lds r20,src_mac_addr+1
+ 773 038a 458F      		std Z+29,r20
+ 208:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->chaddr[2] = src_mac_addr[2];
+ 775               	.LM85:
+ 776 038c 3091 0000 		lds r19,src_mac_addr+2
+ 777 0390 368F      		std Z+30,r19
+ 209:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->chaddr[3] = src_mac_addr[3];
+ 779               	.LM86:
+ 780 0392 2091 0000 		lds r18,src_mac_addr+3
+ 781 0396 278F      		std Z+31,r18
+ 210:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->chaddr[4] = src_mac_addr[4];
+ 783               	.LM87:
+ 784 0398 9091 0000 		lds r25,src_mac_addr+4
+ 785 039c 90A3      		std Z+32,r25
+ 211:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->chaddr[5] = src_mac_addr[5];
+ 787               	.LM88:
+ 788 039e 8091 0000 		lds r24,src_mac_addr+5
+ 789 03a2 81A3      		std Z+33,r24
+ 214:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = (uint8_t)((MAGIC_COOKIE >> 24) & 0xFF);
+ 791               	.LM89:
+ 792 03a4 E451      		subi r30,20
+ 793 03a6 FF4F      		sbci r31,-1
+ 794 03a8 63E6      		ldi r22,lo8(99)
+ 795 03aa 6083      		st Z,r22
+ 215:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = (uint8_t)((MAGIC_COOKIE >> 16) & 0xFF);
+ 797               	.LM90:
+ 798 03ac F601      		movw r30,r12
+ 799 03ae E351      		subi r30,19
+ 800 03b0 FF4F      		sbci r31,-1
+ 801 03b2 72E8      		ldi r23,lo8(-126)
+ 802 03b4 7083      		st Z,r23
+ 216:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = (uint8_t)((MAGIC_COOKIE >> 8) & 0xFF);
+ 804               	.LM91:
+ 805 03b6 F601      		movw r30,r12
+ 806 03b8 E251      		subi r30,18
+ 807 03ba FF4F      		sbci r31,-1
+ 808 03bc 73E5      		ldi r23,lo8(83)
+ 809 03be 7083      		st Z,r23
+ 217:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = (uint8_t)(MAGIC_COOKIE & 0xFF);
+ 811               	.LM92:
+ 812 03c0 F601      		movw r30,r12
+ 813 03c2 E151      		subi r30,17
+ 814 03c4 FF4F      		sbci r31,-1
+ 815 03c6 6083      		st Z,r22
+ 220:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = dhcpMessageType;
+ 817               	.LM93:
+ 818 03c8 F601      		movw r30,r12
+ 819 03ca E051      		subi r30,16
+ 820 03cc FF4F      		sbci r31,-1
+ 821 03ce 65E3      		ldi r22,lo8(53)
+ 822 03d0 6083      		st Z,r22
+ 221:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = 0x01;
+ 824               	.LM94:
+ 825 03d2 F601      		movw r30,r12
+ 826 03d4 EF50      		subi r30,15
+ 827 03d6 FF4F      		sbci r31,-1
+ 828 03d8 61E0      		ldi r22,lo8(1)
+ 829 03da 6083      		st Z,r22
+ 222:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = DHCP_REQUEST;
+ 831               	.LM95:
+ 832 03dc F601      		movw r30,r12
+ 833 03de EE50      		subi r30,14
+ 834 03e0 FF4F      		sbci r31,-1
+ 835 03e2 73E0      		ldi r23,lo8(3)
+ 836 03e4 7083      		st Z,r23
+ 224:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = dhcpClientIdentifier;
+ 838               	.LM96:
+ 839 03e6 F601      		movw r30,r12
+ 840 03e8 ED50      		subi r30,13
+ 841 03ea FF4F      		sbci r31,-1
+ 842 03ec 7DE3      		ldi r23,lo8(61)
+ 843 03ee 7083      		st Z,r23
+ 225:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = 0x07;
+ 845               	.LM97:
+ 846 03f0 F601      		movw r30,r12
+ 847 03f2 EC50      		subi r30,12
+ 848 03f4 FF4F      		sbci r31,-1
+ 849 03f6 77E0      		ldi r23,lo8(7)
+ 850 03f8 7083      		st Z,r23
+ 226:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = 0x01;
+ 852               	.LM98:
+ 853 03fa F601      		movw r30,r12
+ 854 03fc EB50      		subi r30,11
+ 855 03fe FF4F      		sbci r31,-1
+ 856 0400 6083      		st Z,r22
+ 227:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = src_mac_addr[0];
+ 858               	.LM99:
+ 859 0402 F601      		movw r30,r12
+ 860 0404 EA50      		subi r30,10
+ 861 0406 FF4F      		sbci r31,-1
+ 862 0408 5083      		st Z,r21
+ 228:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = src_mac_addr[1];
+ 864               	.LM100:
+ 865 040a F601      		movw r30,r12
+ 866 040c E950      		subi r30,9
+ 867 040e FF4F      		sbci r31,-1
+ 868 0410 4083      		st Z,r20
+ 229:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = src_mac_addr[2];
+ 870               	.LM101:
+ 871 0412 F601      		movw r30,r12
+ 872 0414 E850      		subi r30,8
+ 873 0416 FF4F      		sbci r31,-1
+ 874 0418 3083      		st Z,r19
+ 230:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = src_mac_addr[3];
+ 876               	.LM102:
+ 877 041a F601      		movw r30,r12
+ 878 041c E750      		subi r30,7
+ 879 041e FF4F      		sbci r31,-1
+ 880 0420 2083      		st Z,r18
+ 231:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = src_mac_addr[4];
+ 882               	.LM103:
+ 883 0422 F601      		movw r30,r12
+ 884 0424 E650      		subi r30,6
+ 885 0426 FF4F      		sbci r31,-1
+ 886 0428 9083      		st Z,r25
+ 232:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = src_mac_addr[5];
+ 888               	.LM104:
+ 889 042a F601      		movw r30,r12
+ 890 042c E550      		subi r30,5
+ 891 042e FF4F      		sbci r31,-1
+ 892 0430 8083      		st Z,r24
+ 234:../freeRTOS750/lib_inet/dhcp.c **** 	if(dhcp_state < DHCP_STATE_LEASED)
+ 894               	.LM105:
+ 895 0432 2091 0000 		lds r18,dhcp_state
+ 896 0436 2330      		cpi r18,lo8(3)
+ 897 0438 00F0      		brlo .+2
+ 898 043a 00C0      		rjmp .L19
+ 236:../freeRTOS750/lib_inet/dhcp.c **** 		pRIPMSG->OPT[i++] = dhcpRequestedIPaddr;
+ 900               	.LM106:
+ 901 043c F601      		movw r30,r12
+ 902 043e E450      		subi r30,4
+ 903 0440 FF4F      		sbci r31,-1
+ 904 0442 82E3      		ldi r24,lo8(50)
+ 905 0444 8083      		st Z,r24
+ 237:../freeRTOS750/lib_inet/dhcp.c **** 		pRIPMSG->OPT[i++] = 0x04;
+ 907               	.LM107:
+ 908 0446 F601      		movw r30,r12
+ 909 0448 E350      		subi r30,3
+ 910 044a FF4F      		sbci r31,-1
+ 911 044c 84E0      		ldi r24,lo8(4)
+ 912 044e 8083      		st Z,r24
+ 238:../freeRTOS750/lib_inet/dhcp.c **** 		pRIPMSG->OPT[i++] = get_source_ip[0];
+ 914               	.LM108:
+ 915 0450 F601      		movw r30,r12
+ 916 0452 E250      		subi r30,2
+ 917 0454 FF4F      		sbci r31,-1
+ 918 0456 9091 0000 		lds r25,get_source_ip
+ 919 045a 9083      		st Z,r25
+ 239:../freeRTOS750/lib_inet/dhcp.c **** 		pRIPMSG->OPT[i++] = get_source_ip[1];
+ 921               	.LM109:
+ 922 045c F601      		movw r30,r12
+ 923 045e E150      		subi r30,1
+ 924 0460 FF4F      		sbci r31,-1
+ 925 0462 9091 0000 		lds r25,get_source_ip+1
+ 926 0466 9083      		st Z,r25
+ 240:../freeRTOS750/lib_inet/dhcp.c **** 		pRIPMSG->OPT[i++] = get_source_ip[2];
+ 928               	.LM110:
+ 929 0468 F601      		movw r30,r12
+ 930 046a F395      		inc r31
+ 931 046c 9091 0000 		lds r25,get_source_ip+2
+ 932 0470 9083      		st Z,r25
+ 241:../freeRTOS750/lib_inet/dhcp.c **** 		pRIPMSG->OPT[i++] = get_source_ip[3];
+ 934               	.LM111:
+ 935 0472 F601      		movw r30,r12
+ 936 0474 EF5F      		subi r30,-1
+ 937 0476 FE4F      		sbci r31,-2
+ 938 0478 9091 0000 		lds r25,get_source_ip+3
+ 939 047c 9083      		st Z,r25
+ 243:../freeRTOS750/lib_inet/dhcp.c **** 		pRIPMSG->OPT[i++] = dhcpServerIdentifier;
+ 941               	.LM112:
+ 942 047e F601      		movw r30,r12
+ 943 0480 EE5F      		subi r30,-2
+ 944 0482 FE4F      		sbci r31,-2
+ 945 0484 96E3      		ldi r25,lo8(54)
+ 946 0486 9083      		st Z,r25
+ 244:../freeRTOS750/lib_inet/dhcp.c **** 		pRIPMSG->OPT[i++] = 0x04;
+ 948               	.LM113:
+ 949 0488 F601      		movw r30,r12
+ 950 048a ED5F      		subi r30,-3
+ 951 048c FE4F      		sbci r31,-2
+ 952 048e 8083      		st Z,r24
+ 245:../freeRTOS750/lib_inet/dhcp.c **** 		pRIPMSG->OPT[i++] = dhcp_sip[0];
+ 954               	.LM114:
+ 955 0490 F601      		movw r30,r12
+ 956 0492 EC5F      		subi r30,-4
+ 957 0494 FE4F      		sbci r31,-2
+ 958 0496 8091 0000 		lds r24,dhcp_sip
+ 959 049a 8083      		st Z,r24
+ 246:../freeRTOS750/lib_inet/dhcp.c **** 		pRIPMSG->OPT[i++] = dhcp_sip[1];
+ 961               	.LM115:
+ 962 049c F601      		movw r30,r12
+ 963 049e EB5F      		subi r30,-5
+ 964 04a0 FE4F      		sbci r31,-2
+ 965 04a2 8091 0000 		lds r24,dhcp_sip+1
+ 966 04a6 8083      		st Z,r24
+ 247:../freeRTOS750/lib_inet/dhcp.c **** 		pRIPMSG->OPT[i++] = dhcp_sip[2];
+ 968               	.LM116:
+ 969 04a8 F601      		movw r30,r12
+ 970 04aa EA5F      		subi r30,-6
+ 971 04ac FE4F      		sbci r31,-2
+ 972 04ae 8091 0000 		lds r24,dhcp_sip+2
+ 973 04b2 8083      		st Z,r24
+ 248:../freeRTOS750/lib_inet/dhcp.c **** 		pRIPMSG->OPT[i++] = dhcp_sip[3];
+ 975               	.LM117:
+ 976 04b4 F601      		movw r30,r12
+ 977 04b6 E95F      		subi r30,-7
+ 978 04b8 FE4F      		sbci r31,-2
+ 979 04ba 8091 0000 		lds r24,dhcp_sip+3
+ 980 04be 8083      		st Z,r24
+ 981 04c0 8CE1      		ldi r24,lo8(28)
+ 982 04c2 90E0      		ldi r25,0
+ 983 04c4 00C0      		rjmp .L13
+ 984               	.L19:
+ 232:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = src_mac_addr[5];
+ 986               	.LM118:
+ 987 04c6 80E1      		ldi r24,lo8(16)
+ 988 04c8 90E0      		ldi r25,0
+ 989               	.L13:
+ 252:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = hostName;
+ 991               	.LM119:
+ 992 04ca 8601      		movw r16,r12
+ 993 04cc 080F      		add r16,r24
+ 994 04ce 191F      		adc r17,r25
+ 995 04d0 F801      		movw r30,r16
+ 996 04d2 E451      		subi r30,20
+ 997 04d4 FF4F      		sbci r31,-1
+ 998 04d6 3CE0      		ldi r19,lo8(12)
+ 999 04d8 3083      		st Z,r19
+ 253:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = strlen(HOST_NAME)+3; // length of hostname + 3
+ 1001               	.LM120:
+ 1002 04da F801      		movw r30,r16
+ 1003 04dc E351      		subi r30,19
+ 1004 04de FF4F      		sbci r31,-1
+ 1005 04e0 3DE0      		ldi r19,lo8(13)
+ 1006 04e2 3083      		st Z,r19
+ 254:../freeRTOS750/lib_inet/dhcp.c **** 	strcpy((char*)&(pRIPMSG->OPT[i]),HOST_NAME);
+ 1008               	.LM121:
+ 1009 04e4 8251      		subi r24,18
+ 1010 04e6 9F4F      		sbci r25,-1
+ 1011 04e8 60E0      		ldi r22,lo8(.LC0)
+ 1012 04ea 70E0      		ldi r23,hi8(.LC0)
+ 1013 04ec 8C0D      		add r24,r12
+ 1014 04ee 9D1D      		adc r25,r13
+ 1015 04f0 2D83      		std Y+5,r18
+ 1016 04f2 0E94 0000 		call strcpy
+ 258:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = src_mac_addr[3];
+ 1018               	.LM122:
+ 1019 04f6 F801      		movw r30,r16
+ 1020 04f8 E850      		subi r30,8
+ 1021 04fa FF4F      		sbci r31,-1
+ 1022 04fc 8091 0000 		lds r24,src_mac_addr+3
+ 1023 0500 8083      		st Z,r24
+ 259:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = src_mac_addr[4];
+ 1025               	.LM123:
+ 1026 0502 F801      		movw r30,r16
+ 1027 0504 E750      		subi r30,7
+ 1028 0506 FF4F      		sbci r31,-1
+ 1029 0508 8091 0000 		lds r24,src_mac_addr+4
+ 1030 050c 8083      		st Z,r24
+ 260:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = src_mac_addr[5];
+ 1032               	.LM124:
+ 1033 050e F801      		movw r30,r16
+ 1034 0510 E650      		subi r30,6
+ 1035 0512 FF4F      		sbci r31,-1
+ 1036 0514 8091 0000 		lds r24,src_mac_addr+5
+ 1037 0518 8083      		st Z,r24
+ 262:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = dhcpParamRequest;
+ 1039               	.LM125:
+ 1040 051a F801      		movw r30,r16
+ 1041 051c E550      		subi r30,5
+ 1042 051e FF4F      		sbci r31,-1
+ 1043 0520 87E3      		ldi r24,lo8(55)
+ 1044 0522 8083      		st Z,r24
+ 263:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = 0x08;
+ 1046               	.LM126:
+ 1047 0524 F801      		movw r30,r16
+ 1048 0526 E450      		subi r30,4
+ 1049 0528 FF4F      		sbci r31,-1
+ 1050 052a 88E0      		ldi r24,lo8(8)
+ 1051 052c 8083      		st Z,r24
+ 264:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = subnetMask;
+ 1053               	.LM127:
+ 1054 052e F801      		movw r30,r16
+ 1055 0530 E350      		subi r30,3
+ 1056 0532 FF4F      		sbci r31,-1
+ 1057 0534 81E0      		ldi r24,lo8(1)
+ 1058 0536 8083      		st Z,r24
+ 265:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = routersOnSubnet;
+ 1060               	.LM128:
+ 1061 0538 F801      		movw r30,r16
+ 1062 053a E250      		subi r30,2
+ 1063 053c FF4F      		sbci r31,-1
+ 1064 053e 83E0      		ldi r24,lo8(3)
+ 1065 0540 8083      		st Z,r24
+ 266:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = dns;
+ 1067               	.LM129:
+ 1068 0542 F801      		movw r30,r16
+ 1069 0544 E150      		subi r30,1
+ 1070 0546 FF4F      		sbci r31,-1
+ 1071 0548 86E0      		ldi r24,lo8(6)
+ 1072 054a 8083      		st Z,r24
+ 267:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = domainName;
+ 1074               	.LM130:
+ 1075 054c F801      		movw r30,r16
+ 1076 054e F395      		inc r31
+ 1077 0550 8FE0      		ldi r24,lo8(15)
+ 1078 0552 8083      		st Z,r24
+ 268:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = dhcpT1value;
+ 1080               	.LM131:
+ 1081 0554 F801      		movw r30,r16
+ 1082 0556 EF5F      		subi r30,-1
+ 1083 0558 FE4F      		sbci r31,-2
+ 1084 055a 8AE3      		ldi r24,lo8(58)
+ 1085 055c 8083      		st Z,r24
+ 269:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = dhcpT2value;
+ 1087               	.LM132:
+ 1088 055e F801      		movw r30,r16
+ 1089 0560 EE5F      		subi r30,-2
+ 1090 0562 FE4F      		sbci r31,-2
+ 1091 0564 8BE3      		ldi r24,lo8(59)
+ 1092 0566 8083      		st Z,r24
+ 270:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = performRouterDiscovery;
+ 1094               	.LM133:
+ 1095 0568 F801      		movw r30,r16
+ 1096 056a ED5F      		subi r30,-3
+ 1097 056c FE4F      		sbci r31,-2
+ 1098 056e 8FE1      		ldi r24,lo8(31)
+ 1099 0570 8083      		st Z,r24
+ 271:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = staticRoute;
+ 1101               	.LM134:
+ 1102 0572 F801      		movw r30,r16
+ 1103 0574 EC5F      		subi r30,-4
+ 1104 0576 FE4F      		sbci r31,-2
+ 1105 0578 81E2      		ldi r24,lo8(33)
+ 1106 057a 8083      		st Z,r24
+ 272:../freeRTOS750/lib_inet/dhcp.c **** 	pRIPMSG->OPT[i++] = endOption;
+ 1108               	.LM135:
+ 1109 057c F801      		movw r30,r16
+ 1110 057e EB5F      		subi r30,-5
+ 1111 0580 FE4F      		sbci r31,-2
+ 1112 0582 8FEF      		ldi r24,lo8(-1)
+ 1113 0584 8083      		st Z,r24
+ 275:../freeRTOS750/lib_inet/dhcp.c **** 	if(dhcp_state < DHCP_STATE_LEASED)
+ 1115               	.LM136:
+ 1116 0586 2D81      		ldd r18,Y+5
+ 1117 0588 2330      		cpi r18,lo8(3)
+ 1118 058a 00F4      		brsh .L14
+ 277:../freeRTOS750/lib_inet/dhcp.c **** 		ip.lVal = 0xffffffff;
+ 1120               	.LM137:
+ 1121 058c 4FEF      		ldi r20,lo8(-1)
+ 1122 058e 5FEF      		ldi r21,lo8(-1)
+ 1123 0590 BA01      		movw r22,r20
+ 1124 0592 4983      		std Y+1,r20
+ 1125 0594 5A83      		std Y+2,r21
+ 1126 0596 6B83      		std Y+3,r22
+ 1127 0598 7C83      		std Y+4,r23
+ 1128 059a 00C0      		rjmp .L15
+ 1129               	.L14:
+ 281:../freeRTOS750/lib_inet/dhcp.c **** 		ip.cVal[0] = dhcp_sip[0];
+ 1131               	.LM138:
+ 1132 059c 8091 0000 		lds r24,dhcp_sip
+ 1133 05a0 8983      		std Y+1,r24
+ 282:../freeRTOS750/lib_inet/dhcp.c **** 		ip.cVal[1] = dhcp_sip[1];
+ 1135               	.LM139:
+ 1136 05a2 8091 0000 		lds r24,dhcp_sip+1
+ 1137 05a6 8A83      		std Y+2,r24
+ 283:../freeRTOS750/lib_inet/dhcp.c **** 		ip.cVal[2] = dhcp_sip[2];
+ 1139               	.LM140:
+ 1140 05a8 8091 0000 		lds r24,dhcp_sip+2
+ 1141 05ac 8B83      		std Y+3,r24
+ 284:../freeRTOS750/lib_inet/dhcp.c **** 		ip.cVal[3] = dhcp_sip[3];
+ 1143               	.LM141:
+ 1144 05ae 8091 0000 		lds r24,dhcp_sip+3
+ 1145 05b2 8C83      		std Y+4,r24
+ 1146               	.L15:
+ 287:../freeRTOS750/lib_inet/dhcp.c **** 	if(0 == sendto(s, (uint8_t*)pRIPMSG, sizeof(RIP_MSG), ip.cVal, IP_PORT_DHCP_SERVER))
+ 1148               	.LM142:
+ 1149 05b4 03E4      		ldi r16,lo8(67)
+ 1150 05b6 10E0      		ldi r17,0
+ 1151 05b8 9E01      		movw r18,r28
+ 1152 05ba 2F5F      		subi r18,-1
+ 1153 05bc 3F4F      		sbci r19,-1
+ 1154 05be 44E2      		ldi r20,lo8(36)
+ 1155 05c0 52E0      		ldi r21,lo8(2)
+ 1156 05c2 B601      		movw r22,r12
+ 1157 05c4 8F2D      		mov r24,r15
+ 1158 05c6 0E94 0000 		call sendto
+ 1159 05ca 892B      		or r24,r25
+ 1160 05cc 01F4      		brne .L17
+ 289:../freeRTOS750/lib_inet/dhcp.c **** 		xSerialPrint_P(PSTR("\r\nDHCP: Fatal Error(1)."));
+ 1162               	.LM143:
+ 1163 05ce 80E0      		ldi r24,lo8(__c.2688)
+ 1164 05d0 90E0      		ldi r25,hi8(__c.2688)
+ 1165 05d2 0E94 0000 		call xSerialPrint_P
+ 290:../freeRTOS750/lib_inet/dhcp.c **** 		if ( dhcp_ip_conflict != 0 )
+ 1167               	.LM144:
+ 1168 05d6 E091 0000 		lds r30,dhcp_ip_conflict
+ 1169 05da F091 0000 		lds r31,dhcp_ip_conflict+1
+ 1170 05de 3097      		sbiw r30,0
+ 1171 05e0 01F0      		breq .L17
+ 291:../freeRTOS750/lib_inet/dhcp.c **** 			(*dhcp_ip_conflict)();
+ 1173               	.LM145:
+ 1174 05e2 0995      		icall
+ 1175               	.L17:
+ 294:../freeRTOS750/lib_inet/dhcp.c **** 	xSerialPrint_P(PSTR("\r\nsent DHCP_REQUEST\r\n"));
+ 1177               	.LM146:
+ 1178 05e4 80E0      		ldi r24,lo8(__c.2690)
+ 1179 05e6 90E0      		ldi r25,hi8(__c.2690)
+ 1180 05e8 0E94 0000 		call xSerialPrint_P
+ 1181               	/* epilogue start */
+ 296:../freeRTOS750/lib_inet/dhcp.c **** }
+ 1183               	.LM147:
+ 1184 05ec 0F90      		pop __tmp_reg__
+ 1185 05ee 0F90      		pop __tmp_reg__
+ 1186 05f0 0F90      		pop __tmp_reg__
+ 1187 05f2 0F90      		pop __tmp_reg__
+ 1188 05f4 0F90      		pop __tmp_reg__
+ 1189 05f6 DF91      		pop r29
+ 1190 05f8 CF91      		pop r28
+ 1191 05fa 1F91      		pop r17
+ 1192 05fc 0F91      		pop r16
+ 1193 05fe FF90      		pop r15
+ 1194 0600 DF90      		pop r13
+ 1195 0602 CF90      		pop r12
+ 1196 0604 0895      		ret
+ 1201               	.Lscope4:
+ 1203               		.stabd	78,0,0
+ 1206               	reset_DHCP_time:
+ 1207               		.stabd	46,0,0
+  73:../freeRTOS750/lib_inet/dhcp.c **** {
+ 1209               	.LM148:
+ 1210               	.LFBB5:
+ 1211               	/* prologue: function */
+ 1212               	/* frame size = 0 */
+ 1213               	/* stack size = 0 */
+ 1214               	.L__stack_usage = 0
+  74:../freeRTOS750/lib_inet/dhcp.c **** 	start_dhcp_time  = xTaskGetTickCount();
+ 1216               	.LM149:
+ 1217 0606 0E94 0000 		call xTaskGetTickCount
+ 1218 060a 9093 0000 		sts start_dhcp_time+1,r25
+ 1219 060e 8093 0000 		sts start_dhcp_time,r24
+  75:../freeRTOS750/lib_inet/dhcp.c **** 	next_dhcp_time = start_dhcp_time + DHCP_WAIT_TIME * 1000 / portTICK_RATE_MS;
+ 1221               	.LM150:
+ 1222 0612 0596      		adiw r24,5
+ 1223 0614 9093 0000 		sts next_dhcp_time+1,r25
+ 1224 0618 8093 0000 		sts next_dhcp_time,r24
+  77:../freeRTOS750/lib_inet/dhcp.c **** 	retry_count = 0;
+ 1226               	.LM151:
+ 1227 061c 1092 0000 		sts retry_count,__zero_reg__
+ 1228 0620 0895      		ret
+ 1230               	.Lscope5:
+ 1232               		.stabd	78,0,0
+ 1235               	check_DHCP_Timeout:
+ 1236               		.stabd	46,0,0
+ 673:../freeRTOS750/lib_inet/dhcp.c **** {
+ 1238               	.LM152:
+ 1239               	.LFBB6:
+ 1240 0622 CF93      		push r28
+ 1241 0624 DF93      		push r29
+ 1242               	/* prologue: function */
+ 1243               	/* frame size = 0 */
+ 1244               	/* stack size = 2 */
+ 1245               	.L__stack_usage = 2
+ 674:../freeRTOS750/lib_inet/dhcp.c **** 	if (retry_count < DHCP_MAX_RETRY)
+ 1247               	.LM153:
+ 1248 0626 8091 0000 		lds r24,retry_count
+ 1249 062a 8330      		cpi r24,lo8(3)
+ 1250 062c 00F4      		brsh .L25
+ 677:../freeRTOS750/lib_inet/dhcp.c **** 		if ( next_dhcp_time < xTaskGetTickCount() )
+ 1252               	.LM154:
+ 1253 062e C091 0000 		lds r28,next_dhcp_time
+ 1254 0632 D091 0000 		lds r29,next_dhcp_time+1
+ 1255 0636 0E94 0000 		call xTaskGetTickCount
+ 1256 063a C817      		cp r28,r24
+ 1257 063c D907      		cpc r29,r25
+ 1258 063e 00F4      		brsh .L24
+ 1259               	.LBB25:
+ 1260               	.LBB26:
+ 679:../freeRTOS750/lib_inet/dhcp.c **** 			start_dhcp_time  = xTaskGetTickCount() ;
+ 1262               	.LM155:
+ 1263 0640 0E94 0000 		call xTaskGetTickCount
+ 1264 0644 9093 0000 		sts start_dhcp_time+1,r25
+ 1265 0648 8093 0000 		sts start_dhcp_time,r24
+ 680:../freeRTOS750/lib_inet/dhcp.c **** 			next_dhcp_time = start_dhcp_time + DHCP_WAIT_TIME * 1000 / portTICK_RATE_MS;
+ 1267               	.LM156:
+ 1268 064c 0596      		adiw r24,5
+ 1269 064e 9093 0000 		sts next_dhcp_time+1,r25
+ 1270 0652 8093 0000 		sts next_dhcp_time,r24
+ 681:../freeRTOS750/lib_inet/dhcp.c **** 			retry_count++;
+ 1272               	.LM157:
+ 1273 0656 8091 0000 		lds r24,retry_count
+ 1274 065a 8F5F      		subi r24,lo8(-(1))
+ 1275 065c 8093 0000 		sts retry_count,r24
+ 682:../freeRTOS750/lib_inet/dhcp.c **** 			switch ( dhcp_state )
+ 1277               	.LM158:
+ 1278 0660 8091 0000 		lds r24,dhcp_state
+ 1279 0664 8230      		cpi r24,lo8(2)
+ 1280 0666 01F0      		breq .L28
+ 1281 0668 8430      		cpi r24,lo8(4)
+ 1282 066a 01F0      		breq .L29
+ 1283 066c 8130      		cpi r24,lo8(1)
+ 1284 066e 01F4      		brne .L24
+ 685:../freeRTOS750/lib_inet/dhcp.c **** 				xSerialPrint_P(PSTR("\r\n<timeout> state: DHCP_STATE_DISCOVER"));
+ 1286               	.LM159:
+ 1287 0670 80E0      		ldi r24,lo8(__c.2768)
+ 1288 0672 90E0      		ldi r25,hi8(__c.2768)
+ 1289 0674 0E94 0000 		call xSerialPrint_P
+ 1290 0678 00C0      		rjmp .L30
+ 1291               	.L28:
+ 690:../freeRTOS750/lib_inet/dhcp.c **** 				xSerialPrint_P(PSTR("\r\n<timeout> state: DHCP_STATE_REQUEST"));
+ 1293               	.LM160:
+ 1294 067a 80E0      		ldi r24,lo8(__c.2772)
+ 1295 067c 90E0      		ldi r25,hi8(__c.2772)
+ 1296 067e 00C0      		rjmp .L31
+ 1297               	.L29:
+ 695:../freeRTOS750/lib_inet/dhcp.c **** 				xSerialPrint_P(PSTR("\r\n<timeout> state: DHCP_STATE_REREQUEST"));
+ 1299               	.LM161:
+ 1300 0680 80E0      		ldi r24,lo8(__c.2775)
+ 1301 0682 90E0      		ldi r25,hi8(__c.2775)
+ 1302               	.L31:
+ 1303 0684 0E94 0000 		call xSerialPrint_P
+ 696:../freeRTOS750/lib_inet/dhcp.c **** 				send_DHCP_REQUEST(DHCPC_SOCK);
+ 1305               	.LM162:
+ 1306 0688 8091 0000 		lds r24,DHCPC_SOCK
+ 1307               	/* epilogue start */
+ 1308               	.LBE26:
+ 1309               	.LBE25:
+ 713:../freeRTOS750/lib_inet/dhcp.c **** }
+ 1311               	.LM163:
+ 1312 068c DF91      		pop r29
+ 1313 068e CF91      		pop r28
+ 1314               	.LBB28:
+ 1315               	.LBB27:
+ 696:../freeRTOS750/lib_inet/dhcp.c **** 				send_DHCP_REQUEST(DHCPC_SOCK);
+ 1317               	.LM164:
+ 1318 0690 0C94 0000 		jmp send_DHCP_REQUEST
+ 1319               	.L25:
+ 1320               	.LBE27:
+ 1321               	.LBE28:
+ 706:../freeRTOS750/lib_inet/dhcp.c **** 		reset_DHCP_time();
+ 1323               	.LM165:
+ 1324 0694 0E94 0000 		call reset_DHCP_time
+ 707:../freeRTOS750/lib_inet/dhcp.c **** 		DHCP_timeout = 1;
+ 1326               	.LM166:
+ 1327 0698 C1E0      		ldi r28,lo8(1)
+ 1328 069a C093 0000 		sts DHCP_timeout,r28
+ 709:../freeRTOS750/lib_inet/dhcp.c **** 		xSerialPrint_P(PSTR("\r\n<<timeout>> state: DHCP_STATE_DISCOVER"));
+ 1330               	.LM167:
+ 1331 069e 80E0      		ldi r24,lo8(__c.2778)
+ 1332 06a0 90E0      		ldi r25,hi8(__c.2778)
+ 1333 06a2 0E94 0000 		call xSerialPrint_P
+ 710:../freeRTOS750/lib_inet/dhcp.c **** 		dhcp_state = DHCP_STATE_DISCOVER;
+ 1335               	.LM168:
+ 1336 06a6 C093 0000 		sts dhcp_state,r28
+ 1337               	.L30:
+ 711:../freeRTOS750/lib_inet/dhcp.c **** 		send_DHCP_DISCOVER(DHCPC_SOCK);
+ 1339               	.LM169:
+ 1340 06aa 8091 0000 		lds r24,DHCPC_SOCK
+ 1341               	/* epilogue start */
+ 713:../freeRTOS750/lib_inet/dhcp.c **** }
+ 1343               	.LM170:
+ 1344 06ae DF91      		pop r29
+ 1345 06b0 CF91      		pop r28
+ 711:../freeRTOS750/lib_inet/dhcp.c **** 		send_DHCP_DISCOVER(DHCPC_SOCK);
+ 1347               	.LM171:
+ 1348 06b2 0C94 0000 		jmp send_DHCP_DISCOVER
+ 1349               	.L24:
+ 1350               	/* epilogue start */
+ 713:../freeRTOS750/lib_inet/dhcp.c **** }
+ 1352               	.LM172:
+ 1353 06b6 DF91      		pop r29
+ 1354 06b8 CF91      		pop r28
+ 1355 06ba 0895      		ret
+ 1357               	.Lscope6:
+ 1359               		.stabd	78,0,0
+ 1361               	.global	get_DHCP_socket
+ 1363               	get_DHCP_socket:
+ 1364               		.stabd	46,0,0
+  65:../freeRTOS750/lib_inet/dhcp.c **** {
+ 1366               	.LM173:
+ 1367               	.LFBB7:
+ 1368               	/* prologue: function */
+ 1369               	/* frame size = 0 */
+ 1370               	/* stack size = 0 */
+ 1371               	.L__stack_usage = 0
+  67:../freeRTOS750/lib_inet/dhcp.c **** }
+ 1373               	.LM174:
+ 1374 06bc 8091 0000 		lds r24,DHCPC_SOCK
+ 1375 06c0 0895      		ret
+ 1377               	.Lscope7:
+ 1379               		.stabd	78,0,0
+ 1382               	.global	check_DHCP_state
+ 1384               	check_DHCP_state:
+ 1385               		.stabd	46,0,0
+ 565:../freeRTOS750/lib_inet/dhcp.c **** {
+ 1387               	.LM175:
+ 1388               	.LFBB8:
+ 1389 06c2 2F92      		push r2
+ 1390 06c4 3F92      		push r3
+ 1391 06c6 4F92      		push r4
+ 1392 06c8 5F92      		push r5
+ 1393 06ca 6F92      		push r6
+ 1394 06cc 7F92      		push r7
+ 1395 06ce BF92      		push r11
+ 1396 06d0 CF92      		push r12
+ 1397 06d2 DF92      		push r13
+ 1398 06d4 EF92      		push r14
+ 1399 06d6 FF92      		push r15
+ 1400 06d8 0F93      		push r16
+ 1401 06da 1F93      		push r17
+ 1402 06dc CF93      		push r28
+ 1403 06de DF93      		push r29
+ 1404 06e0 CDB7      		in r28,__SP_L__
+ 1405 06e2 DEB7      		in r29,__SP_H__
+ 1406 06e4 2897      		sbiw r28,8
+ 1407 06e6 0FB6      		in __tmp_reg__,__SREG__
+ 1408 06e8 F894      		cli
+ 1409 06ea DEBF      		out __SP_H__,r29
+ 1410 06ec 0FBE      		out __SREG__,__tmp_reg__
+ 1411 06ee CDBF      		out __SP_L__,r28
+ 1412               	/* prologue: function */
+ 1413               	/* frame size = 8 */
+ 1414               	/* stack size = 23 */
+ 1415               	.L__stack_usage = 23
+ 1416 06f0 B82E      		mov r11,r24
+ 571:../freeRTOS750/lib_inet/dhcp.c **** 	if( s < MAX_SOCK_NUM && getSn_SR(s)!=SOCK_CLOSED)
+ 1418               	.LM176:
+ 1419 06f2 83E0      		ldi r24,lo8(3)
+ 1420 06f4 8B15      		cp r24,r11
+ 1421 06f6 00F4      		brsh .+2
+ 1422 06f8 00C0      		rjmp .L34
+ 571:../freeRTOS750/lib_inet/dhcp.c **** 	if( s < MAX_SOCK_NUM && getSn_SR(s)!=SOCK_CLOSED)
+ 1424               	.LM177:
+ 1425 06fa 8B2D      		mov r24,r11
+ 1426 06fc 0E94 0000 		call getSn_SR
+ 1427 0700 8823      		tst r24
+ 1428 0702 01F4      		brne .+2
+ 1429 0704 00C0      		rjmp .L34
+ 573:../freeRTOS750/lib_inet/dhcp.c **** 		if ((len = getSn_RX_RSR(s)) > 0)
+ 1431               	.LM178:
+ 1432 0706 8B2D      		mov r24,r11
+ 1433 0708 0E94 0000 		call getSn_RX_RSR
+ 1434 070c 0097      		sbiw r24,0
+ 1435 070e 01F4      		brne .L35
+ 1436 0710 00C0      		rjmp .L86
+ 1437               	.L35:
+ 1438               	.LBB42:
+ 1439               	.LBB43:
+ 414:../freeRTOS750/lib_inet/dhcp.c **** 	len = recvfrom(s, (uint8_t *)pRIPMSG, length, svr_addr, &svr_port);
+ 1441               	.LM179:
+ 1442 0712 6091 0000 		lds r22,pRIPMSG
+ 1443 0716 7091 0000 		lds r23,pRIPMSG+1
+ 1444 071a 8E01      		movw r16,r28
+ 1445 071c 095F      		subi r16,-7
+ 1446 071e 1F4F      		sbci r17,-1
+ 1447 0720 9E01      		movw r18,r28
+ 1448 0722 2F5F      		subi r18,-1
+ 1449 0724 3F4F      		sbci r19,-1
+ 1450 0726 AC01      		movw r20,r24
+ 1451 0728 8B2D      		mov r24,r11
+ 1452 072a 0E94 0000 		call recvfrom
+ 1453 072e 7C01      		movw r14,r24
+ 422:../freeRTOS750/lib_inet/dhcp.c **** 	if(pRIPMSG->op != DHCP_BOOTREPLY)
+ 1455               	.LM180:
+ 1456 0730 0091 0000 		lds r16,pRIPMSG
+ 1457 0734 1091 0000 		lds r17,pRIPMSG+1
+ 1458 0738 F801      		movw r30,r16
+ 1459 073a 8081      		ld r24,Z
+ 1460 073c 8230      		cpi r24,lo8(2)
+ 1461 073e 01F0      		breq .L37
+ 424:../freeRTOS750/lib_inet/dhcp.c **** 		xSerialPrint_P(PSTR("\r\nDHCP : NO DHCP MSG"));
+ 1463               	.LM181:
+ 1464 0740 80E0      		ldi r24,lo8(__c.2715)
+ 1465 0742 90E0      		ldi r25,hi8(__c.2715)
+ 1466 0744 00C0      		rjmp .L87
+ 1467               	.L37:
+ 428:../freeRTOS750/lib_inet/dhcp.c **** 		if (svr_port == IP_PORT_DHCP_SERVER)
+ 1469               	.LM182:
+ 1470 0746 8F81      		ldd r24,Y+7
+ 1471 0748 9885      		ldd r25,Y+8
+ 1472 074a 8334      		cpi r24,67
+ 1473 074c 9105      		cpc r25,__zero_reg__
+ 1474 074e 01F0      		breq .L39
+ 1475 0750 00C0      		rjmp .L86
+ 1476               	.L39:
+ 430:../freeRTOS750/lib_inet/dhcp.c **** 			if(memcmp(pRIPMSG->chaddr,src_mac_addr,6) != 0 || pRIPMSG->xid != htonl(DHCP_XID))
+ 1478               	.LM183:
+ 1479 0752 46E0      		ldi r20,lo8(6)
+ 1480 0754 50E0      		ldi r21,0
+ 1481 0756 60E0      		ldi r22,lo8(src_mac_addr)
+ 1482 0758 70E0      		ldi r23,hi8(src_mac_addr)
+ 1483 075a C801      		movw r24,r16
+ 1484 075c 4C96      		adiw r24,28
+ 1485 075e 0E94 0000 		call memcmp
+ 1486 0762 0097      		sbiw r24,0
+ 1487 0764 01F0      		breq .+2
+ 1488 0766 00C0      		rjmp .L86
+ 1489 0768 F801      		movw r30,r16
+ 1490 076a 4480      		ldd r4,Z+4
+ 1491 076c 5580      		ldd r5,Z+5
+ 1492 076e 6680      		ldd r6,Z+6
+ 1493 0770 7780      		ldd r7,Z+7
+ 1494 0772 6091 0000 		lds r22,DHCP_XID
+ 1495 0776 7091 0000 		lds r23,DHCP_XID+1
+ 1496 077a 8091 0000 		lds r24,DHCP_XID+2
+ 1497 077e 9091 0000 		lds r25,DHCP_XID+3
+ 1498 0782 0E94 0000 		call htonl
+ 1499 0786 4616      		cp r4,r22
+ 1500 0788 5706      		cpc r5,r23
+ 1501 078a 6806      		cpc r6,r24
+ 1502 078c 7906      		cpc r7,r25
+ 1503 078e 01F0      		breq .+2
+ 1504 0790 00C0      		rjmp .L86
+ 445:../freeRTOS750/lib_inet/dhcp.c **** 			if( *((uint32_t*)dhcp_sip) != 0x00000000 )
+ 1506               	.LM184:
+ 1507 0792 8091 0000 		lds r24,dhcp_sip
+ 1508 0796 9091 0000 		lds r25,dhcp_sip+1
+ 1509 079a A091 0000 		lds r26,dhcp_sip+2
+ 1510 079e B091 0000 		lds r27,dhcp_sip+3
+ 1511 07a2 0097      		sbiw r24,0
+ 1512 07a4 A105      		cpc r26,__zero_reg__
+ 1513 07a6 B105      		cpc r27,__zero_reg__
+ 1514 07a8 01F0      		breq .L41
+ 447:../freeRTOS750/lib_inet/dhcp.c **** 				if( *((uint32_t*)dhcp_real_sip) != *((uint32_t*)svr_addr) &&
+ 1516               	.LM185:
+ 1517 07aa 4981      		ldd r20,Y+1
+ 1518 07ac 5A81      		ldd r21,Y+2
+ 1519 07ae 6B81      		ldd r22,Y+3
+ 1520 07b0 7C81      		ldd r23,Y+4
+ 1521 07b2 4090 0000 		lds r4,dhcp_real_sip
+ 1522 07b6 5090 0000 		lds r5,dhcp_real_sip+1
+ 1523 07ba 6090 0000 		lds r6,dhcp_real_sip+2
+ 1524 07be 7090 0000 		lds r7,dhcp_real_sip+3
+ 1525 07c2 4416      		cp r4,r20
+ 1526 07c4 5506      		cpc r5,r21
+ 1527 07c6 6606      		cpc r6,r22
+ 1528 07c8 7706      		cpc r7,r23
+ 1529 07ca 01F0      		breq .L41
+ 1530 07cc 8417      		cp r24,r20
+ 1531 07ce 9507      		cpc r25,r21
+ 1532 07d0 A607      		cpc r26,r22
+ 1533 07d2 B707      		cpc r27,r23
+ 1534 07d4 01F0      		breq .+2
+ 1535 07d6 00C0      		rjmp .L86
+ 1536               	.L41:
+ 458:../freeRTOS750/lib_inet/dhcp.c **** 			memcpy(get_source_ip,pRIPMSG->yiaddr,4);
+ 1538               	.LM186:
+ 1539 07d8 E091 0000 		lds r30,pRIPMSG
+ 1540 07dc F091 0000 		lds r31,pRIPMSG+1
+ 1541 07e0 8089      		ldd r24,Z+16
+ 1542 07e2 9189      		ldd r25,Z+17
+ 1543 07e4 A289      		ldd r26,Z+18
+ 1544 07e6 B389      		ldd r27,Z+19
+ 1545 07e8 8093 0000 		sts get_source_ip,r24
+ 1546 07ec 9093 0000 		sts get_source_ip+1,r25
+ 1547 07f0 A093 0000 		sts get_source_ip+2,r26
+ 1548 07f4 B093 0000 		sts get_source_ip+3,r27
+ 460:../freeRTOS750/lib_inet/dhcp.c **** 			xSerialPrint_P(PSTR("\r\nDHCP MSG received..."));
+ 1550               	.LM187:
+ 1551 07f8 80E0      		ldi r24,lo8(__c.2717)
+ 1552 07fa 90E0      		ldi r25,hi8(__c.2717)
+ 1553 07fc 0E94 0000 		call xSerialPrint_P
+ 464:../freeRTOS750/lib_inet/dhcp.c **** 			p = p + 240;
+ 1555               	.LM188:
+ 1556 0800 8091 0000 		lds r24,pRIPMSG
+ 1557 0804 9091 0000 		lds r25,pRIPMSG+1
+ 465:../freeRTOS750/lib_inet/dhcp.c **** 			e = p + (len - 240);
+ 1559               	.LM189:
+ 1560 0808 FC01      		movw r30,r24
+ 1561 080a E051      		subi r30,16
+ 1562 080c FF4F      		sbci r31,-1
+ 1563 080e 6C01      		movw r12,r24
+ 1564 0810 CE0C      		add r12,r14
+ 1565 0812 DF1C      		adc r13,r15
+ 412:../freeRTOS750/lib_inet/dhcp.c **** 	uint8_t type, opt_len=0;
+ 1567               	.LM190:
+ 1568 0814 712C      		mov r7,__zero_reg__
+ 462:../freeRTOS750/lib_inet/dhcp.c **** 			type = 0;
+ 1570               	.LM191:
+ 1571 0816 10E0      		ldi r17,0
+ 1572 0818 00C0      		rjmp .L42
+ 1573               	.L55:
+ 473:../freeRTOS750/lib_inet/dhcp.c **** 				switch ( *p++ )
+ 1575               	.LM192:
+ 1576 081a 8081      		ld r24,Z
+ 1577 081c 8630      		cpi r24,lo8(6)
+ 1578 081e 01F4      		brne .+2
+ 1579 0820 00C0      		rjmp .L47
+ 1580 0822 00F4      		brsh .L51
+ 1581 0824 8130      		cpi r24,lo8(1)
+ 1582 0826 01F0      		breq .L45
+ 1583 0828 00F0      		brlo .L44
+ 1584 082a 8330      		cpi r24,lo8(3)
+ 1585 082c 01F0      		breq .+2
+ 1586 082e 00C0      		rjmp .L43
+ 1587 0830 00C0      		rjmp .L46
+ 1588               	.L51:
+ 1589 0832 8533      		cpi r24,lo8(53)
+ 1590 0834 01F0      		breq .L49
+ 1591 0836 00F4      		brsh .L52
+ 1592 0838 8333      		cpi r24,lo8(51)
+ 1593 083a 01F0      		breq .+2
+ 1594 083c 00C0      		rjmp .L43
+ 1595 083e 00C0      		rjmp .L48
+ 1596               	.L52:
+ 1597 0840 8633      		cpi r24,lo8(54)
+ 1598 0842 01F4      		brne .+2
+ 1599 0844 00C0      		rjmp .L50
+ 1600 0846 8F3F      		cpi r24,lo8(-1)
+ 1601 0848 01F0      		breq .+2
+ 1602 084a 00C0      		rjmp .L43
+ 1603 084c 00C0      		rjmp .L36
+ 1604               	.L44:
+ 1605 084e 7F01      		movw r14,r30
+ 1606 0850 8FEF      		ldi r24,-1
+ 1607 0852 E81A      		sub r14,r24
+ 1608 0854 F80A      		sbc r15,r24
+ 1609 0856 00C0      		rjmp .L53
+ 1610               	.L49:
+ 481:../freeRTOS750/lib_inet/dhcp.c **** 					opt_len = *p++;
+ 1612               	.LM193:
+ 1613 0858 7180      		ldd r7,Z+1
+ 1614 085a 7F01      		movw r14,r30
+ 1615 085c 82E0      		ldi r24,2
+ 1616 085e E80E      		add r14,r24
+ 1617 0860 F11C      		adc r15,__zero_reg__
+ 482:../freeRTOS750/lib_inet/dhcp.c **** 					type = *p;
+ 1619               	.LM194:
+ 1620 0862 1281      		ldd r17,Z+2
+ 1621 0864 00C0      		rjmp .L53
+ 1622               	.L45:
+ 488:../freeRTOS750/lib_inet/dhcp.c **** 					opt_len =* p++;
+ 1624               	.LM195:
+ 1625 0866 7180      		ldd r7,Z+1
+ 1626 0868 7F01      		movw r14,r30
+ 1627 086a 82E0      		ldi r24,2
+ 1628 086c E80E      		add r14,r24
+ 1629 086e F11C      		adc r15,__zero_reg__
+ 489:../freeRTOS750/lib_inet/dhcp.c **** 					memcpy(&get_sn_mask,p,4);
+ 1631               	.LM196:
+ 1632 0870 8281      		ldd r24,Z+2
+ 1633 0872 9381      		ldd r25,Z+3
+ 1634 0874 A481      		ldd r26,Z+4
+ 1635 0876 B581      		ldd r27,Z+5
+ 1636 0878 8093 0000 		sts get_sn_mask,r24
+ 1637 087c 9093 0000 		sts get_sn_mask+1,r25
+ 1638 0880 A093 0000 		sts get_sn_mask+2,r26
+ 1639 0884 B093 0000 		sts get_sn_mask+3,r27
+ 1640 0888 00C0      		rjmp .L53
+ 1641               	.L46:
+ 496:../freeRTOS750/lib_inet/dhcp.c **** 					opt_len = *p++;
+ 1643               	.LM197:
+ 1644 088a 7180      		ldd r7,Z+1
+ 1645 088c 7F01      		movw r14,r30
+ 1646 088e 82E0      		ldi r24,2
+ 1647 0890 E80E      		add r14,r24
+ 1648 0892 F11C      		adc r15,__zero_reg__
+ 497:../freeRTOS750/lib_inet/dhcp.c **** 					memcpy(get_gw_ip,p,4);
+ 1650               	.LM198:
+ 1651 0894 8281      		ldd r24,Z+2
+ 1652 0896 9381      		ldd r25,Z+3
+ 1653 0898 A481      		ldd r26,Z+4
+ 1654 089a B581      		ldd r27,Z+5
+ 1655 089c 8093 0000 		sts get_gw_ip,r24
+ 1656 08a0 9093 0000 		sts get_gw_ip+1,r25
+ 1657 08a4 A093 0000 		sts get_gw_ip+2,r26
+ 1658 08a8 B093 0000 		sts get_gw_ip+3,r27
+ 1659 08ac 00C0      		rjmp .L53
+ 1660               	.L47:
+ 504:../freeRTOS750/lib_inet/dhcp.c **** 					opt_len = *p++;
+ 1662               	.LM199:
+ 1663 08ae 7180      		ldd r7,Z+1
+ 1664 08b0 7F01      		movw r14,r30
+ 1665 08b2 82E0      		ldi r24,2
+ 1666 08b4 E80E      		add r14,r24
+ 1667 08b6 F11C      		adc r15,__zero_reg__
+ 505:../freeRTOS750/lib_inet/dhcp.c **** 					memcpy(get_dns_ip,p,4);
+ 1669               	.LM200:
+ 1670 08b8 8281      		ldd r24,Z+2
+ 1671 08ba 9381      		ldd r25,Z+3
+ 1672 08bc A481      		ldd r26,Z+4
+ 1673 08be B581      		ldd r27,Z+5
+ 1674 08c0 8093 0000 		sts get_dns_ip,r24
+ 1675 08c4 9093 0000 		sts get_dns_ip+1,r25
+ 1676 08c8 A093 0000 		sts get_dns_ip+2,r26
+ 1677 08cc B093 0000 		sts get_dns_ip+3,r27
+ 1678 08d0 00C0      		rjmp .L53
+ 1679               	.L48:
+ 508:../freeRTOS750/lib_inet/dhcp.c **** 					opt_len = *p++;
+ 1681               	.LM201:
+ 1682 08d2 7180      		ldd r7,Z+1
+ 1683 08d4 7F01      		movw r14,r30
+ 1684 08d6 82E0      		ldi r24,2
+ 1685 08d8 E80E      		add r14,r24
+ 1686 08da F11C      		adc r15,__zero_reg__
+ 509:../freeRTOS750/lib_inet/dhcp.c **** 					lease_time.lVal = ntohl(*((uint32_t*)p));
+ 1688               	.LM202:
+ 1689 08dc 6281      		ldd r22,Z+2
+ 1690 08de 7381      		ldd r23,Z+3
+ 1691 08e0 8481      		ldd r24,Z+4
+ 1692 08e2 9581      		ldd r25,Z+5
+ 1693 08e4 0E94 0000 		call ntohl
+ 1694 08e8 6093 0000 		sts lease_time,r22
+ 1695 08ec 7093 0000 		sts lease_time+1,r23
+ 1696 08f0 8093 0000 		sts lease_time+2,r24
+ 1697 08f4 9093 0000 		sts lease_time+3,r25
+ 1698 08f8 00C0      		rjmp .L53
+ 1699               	.L50:
+ 516:../freeRTOS750/lib_inet/dhcp.c **** 					opt_len = *p++;
+ 1701               	.LM203:
+ 1702 08fa 7180      		ldd r7,Z+1
+ 1703 08fc 7F01      		movw r14,r30
+ 1704 08fe 82E0      		ldi r24,2
+ 1705 0900 E80E      		add r14,r24
+ 1706 0902 F11C      		adc r15,__zero_reg__
+ 520:../freeRTOS750/lib_inet/dhcp.c **** 					if( *((uint32_t*)dhcp_sip) == 0 ||
+ 1708               	.LM204:
+ 1709 0904 8091 0000 		lds r24,dhcp_sip
+ 1710 0908 9091 0000 		lds r25,dhcp_sip+1
+ 1711 090c A091 0000 		lds r26,dhcp_sip+2
+ 1712 0910 B091 0000 		lds r27,dhcp_sip+3
+ 1713 0914 0097      		sbiw r24,0
+ 1714 0916 A105      		cpc r26,__zero_reg__
+ 1715 0918 B105      		cpc r27,__zero_reg__
+ 1716 091a 01F0      		breq .L54
+ 521:../freeRTOS750/lib_inet/dhcp.c **** 					    *((uint32_t*)dhcp_real_sip) == *((uint32_t*)svr_addr) ||
+ 1718               	.LM205:
+ 1719 091c 4981      		ldd r20,Y+1
+ 1720 091e 5A81      		ldd r21,Y+2
+ 1721 0920 6B81      		ldd r22,Y+3
+ 1722 0922 7C81      		ldd r23,Y+4
+ 520:../freeRTOS750/lib_inet/dhcp.c **** 					if( *((uint32_t*)dhcp_sip) == 0 ||
+ 1724               	.LM206:
+ 1725 0924 2090 0000 		lds r2,dhcp_real_sip
+ 1726 0928 3090 0000 		lds r3,dhcp_real_sip+1
+ 1727 092c 4090 0000 		lds r4,dhcp_real_sip+2
+ 1728 0930 5090 0000 		lds r5,dhcp_real_sip+3
+ 1729 0934 2416      		cp r2,r20
+ 1730 0936 3506      		cpc r3,r21
+ 1731 0938 4606      		cpc r4,r22
+ 1732 093a 5706      		cpc r5,r23
+ 1733 093c 01F0      		breq .L54
+ 521:../freeRTOS750/lib_inet/dhcp.c **** 					    *((uint32_t*)dhcp_real_sip) == *((uint32_t*)svr_addr) ||
+ 1735               	.LM207:
+ 1736 093e 8417      		cp r24,r20
+ 1737 0940 9507      		cpc r25,r21
+ 1738 0942 A607      		cpc r26,r22
+ 1739 0944 B707      		cpc r27,r23
+ 1740 0946 01F4      		brne .L53
+ 1741               	.L54:
+ 524:../freeRTOS750/lib_inet/dhcp.c **** 						memcpy(dhcp_sip,p,4);
+ 1743               	.LM208:
+ 1744 0948 8281      		ldd r24,Z+2
+ 1745 094a 9381      		ldd r25,Z+3
+ 1746 094c A481      		ldd r26,Z+4
+ 1747 094e B581      		ldd r27,Z+5
+ 1748 0950 8093 0000 		sts dhcp_sip,r24
+ 1749 0954 9093 0000 		sts dhcp_sip+1,r25
+ 1750 0958 A093 0000 		sts dhcp_sip+2,r26
+ 1751 095c B093 0000 		sts dhcp_sip+3,r27
+ 525:../freeRTOS750/lib_inet/dhcp.c **** 						memcpy(dhcp_real_sip,svr_addr,4);	// Copy the real ip address of my DHCP server
+ 1753               	.LM209:
+ 1754 0960 8981      		ldd r24,Y+1
+ 1755 0962 9A81      		ldd r25,Y+2
+ 1756 0964 AB81      		ldd r26,Y+3
+ 1757 0966 BC81      		ldd r27,Y+4
+ 1758 0968 8093 0000 		sts dhcp_real_sip,r24
+ 1759 096c 9093 0000 		sts dhcp_real_sip+1,r25
+ 1760 0970 A093 0000 		sts dhcp_real_sip+2,r26
+ 1761 0974 B093 0000 		sts dhcp_real_sip+3,r27
+ 1762 0978 00C0      		rjmp .L53
+ 1763               	.L43:
+ 544:../freeRTOS750/lib_inet/dhcp.c **** 					opt_len = *p++;
+ 1765               	.LM210:
+ 1766 097a 7180      		ldd r7,Z+1
+ 1767 097c 7F01      		movw r14,r30
+ 1768 097e 82E0      		ldi r24,2
+ 1769 0980 E80E      		add r14,r24
+ 1770 0982 F11C      		adc r15,__zero_reg__
+ 1771               	.L53:
+ 550:../freeRTOS750/lib_inet/dhcp.c **** 				p+=opt_len;
+ 1773               	.LM211:
+ 1774 0984 F701      		movw r30,r14
+ 1775 0986 E70D      		add r30,r7
+ 1776 0988 F11D      		adc r31,__zero_reg__
+ 1777               	.L42:
+ 471:../freeRTOS750/lib_inet/dhcp.c **** 			while ( p < e )
+ 1779               	.LM212:
+ 1780 098a EC15      		cp r30,r12
+ 1781 098c FD05      		cpc r31,r13
+ 1782 098e 00F4      		brsh .+2
+ 1783 0990 00C0      		rjmp .L55
+ 1784 0992 00C0      		rjmp .L86
+ 1785               	.L34:
+ 1786               	.LBE43:
+ 1787               	.LBE42:
+ 578:../freeRTOS750/lib_inet/dhcp.c **** 	else if(!socket(s, Sn_MR_UDP, IP_PORT_DHCP_CLIENT, 0x00))
+ 1789               	.LM213:
+ 1790 0994 20E0      		ldi r18,0
+ 1791 0996 44E4      		ldi r20,lo8(68)
+ 1792 0998 50E0      		ldi r21,0
+ 1793 099a 62E0      		ldi r22,lo8(2)
+ 1794 099c 8B2D      		mov r24,r11
+ 1795 099e 0E94 0000 		call socket
+ 1796 09a2 8111      		cpse r24,__zero_reg__
+ 1797 09a4 00C0      		rjmp .L86
+ 580:../freeRTOS750/lib_inet/dhcp.c **** 		xSerialPrint_P(PSTR("\r\nFail to create the DHCPC_SOCK(%d)"));
+ 1799               	.LM214:
+ 1800 09a6 80E0      		ldi r24,lo8(__c.2737)
+ 1801 09a8 90E0      		ldi r25,hi8(__c.2737)
+ 1802               	.L87:
+ 1803 09aa 0E94 0000 		call xSerialPrint_P
+ 1804               	.L86:
+ 569:../freeRTOS750/lib_inet/dhcp.c **** 	type = 0;
+ 1806               	.LM215:
+ 1807 09ae 10E0      		ldi r17,0
+ 1808               	.L36:
+ 584:../freeRTOS750/lib_inet/dhcp.c **** 	switch ( dhcp_state )
+ 1810               	.LM216:
+ 1811 09b0 8091 0000 		lds r24,dhcp_state
+ 1812 09b4 8230      		cpi r24,lo8(2)
+ 1813 09b6 01F0      		breq .L59
+ 1814 09b8 00F4      		brsh .L62
+ 1815 09ba 8130      		cpi r24,lo8(1)
+ 1816 09bc 01F0      		breq .+2
+ 1817 09be 00C0      		rjmp .L33
+ 1818 09c0 00C0      		rjmp .L58
+ 1819               	.L62:
+ 1820 09c2 8330      		cpi r24,lo8(3)
+ 1821 09c4 01F0      		breq .L60
+ 1822 09c6 8430      		cpi r24,lo8(4)
+ 1823 09c8 01F0      		breq .+2
+ 1824 09ca 00C0      		rjmp .L33
+ 1825 09cc 00C0      		rjmp .L61
+ 1826               	.L58:
+ 587:../freeRTOS750/lib_inet/dhcp.c **** 		if (type == DHCP_OFFER)
+ 1828               	.LM217:
+ 1829 09ce 1230      		cpi r17,lo8(2)
+ 1830 09d0 01F4      		brne .L63
+ 589:../freeRTOS750/lib_inet/dhcp.c **** 			xSerialPrint_P(PSTR("\r\nstate: DHCP_STATE_REQUEST\r\n"));
+ 1832               	.LM218:
+ 1833 09d2 80E0      		ldi r24,lo8(__c.2740)
+ 1834 09d4 90E0      		ldi r25,hi8(__c.2740)
+ 1835 09d6 0E94 0000 		call xSerialPrint_P
+ 590:../freeRTOS750/lib_inet/dhcp.c **** 			dhcp_state = DHCP_STATE_REQUEST;
+ 1837               	.LM219:
+ 1838 09da 1093 0000 		sts dhcp_state,r17
+ 1839 09de 00C0      		rjmp .L92
+ 1840               	.L63:
+ 594:../freeRTOS750/lib_inet/dhcp.c **** 		else check_DHCP_Timeout();
+ 1842               	.LM220:
+ 1843 09e0 0E94 0000 		call check_DHCP_Timeout
+ 1844 09e4 00C0      		rjmp .L33
+ 1845               	.L59:
+ 598:../freeRTOS750/lib_inet/dhcp.c **** 		if (type == DHCP_ACK)
+ 1847               	.LM221:
+ 1848 09e6 1530      		cpi r17,lo8(5)
+ 1849 09e8 01F4      		brne .L64
+ 600:../freeRTOS750/lib_inet/dhcp.c **** 			reset_DHCP_time();
+ 1851               	.LM222:
+ 1852 09ea 0E94 0000 		call reset_DHCP_time
+ 603:../freeRTOS750/lib_inet/dhcp.c **** 				xSerialPrint_P(PSTR("\r\nstate: DHCP_STATE_LEASED\r\n"));
+ 1854               	.LM223:
+ 1855 09ee 80E0      		ldi r24,lo8(__c.2744)
+ 1856 09f0 90E0      		ldi r25,hi8(__c.2744)
+ 1857 09f2 0E94 0000 		call xSerialPrint_P
+ 604:../freeRTOS750/lib_inet/dhcp.c **** 				dhcp_state = DHCP_STATE_LEASED;
+ 1859               	.LM224:
+ 1860 09f6 83E0      		ldi r24,lo8(3)
+ 1861 09f8 8093 0000 		sts dhcp_state,r24
+ 605:../freeRTOS750/lib_inet/dhcp.c **** 				set_DHCP_network();
+ 1863               	.LM225:
+ 1864 09fc 0E94 0000 		call set_DHCP_network
+ 1865 0a00 00C0      		rjmp .L33
+ 1866               	.L64:
+ 613:../freeRTOS750/lib_inet/dhcp.c **** 		else if (type == DHCP_NAK)
+ 1868               	.LM226:
+ 1869 0a02 1630      		cpi r17,lo8(6)
+ 1870 0a04 01F4      		brne .L63
+ 615:../freeRTOS750/lib_inet/dhcp.c **** 			xSerialPrint_P(PSTR("\r\nstate: DHCP_STATE_DISCOVER\r\n"));
+ 1872               	.LM227:
+ 1873 0a06 80E0      		ldi r24,lo8(__c.2748)
+ 1874 0a08 90E0      		ldi r25,hi8(__c.2748)
+ 1875 0a0a 00C0      		rjmp .L89
+ 1876               	.L60:
+ 623:../freeRTOS750/lib_inet/dhcp.c **** 		if ((lease_time.lVal != 0xffffffff) && (((lease_time.lVal/2)* 1000 / portTICK_RATE_MS) < (xTaskGe
+ 1878               	.LM228:
+ 1879 0a0c C090 0000 		lds r12,lease_time
+ 1880 0a10 D090 0000 		lds r13,lease_time+1
+ 1881 0a14 E090 0000 		lds r14,lease_time+2
+ 1882 0a18 F090 0000 		lds r15,lease_time+3
+ 1883 0a1c EFEF      		ldi r30,-1
+ 1884 0a1e CE16      		cp r12,r30
+ 1885 0a20 DE06      		cpc r13,r30
+ 1886 0a22 EE06      		cpc r14,r30
+ 1887 0a24 FE06      		cpc r15,r30
+ 1888 0a26 01F4      		brne .+2
+ 1889 0a28 00C0      		rjmp .L33
+ 623:../freeRTOS750/lib_inet/dhcp.c **** 		if ((lease_time.lVal != 0xffffffff) && (((lease_time.lVal/2)* 1000 / portTICK_RATE_MS) < (xTaskGe
+ 1891               	.LM229:
+ 1892 0a2a 0E94 0000 		call xTaskGetTickCount
+ 1893 0a2e 3C01      		movw r6,r24
+ 1894 0a30 A701      		movw r20,r14
+ 1895 0a32 9601      		movw r18,r12
+ 1896 0a34 5695      		lsr r21
+ 1897 0a36 4795      		ror r20
+ 1898 0a38 3795      		ror r19
+ 1899 0a3a 2795      		ror r18
+ 1900 0a3c A8EE      		ldi r26,lo8(-24)
+ 1901 0a3e B3E0      		ldi r27,lo8(3)
+ 1902 0a40 0E94 0000 		call __muluhisi3
+ 1903 0a44 28EE      		ldi r18,lo8(-24)
+ 1904 0a46 33E0      		ldi r19,lo8(3)
+ 1905 0a48 40E0      		ldi r20,0
+ 1906 0a4a 50E0      		ldi r21,0
+ 1907 0a4c 0E94 0000 		call __udivmodsi4
+ 1908 0a50 8091 0000 		lds r24,start_dhcp_time
+ 1909 0a54 9091 0000 		lds r25,start_dhcp_time+1
+ 1910 0a58 681A      		sub r6,r24
+ 1911 0a5a 790A      		sbc r7,r25
+ 1912 0a5c C301      		movw r24,r6
+ 1913 0a5e A0E0      		ldi r26,0
+ 1914 0a60 B0E0      		ldi r27,0
+ 1915 0a62 2817      		cp r18,r24
+ 1916 0a64 3907      		cpc r19,r25
+ 1917 0a66 4A07      		cpc r20,r26
+ 1918 0a68 5B07      		cpc r21,r27
+ 1919 0a6a 00F0      		brlo .+2
+ 1920 0a6c 00C0      		rjmp .L33
+ 625:../freeRTOS750/lib_inet/dhcp.c **** 			xSerialPrint_P(PSTR("\r\nstate: DHCP_STATE_REREQUEST\r\n"));
+ 1922               	.LM230:
+ 1923 0a6e 80E0      		ldi r24,lo8(__c.2751)
+ 1924 0a70 90E0      		ldi r25,hi8(__c.2751)
+ 1925 0a72 0E94 0000 		call xSerialPrint_P
+ 627:../freeRTOS750/lib_inet/dhcp.c **** 			memcpy(old_sip,get_source_ip,4);
+ 1927               	.LM231:
+ 1928 0a76 8091 0000 		lds r24,get_source_ip
+ 1929 0a7a 9091 0000 		lds r25,get_source_ip+1
+ 1930 0a7e A091 0000 		lds r26,get_source_ip+2
+ 1931 0a82 B091 0000 		lds r27,get_source_ip+3
+ 1932 0a86 8093 0000 		sts old_sip,r24
+ 1933 0a8a 9093 0000 		sts old_sip+1,r25
+ 1934 0a8e A093 0000 		sts old_sip+2,r26
+ 1935 0a92 B093 0000 		sts old_sip+3,r27
+ 628:../freeRTOS750/lib_inet/dhcp.c **** 			DHCP_XID++;
+ 1937               	.LM232:
+ 1938 0a96 4091 0000 		lds r20,DHCP_XID
+ 1939 0a9a 5091 0000 		lds r21,DHCP_XID+1
+ 1940 0a9e 6091 0000 		lds r22,DHCP_XID+2
+ 1941 0aa2 7091 0000 		lds r23,DHCP_XID+3
+ 1942 0aa6 4F5F      		subi r20,-1
+ 1943 0aa8 5F4F      		sbci r21,-1
+ 1944 0aaa 6F4F      		sbci r22,-1
+ 1945 0aac 7F4F      		sbci r23,-1
+ 1946 0aae 4093 0000 		sts DHCP_XID,r20
+ 1947 0ab2 5093 0000 		sts DHCP_XID+1,r21
+ 1948 0ab6 6093 0000 		sts DHCP_XID+2,r22
+ 1949 0aba 7093 0000 		sts DHCP_XID+3,r23
+ 629:../freeRTOS750/lib_inet/dhcp.c **** 			dhcp_state = DHCP_STATE_REREQUEST;
+ 1951               	.LM233:
+ 1952 0abe 84E0      		ldi r24,lo8(4)
+ 1953 0ac0 8093 0000 		sts dhcp_state,r24
+ 1954               	.L92:
+ 630:../freeRTOS750/lib_inet/dhcp.c **** 			send_DHCP_REQUEST(s);
+ 1956               	.LM234:
+ 1957 0ac4 8B2D      		mov r24,r11
+ 1958 0ac6 0E94 0000 		call send_DHCP_REQUEST
+ 1959 0aca 00C0      		rjmp .L91
+ 1960               	.L61:
+ 636:../freeRTOS750/lib_inet/dhcp.c **** 		if (type == DHCP_ACK)
+ 1962               	.LM235:
+ 1963 0acc 1530      		cpi r17,lo8(5)
+ 1964 0ace 01F0      		breq .+2
+ 1965 0ad0 00C0      		rjmp .L67
+ 638:../freeRTOS750/lib_inet/dhcp.c **** 			if(memcmp(old_sip,get_source_ip,4)!=0)
+ 1967               	.LM236:
+ 1968 0ad2 44E0      		ldi r20,lo8(4)
+ 1969 0ad4 50E0      		ldi r21,0
+ 1970 0ad6 60E0      		ldi r22,lo8(get_source_ip)
+ 1971 0ad8 70E0      		ldi r23,hi8(get_source_ip)
+ 1972 0ada 80E0      		ldi r24,lo8(old_sip)
+ 1973 0adc 90E0      		ldi r25,hi8(old_sip)
+ 1974 0ade 0E94 0000 		call memcmp
+ 1975 0ae2 0097      		sbiw r24,0
+ 1976 0ae4 01F0      		breq .L68
+ 640:../freeRTOS750/lib_inet/dhcp.c **** 				xSerialPrintf_P(PSTR("\r\nold_sip=%s,get_source_ip=%s"),inet_ntoa(ntohl(*((uint32_t*)old_sip)))
+ 1978               	.LM237:
+ 1979 0ae6 6091 0000 		lds r22,get_source_ip
+ 1980 0aea 7091 0000 		lds r23,get_source_ip+1
+ 1981 0aee 8091 0000 		lds r24,get_source_ip+2
+ 1982 0af2 9091 0000 		lds r25,get_source_ip+3
+ 1983 0af6 0E94 0000 		call ntohl
+ 1984 0afa 0E94 0000 		call inet_ntoa
+ 1985 0afe 182F      		mov r17,r24
+ 1986 0b00 092F      		mov r16,r25
+ 1987 0b02 6091 0000 		lds r22,old_sip
+ 1988 0b06 7091 0000 		lds r23,old_sip+1
+ 1989 0b0a 8091 0000 		lds r24,old_sip+2
+ 1990 0b0e 9091 0000 		lds r25,old_sip+3
+ 1991 0b12 0E94 0000 		call ntohl
+ 1992 0b16 0E94 0000 		call inet_ntoa
+ 1993 0b1a 0F93      		push r16
+ 1994 0b1c 1F93      		push r17
+ 1995 0b1e 9F93      		push r25
+ 1996 0b20 8F93      		push r24
+ 1997 0b22 80E0      		ldi r24,lo8(__c.2754)
+ 1998 0b24 90E0      		ldi r25,hi8(__c.2754)
+ 1999 0b26 9F93      		push r25
+ 2000 0b28 8F93      		push r24
+ 2001 0b2a 0E94 0000 		call xSerialPrintf_P
+ 641:../freeRTOS750/lib_inet/dhcp.c **** 				if ( dhcp_ip_update != 0 )
+ 2003               	.LM238:
+ 2004 0b2e E091 0000 		lds r30,dhcp_ip_update
+ 2005 0b32 F091 0000 		lds r31,dhcp_ip_update+1
+ 2006 0b36 0F90      		pop __tmp_reg__
+ 2007 0b38 0F90      		pop __tmp_reg__
+ 2008 0b3a 0F90      		pop __tmp_reg__
+ 2009 0b3c 0F90      		pop __tmp_reg__
+ 2010 0b3e 0F90      		pop __tmp_reg__
+ 2011 0b40 0F90      		pop __tmp_reg__
+ 2012 0b42 3097      		sbiw r30,0
+ 2013 0b44 01F0      		breq .L69
+ 642:../freeRTOS750/lib_inet/dhcp.c **** 					(*dhcp_ip_update)();
+ 2015               	.LM239:
+ 2016 0b46 0995      		icall
+ 2017               	.L69:
+ 643:../freeRTOS750/lib_inet/dhcp.c **** 				xSerialPrint_P(PSTR("\r\nThe IP address from the DHCP server is updated."));
+ 2019               	.LM240:
+ 2020 0b48 80E0      		ldi r24,lo8(__c.2756)
+ 2021 0b4a 90E0      		ldi r25,hi8(__c.2756)
+ 2022 0b4c 00C0      		rjmp .L88
+ 2023               	.L68:
+ 647:../freeRTOS750/lib_inet/dhcp.c **** 				xSerialPrint_P(PSTR("\r\nstate: DHCP_STATE_LEASED same IP\r\n"));
+ 2025               	.LM241:
+ 2026 0b4e 80E0      		ldi r24,lo8(__c.2758)
+ 2027 0b50 90E0      		ldi r25,hi8(__c.2758)
+ 2028               	.L88:
+ 2029 0b52 0E94 0000 		call xSerialPrint_P
+ 649:../freeRTOS750/lib_inet/dhcp.c **** 			dhcp_state = DHCP_STATE_LEASED;
+ 2031               	.LM242:
+ 2032 0b56 83E0      		ldi r24,lo8(3)
+ 2033 0b58 00C0      		rjmp .L90
+ 2034               	.L67:
+ 652:../freeRTOS750/lib_inet/dhcp.c **** 		else if (type == DHCP_NAK)
+ 2036               	.LM243:
+ 2037 0b5a 1630      		cpi r17,lo8(6)
+ 2038 0b5c 01F0      		breq .+2
+ 2039 0b5e 00C0      		rjmp .L63
+ 654:../freeRTOS750/lib_inet/dhcp.c **** 			xSerialPrint_P(PSTR("\r\nstate: DHCP_STATE_DISCOVER\r\n"));
+ 2041               	.LM244:
+ 2042 0b60 80E0      		ldi r24,lo8(__c.2760)
+ 2043 0b62 90E0      		ldi r25,hi8(__c.2760)
+ 2044               	.L89:
+ 2045 0b64 0E94 0000 		call xSerialPrint_P
+ 655:../freeRTOS750/lib_inet/dhcp.c **** 			dhcp_state = DHCP_STATE_DISCOVER;
+ 2047               	.LM245:
+ 2048 0b68 81E0      		ldi r24,lo8(1)
+ 2049               	.L90:
+ 2050 0b6a 8093 0000 		sts dhcp_state,r24
+ 2051               	.L91:
+ 656:../freeRTOS750/lib_inet/dhcp.c **** 			reset_DHCP_time();
+ 2053               	.LM246:
+ 2054 0b6e 0E94 0000 		call reset_DHCP_time
+ 2055               	.L33:
+ 2056               	/* epilogue start */
+ 666:../freeRTOS750/lib_inet/dhcp.c **** }
+ 2058               	.LM247:
+ 2059 0b72 2896      		adiw r28,8
+ 2060 0b74 0FB6      		in __tmp_reg__,__SREG__
+ 2061 0b76 F894      		cli
+ 2062 0b78 DEBF      		out __SP_H__,r29
+ 2063 0b7a 0FBE      		out __SREG__,__tmp_reg__
+ 2064 0b7c CDBF      		out __SP_L__,r28
+ 2065 0b7e DF91      		pop r29
+ 2066 0b80 CF91      		pop r28
+ 2067 0b82 1F91      		pop r17
+ 2068 0b84 0F91      		pop r16
+ 2069 0b86 FF90      		pop r15
+ 2070 0b88 EF90      		pop r14
+ 2071 0b8a DF90      		pop r13
+ 2072 0b8c CF90      		pop r12
+ 2073 0b8e BF90      		pop r11
+ 2074 0b90 7F90      		pop r7
+ 2075 0b92 6F90      		pop r6
+ 2076 0b94 5F90      		pop r5
+ 2077 0b96 4F90      		pop r4
+ 2078 0b98 3F90      		pop r3
+ 2079 0b9a 2F90      		pop r2
+ 2080 0b9c 0895      		ret
+ 2093               	.Lscope8:
+ 2095               		.stabd	78,0,0
+ 2097               	.global	getIP_DHCPS
+ 2099               	getIP_DHCPS:
+ 2100               		.stabd	46,0,0
+ 781:../freeRTOS750/lib_inet/dhcp.c **** {
+ 2102               	.LM248:
+ 2103               	.LFBB9:
+ 2104               	/* prologue: function */
+ 2105               	/* frame size = 0 */
+ 2106               	/* stack size = 0 */
+ 2107               	.L__stack_usage = 0
+ 782:../freeRTOS750/lib_inet/dhcp.c **** 	send_DHCP_DISCOVER(DHCPC_SOCK);
+ 2109               	.LM249:
+ 2110 0b9e 8091 0000 		lds r24,DHCPC_SOCK
+ 2111 0ba2 0E94 0000 		call send_DHCP_DISCOVER
+ 783:../freeRTOS750/lib_inet/dhcp.c **** 	dhcp_state = DHCP_STATE_DISCOVER;
+ 2113               	.LM250:
+ 2114 0ba6 81E0      		ldi r24,lo8(1)
+ 2115 0ba8 8093 0000 		sts dhcp_state,r24
+ 785:../freeRTOS750/lib_inet/dhcp.c **** 	reset_DHCP_time();
+ 2117               	.LM251:
+ 2118 0bac 0E94 0000 		call reset_DHCP_time
+ 786:../freeRTOS750/lib_inet/dhcp.c **** 	DHCP_timeout = 0;
+ 2120               	.LM252:
+ 2121 0bb0 1092 0000 		sts DHCP_timeout,__zero_reg__
+ 788:../freeRTOS750/lib_inet/dhcp.c **** 	while (dhcp_state != DHCP_STATE_LEASED)
+ 2123               	.LM253:
+ 2124 0bb4 00C0      		rjmp .L94
+ 2125               	.L96:
+ 790:../freeRTOS750/lib_inet/dhcp.c **** 		if (DHCP_timeout == 1)
+ 2127               	.LM254:
+ 2128 0bb6 8091 0000 		lds r24,DHCP_timeout
+ 2129 0bba 8130      		cpi r24,lo8(1)
+ 2130 0bbc 01F0      		breq .L97
+ 794:../freeRTOS750/lib_inet/dhcp.c **** 		check_DHCP_state(DHCPC_SOCK);
+ 2132               	.LM255:
+ 2133 0bbe 8091 0000 		lds r24,DHCPC_SOCK
+ 2134 0bc2 0E94 0000 		call check_DHCP_state
+ 795:../freeRTOS750/lib_inet/dhcp.c **** 		vTaskDelay(  100 / portTICK_RATE_MS  );
+ 2136               	.LM256:
+ 2137 0bc6 80E0      		ldi r24,0
+ 2138 0bc8 90E0      		ldi r25,0
+ 2139 0bca 0E94 0000 		call vTaskDelay
+ 2140               	.L94:
+ 788:../freeRTOS750/lib_inet/dhcp.c **** 	while (dhcp_state != DHCP_STATE_LEASED)
+ 2142               	.LM257:
+ 2143 0bce 8091 0000 		lds r24,dhcp_state
+ 2144 0bd2 8330      		cpi r24,lo8(3)
+ 2145 0bd4 01F4      		brne .L96
+ 797:../freeRTOS750/lib_inet/dhcp.c **** 	return 1;
+ 2147               	.LM258:
+ 2148 0bd6 81E0      		ldi r24,lo8(1)
+ 2149 0bd8 0895      		ret
+ 2150               	.L97:
+ 792:../freeRTOS750/lib_inet/dhcp.c **** 			return 0;
+ 2152               	.LM259:
+ 2153 0bda 80E0      		ldi r24,0
+ 798:../freeRTOS750/lib_inet/dhcp.c **** }
+ 2155               	.LM260:
+ 2156 0bdc 0895      		ret
+ 2158               	.Lscope9:
+ 2160               		.stabd	78,0,0
+ 2163               	.global	init_dhcpc_ch
+ 2165               	init_dhcpc_ch:
+ 2166               		.stabd	46,0,0
+ 829:../freeRTOS750/lib_inet/dhcp.c **** 			"Retry to get a IP address from DHCP server\r\n"));
+ 830:../freeRTOS750/lib_inet/dhcp.c **** }
+ 831:../freeRTOS750/lib_inet/dhcp.c **** 
+ 832:../freeRTOS750/lib_inet/dhcp.c **** 
+ 833:../freeRTOS750/lib_inet/dhcp.c **** /**
+ 834:../freeRTOS750/lib_inet/dhcp.c ****  * @brief		Initialise the socket for DHCP client
+ 835:../freeRTOS750/lib_inet/dhcp.c ****  */
+ 836:../freeRTOS750/lib_inet/dhcp.c **** uint8_t init_dhcpc_ch(SOCKET s)
+ 837:../freeRTOS750/lib_inet/dhcp.c **** {
+ 2168               	.LM261:
+ 2169               	.LFBB10:
+ 2170 0bde CF93      		push r28
+ 2171               	/* prologue: function */
+ 2172               	/* frame size = 0 */
+ 2173               	/* stack size = 1 */
+ 2174               	.L__stack_usage = 1
+ 2175 0be0 C82F      		mov r28,r24
+ 838:../freeRTOS750/lib_inet/dhcp.c **** 	uint8_t ret;
+ 839:../freeRTOS750/lib_inet/dhcp.c **** 
+ 840:../freeRTOS750/lib_inet/dhcp.c **** 	DHCP_XID = DHCP_INITIAL_XID;
+ 2177               	.LM262:
+ 2178 0be2 4DE0      		ldi r20,lo8(13)
+ 2179 0be4 50EF      		ldi r21,lo8(-16)
+ 2180 0be6 6EEF      		ldi r22,lo8(-2)
+ 2181 0be8 7AEC      		ldi r23,lo8(-54)
+ 2182 0bea 4093 0000 		sts DHCP_XID,r20
+ 2183 0bee 5093 0000 		sts DHCP_XID+1,r21
+ 2184 0bf2 6093 0000 		sts DHCP_XID+2,r22
+ 2185 0bf6 7093 0000 		sts DHCP_XID+3,r23
+ 841:../freeRTOS750/lib_inet/dhcp.c **** 	memset(get_source_ip,0,4);
+ 2187               	.LM263:
+ 2188 0bfa 1092 0000 		sts get_source_ip,__zero_reg__
+ 2189 0bfe 1092 0000 		sts get_source_ip+1,__zero_reg__
+ 2190 0c02 1092 0000 		sts get_source_ip+2,__zero_reg__
+ 2191 0c06 1092 0000 		sts get_source_ip+3,__zero_reg__
+ 842:../freeRTOS750/lib_inet/dhcp.c **** 	memset(get_gw_ip,0,4);
+ 2193               	.LM264:
+ 2194 0c0a 1092 0000 		sts get_gw_ip,__zero_reg__
+ 2195 0c0e 1092 0000 		sts get_gw_ip+1,__zero_reg__
+ 2196 0c12 1092 0000 		sts get_gw_ip+2,__zero_reg__
+ 2197 0c16 1092 0000 		sts get_gw_ip+3,__zero_reg__
+ 843:../freeRTOS750/lib_inet/dhcp.c **** 
+ 844:../freeRTOS750/lib_inet/dhcp.c **** 	get_sn_mask.lVal = 0;
+ 2199               	.LM265:
+ 2200 0c1a 1092 0000 		sts get_sn_mask,__zero_reg__
+ 2201 0c1e 1092 0000 		sts get_sn_mask+1,__zero_reg__
+ 2202 0c22 1092 0000 		sts get_sn_mask+2,__zero_reg__
+ 2203 0c26 1092 0000 		sts get_sn_mask+3,__zero_reg__
+ 845:../freeRTOS750/lib_inet/dhcp.c **** 
+ 846:../freeRTOS750/lib_inet/dhcp.c **** 	IINCHIP_init();
+ 2205               	.LM266:
+ 2206 0c2a 0E94 0000 		call IINCHIP_init
+ 847:../freeRTOS750/lib_inet/dhcp.c **** 
+ 848:../freeRTOS750/lib_inet/dhcp.c **** 	setSHAR(src_mac_addr);
+ 2208               	.LM267:
+ 2209 0c2e 80E0      		ldi r24,lo8(src_mac_addr)
+ 2210 0c30 90E0      		ldi r25,hi8(src_mac_addr)
+ 2211 0c32 0E94 0000 		call setSHAR
+ 849:../freeRTOS750/lib_inet/dhcp.c **** 	setSIPR(get_source_ip);
+ 2213               	.LM268:
+ 2214 0c36 80E0      		ldi r24,lo8(get_source_ip)
+ 2215 0c38 90E0      		ldi r25,hi8(get_source_ip)
+ 2216 0c3a 0E94 0000 		call setSIPR
+ 850:../freeRTOS750/lib_inet/dhcp.c **** 
+ 851:../freeRTOS750/lib_inet/dhcp.c **** #ifdef __DEF_IINCHIP_INT__
+ 852:../freeRTOS750/lib_inet/dhcp.c ****        setIMR(0xEF);
+ 853:../freeRTOS750/lib_inet/dhcp.c **** #endif
+ 854:../freeRTOS750/lib_inet/dhcp.c **** 
+ 855:../freeRTOS750/lib_inet/dhcp.c **** #ifdef portW5200
+ 856:../freeRTOS750/lib_inet/dhcp.c ****     IINCHIP_sysinit ((uint8_t *)txsize, (uint8_t *)rxsize);			// set the Tx and Rx buffers
+ 857:../freeRTOS750/lib_inet/dhcp.c **** #else
+ 858:../freeRTOS750/lib_inet/dhcp.c **** 	IINCHIP_sysinit(0x55, 0x55);
+ 2218               	.LM269:
+ 2219 0c3e 65E5      		ldi r22,lo8(85)
+ 2220 0c40 85E5      		ldi r24,lo8(85)
+ 2221 0c42 0E94 0000 		call IINCHIP_sysinit
+ 859:../freeRTOS750/lib_inet/dhcp.c **** #endif
+ 860:../freeRTOS750/lib_inet/dhcp.c **** 
+ 861:../freeRTOS750/lib_inet/dhcp.c **** #ifdef DHCP_DEBUG
+ 862:../freeRTOS750/lib_inet/dhcp.c **** {
+ 863:../freeRTOS750/lib_inet/dhcp.c **** 	uint16_t i;
+ 864:../freeRTOS750/lib_inet/dhcp.c **** 	xSerialPrint_P(PSTR("\r\nMAC Addr: "));
+ 865:../freeRTOS750/lib_inet/dhcp.c **** 	for (i = 0; i < 5; i++) xSerialPrintf_P(PSTR("%02x."), src_mac_addr[i]);
+ 866:../freeRTOS750/lib_inet/dhcp.c **** 	xSerialPrintf_P(PSTR("%02x"),src_mac_addr[5]);
+ 867:../freeRTOS750/lib_inet/dhcp.c **** }
+ 868:../freeRTOS750/lib_inet/dhcp.c **** #endif
+ 869:../freeRTOS750/lib_inet/dhcp.c **** 
+ 870:../freeRTOS750/lib_inet/dhcp.c **** 	if( getSn_SR(s) != SOCK_CLOSED )	// Check the preferred socket is available,
+ 2223               	.LM270:
+ 2224 0c46 8C2F      		mov r24,r28
+ 2225 0c48 0E94 0000 		call getSn_SR
+ 2226 0c4c 8823      		tst r24
+ 2227 0c4e 01F0      		breq .L99
+ 871:../freeRTOS750/lib_inet/dhcp.c **** 	{
+ 872:../freeRTOS750/lib_inet/dhcp.c **** 		s = getSocket(SOCK_CLOSED, 0);	// otherwise find free socket,
+ 2229               	.LM271:
+ 2230 0c50 60E0      		ldi r22,0
+ 2231 0c52 80E0      		ldi r24,0
+ 2232 0c54 0E94 0000 		call getSocket
+ 2233 0c58 C82F      		mov r28,r24
+ 2234               	.L99:
+ 873:../freeRTOS750/lib_inet/dhcp.c **** 		if(s == MAX_SOCK_NUM )        	// If there is no free socket?
+ 874:../freeRTOS750/lib_inet/dhcp.c **** 			ret = 0;
+ 875:../freeRTOS750/lib_inet/dhcp.c **** 	} else {
+ 876:../freeRTOS750/lib_inet/dhcp.c **** 		ret = 1;
+ 877:../freeRTOS750/lib_inet/dhcp.c **** 	}
+ 878:../freeRTOS750/lib_inet/dhcp.c **** 
+ 879:../freeRTOS750/lib_inet/dhcp.c **** 	xSerialPrintf_P(PSTR("\r\nDHCP socket: %d,"),s);
+ 2236               	.LM272:
+ 2237 0c5a 1F92      		push __zero_reg__
+ 2238 0c5c CF93      		push r28
+ 2239 0c5e 20E0      		ldi r18,lo8(__c.2809)
+ 2240 0c60 30E0      		ldi r19,hi8(__c.2809)
+ 2241 0c62 3F93      		push r19
+ 2242 0c64 2F93      		push r18
+ 2243 0c66 0E94 0000 		call xSerialPrintf_P
+ 880:../freeRTOS750/lib_inet/dhcp.c **** 	if(!socket(s, Sn_MR_UDP, IP_PORT_DHCP_CLIENT, 0x00)) // initialise the socket for DHCP service
+ 2245               	.LM273:
+ 2246 0c6a 20E0      		ldi r18,0
+ 2247 0c6c 44E4      		ldi r20,lo8(68)
+ 2248 0c6e 50E0      		ldi r21,0
+ 2249 0c70 62E0      		ldi r22,lo8(2)
+ 2250 0c72 8C2F      		mov r24,r28
+ 2251 0c74 0E94 0000 		call socket
+ 2252 0c78 0F90      		pop __tmp_reg__
+ 2253 0c7a 0F90      		pop __tmp_reg__
+ 2254 0c7c 0F90      		pop __tmp_reg__
+ 2255 0c7e 0F90      		pop __tmp_reg__
+ 2256 0c80 8111      		cpse r24,__zero_reg__
+ 2257 0c82 00C0      		rjmp .L100
+ 881:../freeRTOS750/lib_inet/dhcp.c **** 	{
+ 882:../freeRTOS750/lib_inet/dhcp.c **** 		xSerialPrint_P(PSTR(" fail..!\r\n"));
+ 2259               	.LM274:
+ 2260 0c84 80E0      		ldi r24,lo8(__c.2811)
+ 2261 0c86 90E0      		ldi r25,hi8(__c.2811)
+ 2262 0c88 0E94 0000 		call xSerialPrint_P
+ 883:../freeRTOS750/lib_inet/dhcp.c **** 		ret = 0;
+ 2264               	.LM275:
+ 2265 0c8c 80E0      		ldi r24,0
+ 2266 0c8e 00C0      		rjmp .L101
+ 2267               	.L100:
+ 884:../freeRTOS750/lib_inet/dhcp.c **** 	}
+ 885:../freeRTOS750/lib_inet/dhcp.c **** 	else
+ 886:../freeRTOS750/lib_inet/dhcp.c **** 	{
+ 887:../freeRTOS750/lib_inet/dhcp.c **** 		xSerialPrint_P(PSTR(" ok..!\r\n"));
+ 2269               	.LM276:
+ 2270 0c90 80E0      		ldi r24,lo8(__c.2813)
+ 2271 0c92 90E0      		ldi r25,hi8(__c.2813)
+ 2272 0c94 0E94 0000 		call xSerialPrint_P
+ 888:../freeRTOS750/lib_inet/dhcp.c **** 		ret = 1;
+ 2274               	.LM277:
+ 2275 0c98 81E0      		ldi r24,lo8(1)
+ 2276               	.L101:
+ 889:../freeRTOS750/lib_inet/dhcp.c **** 	}
+ 890:../freeRTOS750/lib_inet/dhcp.c **** 
+ 891:../freeRTOS750/lib_inet/dhcp.c **** 	if(pRIPMSG == NULL) // if there is no buffer allocated (pointer is NULL), then allocate buffer for
+ 2278               	.LM278:
+ 2279 0c9a 2091 0000 		lds r18,pRIPMSG
+ 2280 0c9e 3091 0000 		lds r19,pRIPMSG+1
+ 2281 0ca2 232B      		or r18,r19
+ 2282 0ca4 01F4      		brne .L102
+ 892:../freeRTOS750/lib_inet/dhcp.c **** 	{
+ 893:../freeRTOS750/lib_inet/dhcp.c **** 		if( !(pRIPMSG = (RIP_MSG *) pvPortMalloc( sizeof(RIP_MSG) ) ) )
+ 2284               	.LM279:
+ 2285 0ca6 84E2      		ldi r24,lo8(36)
+ 2286 0ca8 92E0      		ldi r25,lo8(2)
+ 2287 0caa 0E94 0000 		call pvPortMalloc
+ 2288 0cae 9C01      		movw r18,r24
+ 2289 0cb0 9093 0000 		sts pRIPMSG+1,r25
+ 2290 0cb4 8093 0000 		sts pRIPMSG,r24
+ 2291 0cb8 81E0      		ldi r24,lo8(1)
+ 2292 0cba 232B      		or r18,r19
+ 2293 0cbc 01F4      		brne .L102
+ 2294 0cbe 80E0      		ldi r24,0
+ 2295               	.L102:
+ 894:../freeRTOS750/lib_inet/dhcp.c **** 			ret = 0;
+ 895:../freeRTOS750/lib_inet/dhcp.c **** 		else
+ 896:../freeRTOS750/lib_inet/dhcp.c **** 			ret = 1;
+ 897:../freeRTOS750/lib_inet/dhcp.c **** 	}
+ 898:../freeRTOS750/lib_inet/dhcp.c **** 
+ 899:../freeRTOS750/lib_inet/dhcp.c **** 
+ 900:../freeRTOS750/lib_inet/dhcp.c **** 	DHCPC_SOCK = s;
+ 2297               	.LM280:
+ 2298 0cc0 C093 0000 		sts DHCPC_SOCK,r28
+ 2299               	/* epilogue start */
+ 901:../freeRTOS750/lib_inet/dhcp.c **** 
+ 902:../freeRTOS750/lib_inet/dhcp.c **** 	return ret;
+ 903:../freeRTOS750/lib_inet/dhcp.c **** }
+ 2301               	.LM281:
+ 2302 0cc4 CF91      		pop r28
+ 2303 0cc6 0895      		ret
+ 2308               	.Lscope10:
+ 2310               		.stabd	78,0,0
+ 2315               	.global	init_DHCP_client
+ 2317               	init_DHCP_client:
+ 2318               		.stabd	46,0,0
+ 810:../freeRTOS750/lib_inet/dhcp.c **** {
+ 2320               	.LM282:
+ 2321               	.LFBB11:
+ 2322               	/* prologue: function */
+ 2323               	/* frame size = 0 */
+ 2324               	/* stack size = 0 */
+ 2325               	.L__stack_usage = 0
+ 812:../freeRTOS750/lib_inet/dhcp.c **** 	if(!ip_update)	dhcp_ip_update = set_DHCP_network;
+ 2327               	.LM283:
+ 2328 0cc8 6115      		cp r22,__zero_reg__
+ 2329 0cca 7105      		cpc r23,__zero_reg__
+ 2330 0ccc 01F4      		brne .L108
+ 812:../freeRTOS750/lib_inet/dhcp.c **** 	if(!ip_update)	dhcp_ip_update = set_DHCP_network;
+ 2332               	.LM284:
+ 2333 0cce 20E0      		ldi r18,lo8(gs(set_DHCP_network))
+ 2334 0cd0 30E0      		ldi r19,hi8(gs(set_DHCP_network))
+ 2335 0cd2 3093 0000 		sts dhcp_ip_update+1,r19
+ 2336 0cd6 2093 0000 		sts dhcp_ip_update,r18
+ 2337 0cda 00C0      		rjmp .L109
+ 2338               	.L108:
+ 813:../freeRTOS750/lib_inet/dhcp.c **** 	else		dhcp_ip_update = ip_update;
+ 2340               	.LM285:
+ 2341 0cdc 7093 0000 		sts dhcp_ip_update+1,r23
+ 2342 0ce0 6093 0000 		sts dhcp_ip_update,r22
+ 2343               	.L109:
+ 815:../freeRTOS750/lib_inet/dhcp.c **** 	if(!ip_conflict) dhcp_ip_conflict = proc_ip_conflict;
+ 2345               	.LM286:
+ 2346 0ce4 4115      		cp r20,__zero_reg__
+ 2347 0ce6 5105      		cpc r21,__zero_reg__
+ 2348 0ce8 01F4      		brne .L110
+ 815:../freeRTOS750/lib_inet/dhcp.c **** 	if(!ip_conflict) dhcp_ip_conflict = proc_ip_conflict;
+ 2350               	.LM287:
+ 2351 0cea 20E0      		ldi r18,lo8(gs(proc_ip_conflict))
+ 2352 0cec 30E0      		ldi r19,hi8(gs(proc_ip_conflict))
+ 2353 0cee 3093 0000 		sts dhcp_ip_conflict+1,r19
+ 2354 0cf2 2093 0000 		sts dhcp_ip_conflict,r18
+ 2355 0cf6 00C0      		rjmp .L111
+ 2356               	.L110:
+ 816:../freeRTOS750/lib_inet/dhcp.c **** 	else		 dhcp_ip_conflict = ip_conflict;
+ 2358               	.LM288:
+ 2359 0cf8 5093 0000 		sts dhcp_ip_conflict+1,r21
+ 2360 0cfc 4093 0000 		sts dhcp_ip_conflict,r20
+ 2361               	.L111:
+ 818:../freeRTOS750/lib_inet/dhcp.c **** 	init_dhcpc_ch(s);
+ 2363               	.LM289:
+ 2364 0d00 0C94 0000 		jmp init_dhcpc_ch
+ 2366               	.Lscope11:
+ 2368               		.stabd	78,0,0
+ 2369               	.global	dhcp_ip_conflict
+ 2370               		.section .bss
+ 2373               	dhcp_ip_conflict:
+ 2374 0000 0000      		.zero	2
+ 2375               	.global	dhcp_ip_update
+ 2378               	dhcp_ip_update:
+ 2379 0002 0000      		.zero	2
+ 2380               	.global	get_source_ip
+ 2383               	get_source_ip:
+ 2384 0004 0000 0000 		.zero	4
+ 2385               	.global	get_dns_ip
+ 2388               	get_dns_ip:
+ 2389 0008 0000 0000 		.zero	4
+ 2390               		.comm	get_gw_ip,4,1
+ 2391               		.comm	get_sn_mask,4,1
+ 2392               		.local	DHCPC_SOCK
+ 2393               		.comm	DHCPC_SOCK,1,1
+ 2394               		.section	.progmem.data,"a",@progbits
+ 2397               	__c.2737:
+ 2398 0000 0D0A 4661 		.string	"\r\nFail to create the DHCPC_SOCK(%d)"
+ 2398      696C 2074 
+ 2398      6F20 6372 
+ 2398      6561 7465 
+ 2398      2074 6865 
+ 2399               		.local	dhcp_state
+ 2400               		.comm	dhcp_state,1,1
+ 2403               	__c.2740:
+ 2404 0024 0D0A 7374 		.string	"\r\nstate: DHCP_STATE_REQUEST\r\n"
+ 2404      6174 653A 
+ 2404      2044 4843 
+ 2404      505F 5354 
+ 2404      4154 455F 
+ 2407               	__c.2744:
+ 2408 0042 0D0A 7374 		.string	"\r\nstate: DHCP_STATE_LEASED\r\n"
+ 2408      6174 653A 
+ 2408      2044 4843 
+ 2408      505F 5354 
+ 2408      4154 455F 
+ 2411               	__c.2748:
+ 2412 005f 0D0A 7374 		.string	"\r\nstate: DHCP_STATE_DISCOVER\r\n"
+ 2412      6174 653A 
+ 2412      2044 4843 
+ 2412      505F 5354 
+ 2412      4154 455F 
+ 2413               		.local	lease_time
+ 2414               		.comm	lease_time,4,1
+ 2415               		.local	start_dhcp_time
+ 2416               		.comm	start_dhcp_time,2,1
+ 2419               	__c.2751:
+ 2420 007e 0D0A 7374 		.string	"\r\nstate: DHCP_STATE_REREQUEST\r\n"
+ 2420      6174 653A 
+ 2420      2044 4843 
+ 2420      505F 5354 
+ 2420      4154 455F 
+ 2421               		.local	old_sip
+ 2422               		.comm	old_sip,4,1
+ 2423               		.local	DHCP_XID
+ 2424               		.comm	DHCP_XID,4,1
+ 2427               	__c.2754:
+ 2428 009e 0D0A 6F6C 		.string	"\r\nold_sip=%s,get_source_ip=%s"
+ 2428      645F 7369 
+ 2428      703D 2573 
+ 2428      2C67 6574 
+ 2428      5F73 6F75 
+ 2431               	__c.2756:
+ 2432 00bc 0D0A 5468 		.string	"\r\nThe IP address from the DHCP server is updated."
+ 2432      6520 4950 
+ 2432      2061 6464 
+ 2432      7265 7373 
+ 2432      2066 726F 
+ 2435               	__c.2758:
+ 2436 00ee 0D0A 7374 		.string	"\r\nstate: DHCP_STATE_LEASED same IP\r\n"
+ 2436      6174 653A 
+ 2436      2044 4843 
+ 2436      505F 5354 
+ 2436      4154 455F 
+ 2439               	__c.2760:
+ 2440 0113 0D0A 7374 		.string	"\r\nstate: DHCP_STATE_DISCOVER\r\n"
+ 2440      6174 653A 
+ 2440      2044 4843 
+ 2440      505F 5354 
+ 2440      4154 455F 
+ 2441               		.local	pRIPMSG
+ 2442               		.comm	pRIPMSG,2,1
+ 2445               	__c.2715:
+ 2446 0132 0D0A 4448 		.string	"\r\nDHCP : NO DHCP MSG"
+ 2446      4350 203A 
+ 2446      204E 4F20 
+ 2446      4448 4350 
+ 2446      204D 5347 
+ 2447               		.local	dhcp_sip
+ 2448               		.comm	dhcp_sip,4,1
+ 2449               		.local	dhcp_real_sip
+ 2450               		.comm	dhcp_real_sip,4,1
+ 2453               	__c.2717:
+ 2454 0147 0D0A 4448 		.string	"\r\nDHCP MSG received..."
+ 2454      4350 204D 
+ 2454      5347 2072 
+ 2454      6563 6569 
+ 2454      7665 642E 
+ 2457               	__c.2783:
+ 2458 015e 0D0A 4448 		.string	"\r\nDHCP set IP: %d.%d.%d.%d\r\n"
+ 2458      4350 2073 
+ 2458      6574 2049 
+ 2458      503A 2025 
+ 2458      642E 2564 
+ 2461               	__c.2688:
+ 2462 017b 0D0A 4448 		.string	"\r\nDHCP: Fatal Error(1)."
+ 2462      4350 3A20 
+ 2462      4661 7461 
+ 2462      6C20 4572 
+ 2462      726F 7228 
+ 2465               	__c.2690:
+ 2466 0193 0D0A 7365 		.string	"\r\nsent DHCP_REQUEST\r\n"
+ 2466      6E74 2044 
+ 2466      4843 505F 
+ 2466      5245 5155 
+ 2466      4553 540D 
+ 2467               		.local	next_dhcp_time
+ 2468               		.comm	next_dhcp_time,2,1
+ 2469               		.local	retry_count
+ 2470               		.comm	retry_count,1,1
+ 2471               		.local	DHCP_timeout
+ 2472               		.comm	DHCP_timeout,1,1
+ 2475               	__c.2778:
+ 2476 01a9 0D0A 3C3C 		.string	"\r\n<<timeout>> state: DHCP_STATE_DISCOVER"
+ 2476      7469 6D65 
+ 2476      6F75 743E 
+ 2476      3E20 7374 
+ 2476      6174 653A 
+ 2479               	__c.2768:
+ 2480 01d2 0D0A 3C74 		.string	"\r\n<timeout> state: DHCP_STATE_DISCOVER"
+ 2480      696D 656F 
+ 2480      7574 3E20 
+ 2480      7374 6174 
+ 2480      653A 2044 
+ 2483               	__c.2772:
+ 2484 01f9 0D0A 3C74 		.string	"\r\n<timeout> state: DHCP_STATE_REQUEST"
+ 2484      696D 656F 
+ 2484      7574 3E20 
+ 2484      7374 6174 
+ 2484      653A 2044 
+ 2487               	__c.2775:
+ 2488 021f 0D0A 3C74 		.string	"\r\n<timeout> state: DHCP_STATE_REREQUEST"
+ 2488      696D 656F 
+ 2488      7574 3E20 
+ 2488      7374 6174 
+ 2488      653A 2044 
+ 2491               	__c.2679:
+ 2492 0247 0D0A 4448 		.string	"\r\nDHCP: Fatal Error(0)."
+ 2492      4350 3A20 
+ 2492      4661 7461 
+ 2492      6C20 4572 
+ 2492      726F 7228 
+ 2495               	__c.2681:
+ 2496 025f 0D0A 7365 		.string	"\r\nsent DHCP_DISCOVER\r\n"
+ 2496      6E74 2044 
+ 2496      4843 505F 
+ 2496      4449 5343 
+ 2496      4F56 4552 
+ 2499               	__c.2803:
+ 2500 0276 0D0A 5468 		.string	"\r\nThe IP Address from DHCP server is CONFLICT!!!\r\nRetry to get a IP address from DHCP
+ 2500      6520 4950 
+ 2500      2041 6464 
+ 2500      7265 7373 
+ 2500      2066 726F 
+ 2503               	__c.2809:
+ 2504 02d5 0D0A 4448 		.string	"\r\nDHCP socket: %d,"
+ 2504      4350 2073 
+ 2504      6F63 6B65 
+ 2504      743A 2025 
+ 2504      642C 00
+ 2507               	__c.2811:
+ 2508 02e8 2066 6169 		.string	" fail..!\r\n"
+ 2508      6C2E 2E21 
+ 2508      0D0A 00
+ 2511               	__c.2813:
+ 2512 02f3 206F 6B2E 		.string	" ok..!\r\n"
+ 2512      2E21 0D0A 
+ 2512      00
+ 2531               		.text
+ 2533               	.Letext0:
+ 2534               		.ident	"GCC: (GNU) 4.7.2"
+ 2535               	.global __do_copy_data
+ 2536               	.global __do_clear_bss
+DEFINED SYMBOLS
+                            *ABS*:00000000 dhcp.c
+     /tmp/ccejTKwr.s:2      *ABS*:0000003e __SP_H__
+     /tmp/ccejTKwr.s:3      *ABS*:0000003d __SP_L__
+     /tmp/ccejTKwr.s:4      *ABS*:0000003f __SREG__
+     /tmp/ccejTKwr.s:5      *ABS*:00000000 __tmp_reg__
+     /tmp/ccejTKwr.s:6      *ABS*:00000001 __zero_reg__
+     /tmp/ccejTKwr.s:161    .text:00000000 proc_ip_conflict
+     /tmp/ccejTKwr.s:2499   .progmem.data:00000276 __c.2803
+     /tmp/ccejTKwr.s:181    .text:00000008 set_DHCP_network
+                            *COM*:00000004 get_gw_ip
+                            *COM*:00000004 get_sn_mask
+     /tmp/ccejTKwr.s:2383   .bss:00000004 get_source_ip
+     /tmp/ccejTKwr.s:2457   .progmem.data:0000015e __c.2783
+     /tmp/ccejTKwr.s:257    .text:00000072 send_DHCP_DISCOVER
+     /tmp/ccejTKwr.s:2442   .bss:0000001e dhcp_sip
+     /tmp/ccejTKwr.s:2448   .bss:00000022 dhcp_real_sip
+     /tmp/ccejTKwr.s:2424   .bss:0000001c pRIPMSG
+     /tmp/ccejTKwr.s:2422   .bss:00000018 DHCP_XID
+     /tmp/ccejTKwr.s:2491   .progmem.data:00000247 __c.2679
+     /tmp/ccejTKwr.s:2373   .bss:00000000 dhcp_ip_conflict
+     /tmp/ccejTKwr.s:2495   .progmem.data:0000025f __c.2681
+     /tmp/ccejTKwr.s:652    .text:000002c4 send_DHCP_REQUEST
+     /tmp/ccejTKwr.s:2393   .bss:0000000d dhcp_state
+     /tmp/ccejTKwr.s:2461   .progmem.data:0000017b __c.2688
+     /tmp/ccejTKwr.s:2465   .progmem.data:00000193 __c.2690
+     /tmp/ccejTKwr.s:1206   .text:00000606 reset_DHCP_time
+     /tmp/ccejTKwr.s:2414   .bss:00000012 start_dhcp_time
+     /tmp/ccejTKwr.s:2450   .bss:00000026 next_dhcp_time
+     /tmp/ccejTKwr.s:2468   .bss:00000028 retry_count
+     /tmp/ccejTKwr.s:1235   .text:00000622 check_DHCP_Timeout
+     /tmp/ccejTKwr.s:2479   .progmem.data:000001d2 __c.2768
+     /tmp/ccejTKwr.s:2483   .progmem.data:000001f9 __c.2772
+     /tmp/ccejTKwr.s:2487   .progmem.data:0000021f __c.2775
+                             .bss:0000000c DHCPC_SOCK
+     /tmp/ccejTKwr.s:2470   .bss:00000029 DHCP_timeout
+     /tmp/ccejTKwr.s:2475   .progmem.data:000001a9 __c.2778
+     /tmp/ccejTKwr.s:1363   .text:000006bc get_DHCP_socket
+     /tmp/ccejTKwr.s:1384   .text:000006c2 check_DHCP_state
+     /tmp/ccejTKwr.s:2445   .progmem.data:00000132 __c.2715
+     /tmp/ccejTKwr.s:2453   .progmem.data:00000147 __c.2717
+     /tmp/ccejTKwr.s:2388   .bss:00000008 get_dns_ip
+     /tmp/ccejTKwr.s:2400   .bss:0000000e lease_time
+     /tmp/ccejTKwr.s:2397   .progmem.data:00000000 __c.2737
+     /tmp/ccejTKwr.s:2403   .progmem.data:00000024 __c.2740
+     /tmp/ccejTKwr.s:2407   .progmem.data:00000042 __c.2744
+     /tmp/ccejTKwr.s:2411   .progmem.data:0000005f __c.2748
+     /tmp/ccejTKwr.s:2419   .progmem.data:0000007e __c.2751
+     /tmp/ccejTKwr.s:2416   .bss:00000014 old_sip
+     /tmp/ccejTKwr.s:2427   .progmem.data:0000009e __c.2754
+     /tmp/ccejTKwr.s:2378   .bss:00000002 dhcp_ip_update
+     /tmp/ccejTKwr.s:2431   .progmem.data:000000bc __c.2756
+     /tmp/ccejTKwr.s:2435   .progmem.data:000000ee __c.2758
+     /tmp/ccejTKwr.s:2439   .progmem.data:00000113 __c.2760
+     /tmp/ccejTKwr.s:2099   .text:00000b9e getIP_DHCPS
+     /tmp/ccejTKwr.s:2165   .text:00000bde init_dhcpc_ch
+     /tmp/ccejTKwr.s:2503   .progmem.data:000002d5 __c.2809
+     /tmp/ccejTKwr.s:2507   .progmem.data:000002e8 __c.2811
+     /tmp/ccejTKwr.s:2511   .progmem.data:000002f3 __c.2813
+     /tmp/ccejTKwr.s:2317   .text:00000cc8 init_DHCP_client
+
+UNDEFINED SYMBOLS
+xSerialPrint_P
+IINCHIP_init
+src_mac_addr
+setSHAR
+setGAR
+saveSUBR
+setSIPR
+IINCHIP_sysinit
+xSerialPrintf_P
+htonl
+htons
+strcpy
+sendto
+xTaskGetTickCount
+getSn_SR
+getSn_RX_RSR
+recvfrom
+memcmp
+ntohl
+socket
+__muluhisi3
+__udivmodsi4
+inet_ntoa
+vTaskDelay
+getSocket
+pvPortMalloc
+__do_copy_data
+__do_clear_bss

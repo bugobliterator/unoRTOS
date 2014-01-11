@@ -1,0 +1,490 @@
+   1               		.file	"gmtime_r.c"
+   2               	__SP_H__ = 0x3e
+   3               	__SP_L__ = 0x3d
+   4               	__SREG__ = 0x3f
+   5               	__tmp_reg__ = 0
+   6               	__zero_reg__ = 1
+   9               		.text
+  10               	.Ltext0:
+  83               	.global	gmtime_r
+  85               	gmtime_r:
+  86               		.stabd	46,0,0
+   1:../freeRTOS750/lib_time/gmtime_r.c **** /*
+   2:../freeRTOS750/lib_time/gmtime_r.c ****  * (C)2012 Michael Duane Rice All rights reserved.
+   3:../freeRTOS750/lib_time/gmtime_r.c ****  *
+   4:../freeRTOS750/lib_time/gmtime_r.c ****  * Redistribution and use in source and binary forms, with or without
+   5:../freeRTOS750/lib_time/gmtime_r.c ****  * modification, are permitted provided that the following conditions are
+   6:../freeRTOS750/lib_time/gmtime_r.c ****  * met:
+   7:../freeRTOS750/lib_time/gmtime_r.c ****  *
+   8:../freeRTOS750/lib_time/gmtime_r.c ****  * Redistributions of source code must retain the above copyright notice, this
+   9:../freeRTOS750/lib_time/gmtime_r.c ****  * list of conditions and the following disclaimer. Redistributions in binary
+  10:../freeRTOS750/lib_time/gmtime_r.c ****  * form must reproduce the above copyright notice, this list of conditions
+  11:../freeRTOS750/lib_time/gmtime_r.c ****  * and the following disclaimer in the documentation and/or other materials
+  12:../freeRTOS750/lib_time/gmtime_r.c ****  * provided with the distribution. Neither the name of the copyright holders
+  13:../freeRTOS750/lib_time/gmtime_r.c ****  * nor the names of contributors may be used to endorse or promote products
+  14:../freeRTOS750/lib_time/gmtime_r.c ****  * derived from this software without specific prior written permission.
+  15:../freeRTOS750/lib_time/gmtime_r.c ****  *
+  16:../freeRTOS750/lib_time/gmtime_r.c ****  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  17:../freeRTOS750/lib_time/gmtime_r.c ****  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  18:../freeRTOS750/lib_time/gmtime_r.c ****  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  19:../freeRTOS750/lib_time/gmtime_r.c ****  * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+  20:../freeRTOS750/lib_time/gmtime_r.c ****  * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+  21:../freeRTOS750/lib_time/gmtime_r.c ****  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+  22:../freeRTOS750/lib_time/gmtime_r.c ****  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+  23:../freeRTOS750/lib_time/gmtime_r.c ****  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+  24:../freeRTOS750/lib_time/gmtime_r.c ****  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+  25:../freeRTOS750/lib_time/gmtime_r.c ****  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+  26:../freeRTOS750/lib_time/gmtime_r.c ****  * POSSIBILITY OF SUCH DAMAGE.
+  27:../freeRTOS750/lib_time/gmtime_r.c ****  */
+  28:../freeRTOS750/lib_time/gmtime_r.c **** 
+  29:../freeRTOS750/lib_time/gmtime_r.c **** /* $Id$ */
+  30:../freeRTOS750/lib_time/gmtime_r.c **** 
+  31:../freeRTOS750/lib_time/gmtime_r.c **** /* Re entrant version of gmtime(). */
+  32:../freeRTOS750/lib_time/gmtime_r.c **** 
+  33:../freeRTOS750/lib_time/gmtime_r.c **** #include <time.h>
+  34:../freeRTOS750/lib_time/gmtime_r.c **** #include <stdlib.h>
+  35:../freeRTOS750/lib_time/gmtime_r.c **** #include <inttypes.h>
+  36:../freeRTOS750/lib_time/gmtime_r.c **** 
+  37:../freeRTOS750/lib_time/gmtime_r.c **** void
+  38:../freeRTOS750/lib_time/gmtime_r.c **** gmtime_r(const time_t * timer, struct tm * timeptr)
+  39:../freeRTOS750/lib_time/gmtime_r.c **** {
+  88               	.LM0:
+  89               	.LFBB1:
+  90 0000 CF92      		push r12
+  91 0002 DF92      		push r13
+  92 0004 EF92      		push r14
+  93 0006 FF92      		push r15
+  94 0008 0F93      		push r16
+  95 000a 1F93      		push r17
+  96 000c CF93      		push r28
+  97 000e DF93      		push r29
+  98 0010 CDB7      		in r28,__SP_L__
+  99 0012 DEB7      		in r29,__SP_H__
+ 100 0014 6097      		sbiw r28,16
+ 101 0016 0FB6      		in __tmp_reg__,__SREG__
+ 102 0018 F894      		cli
+ 103 001a DEBF      		out __SP_H__,r29
+ 104 001c 0FBE      		out __SREG__,__tmp_reg__
+ 105 001e CDBF      		out __SP_L__,r28
+ 106               	/* prologue: function */
+ 107               	/* frame size = 16 */
+ 108               	/* stack size = 24 */
+ 109               	.L__stack_usage = 24
+ 110 0020 8B01      		movw r16,r22
+  40:../freeRTOS750/lib_time/gmtime_r.c ****     int32_t         fract;
+  41:../freeRTOS750/lib_time/gmtime_r.c ****     ldiv_t          lresult;
+  42:../freeRTOS750/lib_time/gmtime_r.c ****     div_t           result;
+  43:../freeRTOS750/lib_time/gmtime_r.c ****     uint16_t        days, n, leapyear, years;
+  44:../freeRTOS750/lib_time/gmtime_r.c **** 
+  45:../freeRTOS750/lib_time/gmtime_r.c ****     /* break down timer into whole and fractional parts of 1 day */
+  46:../freeRTOS750/lib_time/gmtime_r.c ****     days = *timer / 86400UL;
+ 112               	.LM1:
+ 113 0022 FC01      		movw r30,r24
+ 114 0024 6081      		ld r22,Z
+ 115 0026 7181      		ldd r23,Z+1
+ 116 0028 8281      		ldd r24,Z+2
+ 117 002a 9381      		ldd r25,Z+3
+ 118 002c 20E8      		ldi r18,lo8(-128)
+ 119 002e 31E5      		ldi r19,lo8(81)
+ 120 0030 41E0      		ldi r20,lo8(1)
+ 121 0032 50E0      		ldi r21,0
+ 122 0034 0E94 0000 		call __udivmodsi4
+ 123 0038 6901      		movw r12,r18
+ 124 003a 7A01      		movw r14,r20
+  47:../freeRTOS750/lib_time/gmtime_r.c ****     fract = *timer % 86400UL;
+  48:../freeRTOS750/lib_time/gmtime_r.c **** 
+  49:../freeRTOS750/lib_time/gmtime_r.c ****     /*
+  50:../freeRTOS750/lib_time/gmtime_r.c ****             Extract hour, minute, and second from the fractional day
+  51:../freeRTOS750/lib_time/gmtime_r.c ****         */
+  52:../freeRTOS750/lib_time/gmtime_r.c ****     lresult = ldiv(fract, 60L);
+ 126               	.LM2:
+ 127 003c 2CE3      		ldi r18,lo8(60)
+ 128 003e 30E0      		ldi r19,0
+ 129 0040 40E0      		ldi r20,0
+ 130 0042 50E0      		ldi r21,0
+ 131 0044 0E94 0000 		call __divmodsi4
+ 132 0048 2987      		std Y+9,r18
+ 133 004a 3A87      		std Y+10,r19
+ 134 004c 4B87      		std Y+11,r20
+ 135 004e 5C87      		std Y+12,r21
+ 136 0050 6D87      		std Y+13,r22
+ 137 0052 7E87      		std Y+14,r23
+ 138 0054 8F87      		std Y+15,r24
+ 139 0056 988B      		std Y+16,r25
+ 140 0058 88E0      		ldi r24,lo8(8)
+ 141 005a FE01      		movw r30,r28
+ 142 005c 3996      		adiw r30,9
+ 143 005e DE01      		movw r26,r28
+ 144 0060 1196      		adiw r26,1
+ 145               		0:
+ 146 0062 0190      		ld r0,Z+
+ 147 0064 0D92      		st X+,r0
+ 148 0066 8A95      		dec r24
+ 149 0068 01F4      		brne 0b
+ 150 006a 8981      		ldd r24,Y+1
+ 151 006c 9A81      		ldd r25,Y+2
+ 152 006e AB81      		ldd r26,Y+3
+ 153 0070 BC81      		ldd r27,Y+4
+  53:../freeRTOS750/lib_time/gmtime_r.c ****     timeptr->tm_sec = lresult.rem;
+ 155               	.LM3:
+ 156 0072 2D81      		ldd r18,Y+5
+ 157 0074 F801      		movw r30,r16
+ 158 0076 2083      		st Z,r18
+  54:../freeRTOS750/lib_time/gmtime_r.c ****     result = div(lresult.quot, 60);
+ 160               	.LM4:
+ 161 0078 6CE3      		ldi r22,lo8(60)
+ 162 007a 70E0      		ldi r23,0
+ 163 007c 0E94 0000 		call __divmodhi4
+ 164 0080 DC01      		movw r26,r24
+ 165 0082 CB01      		movw r24,r22
+  55:../freeRTOS750/lib_time/gmtime_r.c ****     timeptr->tm_min = result.rem;
+ 167               	.LM5:
+ 168 0084 F801      		movw r30,r16
+ 169 0086 A183      		std Z+1,r26
+  56:../freeRTOS750/lib_time/gmtime_r.c ****     timeptr->tm_hour = result.quot;
+ 171               	.LM6:
+ 172 0088 8283      		std Z+2,r24
+  57:../freeRTOS750/lib_time/gmtime_r.c **** 
+  58:../freeRTOS750/lib_time/gmtime_r.c ****     /* Determine day of week ( the epoch was a Saturday ) */
+  59:../freeRTOS750/lib_time/gmtime_r.c ****     n = days + SATURDAY;
+ 174               	.LM7:
+ 175 008a C601      		movw r24,r12
+ 176 008c 0696      		adiw r24,6
+  60:../freeRTOS750/lib_time/gmtime_r.c ****     n %= 7;
+ 178               	.LM8:
+ 179 008e 67E0      		ldi r22,lo8(7)
+ 180 0090 70E0      		ldi r23,0
+ 181 0092 0E94 0000 		call __udivmodhi4
+  61:../freeRTOS750/lib_time/gmtime_r.c ****     timeptr->tm_wday = n;
+ 183               	.LM9:
+ 184 0096 8483      		std Z+4,r24
+  62:../freeRTOS750/lib_time/gmtime_r.c **** 
+  63:../freeRTOS750/lib_time/gmtime_r.c ****     /*
+  64:../freeRTOS750/lib_time/gmtime_r.c ****         * Our epoch year has the property of being at the conjunction of all three 'leap cycles',
+  65:../freeRTOS750/lib_time/gmtime_r.c ****         * 4, 100, and 400 years ( though we can ignore the 400 year cycle in this library).
+  66:../freeRTOS750/lib_time/gmtime_r.c ****         *
+  67:../freeRTOS750/lib_time/gmtime_r.c ****         * Using this property, we can easily 'map' the time stamp into the leap cycles, quickly
+  68:../freeRTOS750/lib_time/gmtime_r.c ****         * deriving the year and day of year, along with the fact of whether it is a leap year.
+  69:../freeRTOS750/lib_time/gmtime_r.c ****         */
+  70:../freeRTOS750/lib_time/gmtime_r.c **** 
+  71:../freeRTOS750/lib_time/gmtime_r.c ****     /* map into a 100 year cycle */
+  72:../freeRTOS750/lib_time/gmtime_r.c ****     lresult = ldiv((long) days, 36525L);
+ 186               	.LM10:
+ 187 0098 2DEA      		ldi r18,lo8(-83)
+ 188 009a 3EE8      		ldi r19,lo8(-114)
+ 189 009c 40E0      		ldi r20,0
+ 190 009e 50E0      		ldi r21,0
+ 191 00a0 C701      		movw r24,r14
+ 192 00a2 B601      		movw r22,r12
+ 193 00a4 0E94 0000 		call __divmodsi4
+ 194 00a8 2987      		std Y+9,r18
+ 195 00aa 3A87      		std Y+10,r19
+ 196 00ac 4B87      		std Y+11,r20
+ 197 00ae 5C87      		std Y+12,r21
+ 198 00b0 6D87      		std Y+13,r22
+ 199 00b2 7E87      		std Y+14,r23
+ 200 00b4 8F87      		std Y+15,r24
+ 201 00b6 988B      		std Y+16,r25
+ 202 00b8 88E0      		ldi r24,lo8(8)
+ 203 00ba FE01      		movw r30,r28
+ 204 00bc 3996      		adiw r30,9
+ 205 00be DE01      		movw r26,r28
+ 206 00c0 1196      		adiw r26,1
+ 207               		0:
+ 208 00c2 0190      		ld r0,Z+
+ 209 00c4 0D92      		st X+,r0
+ 210 00c6 8A95      		dec r24
+ 211 00c8 01F4      		brne 0b
+  73:../freeRTOS750/lib_time/gmtime_r.c ****     years = 100 * lresult.quot;
+ 213               	.LM11:
+ 214 00ca 8981      		ldd r24,Y+1
+ 215 00cc 9A81      		ldd r25,Y+2
+ 216 00ce 24E6      		ldi r18,lo8(100)
+ 217 00d0 289F      		mul r18,r24
+ 218 00d2 6001      		movw r12,r0
+ 219 00d4 299F      		mul r18,r25
+ 220 00d6 D00C      		add r13,r0
+ 221 00d8 1124      		clr __zero_reg__
+  74:../freeRTOS750/lib_time/gmtime_r.c **** 
+  75:../freeRTOS750/lib_time/gmtime_r.c ****     /* map into a 4 year cycle */
+  76:../freeRTOS750/lib_time/gmtime_r.c ****     lresult = ldiv(lresult.rem, 1461L);
+ 223               	.LM12:
+ 224 00da 6D81      		ldd r22,Y+5
+ 225 00dc 7E81      		ldd r23,Y+6
+ 226 00de 8F81      		ldd r24,Y+7
+ 227 00e0 9885      		ldd r25,Y+8
+ 228 00e2 25EB      		ldi r18,lo8(-75)
+ 229 00e4 35E0      		ldi r19,lo8(5)
+ 230 00e6 40E0      		ldi r20,0
+ 231 00e8 50E0      		ldi r21,0
+ 232 00ea 0E94 0000 		call __divmodsi4
+ 233 00ee 2987      		std Y+9,r18
+ 234 00f0 3A87      		std Y+10,r19
+ 235 00f2 4B87      		std Y+11,r20
+ 236 00f4 5C87      		std Y+12,r21
+ 237 00f6 6D87      		std Y+13,r22
+ 238 00f8 7E87      		std Y+14,r23
+ 239 00fa 8F87      		std Y+15,r24
+ 240 00fc 988B      		std Y+16,r25
+ 241 00fe 88E0      		ldi r24,lo8(8)
+ 242 0100 FE01      		movw r30,r28
+ 243 0102 3996      		adiw r30,9
+ 244 0104 DE01      		movw r26,r28
+ 245 0106 1196      		adiw r26,1
+ 246               		0:
+ 247 0108 0190      		ld r0,Z+
+ 248 010a 0D92      		st X+,r0
+ 249 010c 8A95      		dec r24
+ 250 010e 01F4      		brne 0b
+  77:../freeRTOS750/lib_time/gmtime_r.c ****     years += 4 * lresult.quot;
+ 252               	.LM13:
+ 253 0110 E980      		ldd r14,Y+1
+ 254 0112 FA80      		ldd r15,Y+2
+ 255 0114 EE0C      		lsl r14
+ 256 0116 FF1C      		rol r15
+ 257 0118 EE0C      		lsl r14
+ 258 011a FF1C      		rol r15
+ 259 011c EC0C      		add r14,r12
+ 260 011e FD1C      		adc r15,r13
+  78:../freeRTOS750/lib_time/gmtime_r.c ****     days = lresult.rem;
+ 262               	.LM14:
+ 263 0120 2D81      		ldd r18,Y+5
+ 264 0122 3E81      		ldd r19,Y+6
+  79:../freeRTOS750/lib_time/gmtime_r.c ****     if (years > 100)
+ 266               	.LM15:
+ 267 0124 F5E6      		ldi r31,101
+ 268 0126 EF16      		cp r14,r31
+ 269 0128 F104      		cpc r15,__zero_reg__
+ 270 012a 00F0      		brlo .L2
+  80:../freeRTOS750/lib_time/gmtime_r.c ****         days++;
+ 272               	.LM16:
+ 273 012c 2F5F      		subi r18,-1
+ 274 012e 3F4F      		sbci r19,-1
+ 275 0130 00C0      		rjmp .L3
+ 276               	.L2:
+  81:../freeRTOS750/lib_time/gmtime_r.c **** 
+  82:../freeRTOS750/lib_time/gmtime_r.c ****     /*
+  83:../freeRTOS750/lib_time/gmtime_r.c ****          * 'years' is now at the first year of a 4 year leap cycle, which will always be a leap yea
+  84:../freeRTOS750/lib_time/gmtime_r.c ****          * unless it is 100. 'days' is now an index into that cycle.
+  85:../freeRTOS750/lib_time/gmtime_r.c ****          */
+  86:../freeRTOS750/lib_time/gmtime_r.c ****     leapyear = 1;
+  87:../freeRTOS750/lib_time/gmtime_r.c ****     if (years == 100)
+ 278               	.LM17:
+ 279 0132 44E6      		ldi r20,100
+ 280 0134 E416      		cp r14,r20
+ 281 0136 F104      		cpc r15,__zero_reg__
+ 282 0138 01F0      		breq .L8
+ 283               	.L3:
+  86:../freeRTOS750/lib_time/gmtime_r.c ****     leapyear = 1;
+ 285               	.LM18:
+ 286 013a 81E0      		ldi r24,lo8(1)
+ 287 013c 90E0      		ldi r25,0
+ 288 013e 00C0      		rjmp .L4
+ 289               	.L8:
+  88:../freeRTOS750/lib_time/gmtime_r.c ****         leapyear = 0;
+ 291               	.LM19:
+ 292 0140 80E0      		ldi r24,0
+ 293 0142 90E0      		ldi r25,0
+ 294               	.L4:
+  89:../freeRTOS750/lib_time/gmtime_r.c **** 
+  90:../freeRTOS750/lib_time/gmtime_r.c ****     /* compute length, in days, of first year of this cycle */
+  91:../freeRTOS750/lib_time/gmtime_r.c ****     n = 364 + leapyear;
+ 296               	.LM20:
+ 297 0144 AC01      		movw r20,r24
+ 298 0146 4459      		subi r20,-108
+ 299 0148 5E4F      		sbci r21,-2
+  92:../freeRTOS750/lib_time/gmtime_r.c **** 
+  93:../freeRTOS750/lib_time/gmtime_r.c ****     /*
+  94:../freeRTOS750/lib_time/gmtime_r.c ****      * if the number of days remaining is greater than the length of the
+  95:../freeRTOS750/lib_time/gmtime_r.c ****      * first year, we make one more division.
+  96:../freeRTOS750/lib_time/gmtime_r.c ****      */
+  97:../freeRTOS750/lib_time/gmtime_r.c ****     if (days > n) {
+ 301               	.LM21:
+ 302 014a 4217      		cp r20,r18
+ 303 014c 5307      		cpc r21,r19
+ 304 014e 00F4      		brsh .L5
+  98:../freeRTOS750/lib_time/gmtime_r.c ****         days -= leapyear;
+  99:../freeRTOS750/lib_time/gmtime_r.c ****         leapyear = 0;
+ 100:../freeRTOS750/lib_time/gmtime_r.c ****         result = div(days, 365);
+ 306               	.LM22:
+ 307 0150 6DE6      		ldi r22,lo8(109)
+ 308 0152 71E0      		ldi r23,lo8(1)
+ 309 0154 F901      		movw r30,r18
+ 310 0156 E81B      		sub r30,r24
+ 311 0158 F90B      		sbc r31,r25
+ 312 015a CF01      		movw r24,r30
+ 313 015c 0E94 0000 		call __divmodhi4
+ 314 0160 DC01      		movw r26,r24
+ 315 0162 CB01      		movw r24,r22
+ 101:../freeRTOS750/lib_time/gmtime_r.c ****         years += result.quot;
+ 317               	.LM23:
+ 318 0164 E80E      		add r14,r24
+ 319 0166 F91E      		adc r15,r25
+ 102:../freeRTOS750/lib_time/gmtime_r.c ****         days = result.rem;
+ 321               	.LM24:
+ 322 0168 9D01      		movw r18,r26
+  99:../freeRTOS750/lib_time/gmtime_r.c ****         leapyear = 0;
+ 324               	.LM25:
+ 325 016a 80E0      		ldi r24,0
+ 326 016c 90E0      		ldi r25,0
+ 327               	.L5:
+ 103:../freeRTOS750/lib_time/gmtime_r.c ****     }
+ 104:../freeRTOS750/lib_time/gmtime_r.c ****     timeptr->tm_year = 100 + years;
+ 329               	.LM26:
+ 330 016e F4E6      		ldi r31,100
+ 331 0170 EF0E      		add r14,r31
+ 332 0172 F11C      		adc r15,__zero_reg__
+ 333 0174 F801      		movw r30,r16
+ 334 0176 F782      		std Z+7,r15
+ 335 0178 E682      		std Z+6,r14
+ 105:../freeRTOS750/lib_time/gmtime_r.c ****     timeptr->tm_yday = days;
+ 337               	.LM27:
+ 338 017a 2087      		std Z+8,r18
+ 339 017c 3187      		std Z+9,r19
+ 106:../freeRTOS750/lib_time/gmtime_r.c **** 
+ 107:../freeRTOS750/lib_time/gmtime_r.c ****     /*
+ 108:../freeRTOS750/lib_time/gmtime_r.c ****             Given the year, day of year, and leap year indicator, we can break down the
+ 109:../freeRTOS750/lib_time/gmtime_r.c ****             month and day of month. If the day of year is less than 59 (or 60 if a leap year), then
+ 110:../freeRTOS750/lib_time/gmtime_r.c ****             we handle the Jan/Feb month pair as an exception.
+ 111:../freeRTOS750/lib_time/gmtime_r.c ****         */
+ 112:../freeRTOS750/lib_time/gmtime_r.c ****     n = 59 + leapyear;
+ 341               	.LM28:
+ 342 017e CB96      		adiw r24,59
+ 113:../freeRTOS750/lib_time/gmtime_r.c ****     if (days < n) {
+ 344               	.LM29:
+ 345 0180 2817      		cp r18,r24
+ 346 0182 3907      		cpc r19,r25
+ 347 0184 00F4      		brsh .L6
+ 114:../freeRTOS750/lib_time/gmtime_r.c ****         /* special case: Jan/Feb month pair */
+ 115:../freeRTOS750/lib_time/gmtime_r.c ****         result = div(days, 31);
+ 349               	.LM30:
+ 350 0186 6FE1      		ldi r22,lo8(31)
+ 351 0188 70E0      		ldi r23,0
+ 352 018a C901      		movw r24,r18
+ 353 018c 0E94 0000 		call __divmodhi4
+ 354 0190 DC01      		movw r26,r24
+ 355 0192 CB01      		movw r24,r22
+ 116:../freeRTOS750/lib_time/gmtime_r.c ****         timeptr->tm_mon = result.quot;
+ 357               	.LM31:
+ 358 0194 F801      		movw r30,r16
+ 359 0196 8583      		std Z+5,r24
+ 360 0198 00C0      		rjmp .L9
+ 361               	.L6:
+ 117:../freeRTOS750/lib_time/gmtime_r.c ****         timeptr->tm_mday = result.rem;
+ 118:../freeRTOS750/lib_time/gmtime_r.c ****     } else {
+ 119:../freeRTOS750/lib_time/gmtime_r.c ****         /*
+ 120:../freeRTOS750/lib_time/gmtime_r.c ****             The remaining 10 months form a regular pattern of 31 day months alternating with 30 day
+ 121:../freeRTOS750/lib_time/gmtime_r.c ****             months, with a 'phase change' between July and August (153 days after March 1).
+ 122:../freeRTOS750/lib_time/gmtime_r.c ****             We proceed by mapping our position into either March-July or August-December.
+ 123:../freeRTOS750/lib_time/gmtime_r.c ****             */
+ 124:../freeRTOS750/lib_time/gmtime_r.c ****         days -= n;
+ 125:../freeRTOS750/lib_time/gmtime_r.c ****         result = div(days, 153);
+ 363               	.LM32:
+ 364 019a 69E9      		ldi r22,lo8(-103)
+ 365 019c 70E0      		ldi r23,0
+ 366 019e A901      		movw r20,r18
+ 367 01a0 481B      		sub r20,r24
+ 368 01a2 590B      		sbc r21,r25
+ 369 01a4 CA01      		movw r24,r20
+ 370 01a6 0E94 0000 		call __divmodhi4
+ 371 01aa DC01      		movw r26,r24
+ 372 01ac CB01      		movw r24,r22
+ 126:../freeRTOS750/lib_time/gmtime_r.c ****         timeptr->tm_mon = 2 + result.quot * 5;
+ 374               	.LM33:
+ 375 01ae E82E      		mov r14,r24
+ 376 01b0 54E0      		ldi r21,lo8(4)
+ 377 01b2 859F      		mul r24,r21
+ 378 01b4 E00C      		add r14,r0
+ 379 01b6 1124      		clr __zero_reg__
+ 127:../freeRTOS750/lib_time/gmtime_r.c **** 
+ 128:../freeRTOS750/lib_time/gmtime_r.c ****         /* map into a 61 day pair of months */
+ 129:../freeRTOS750/lib_time/gmtime_r.c ****         result = div(result.rem, 61);
+ 381               	.LM34:
+ 382 01b8 6DE3      		ldi r22,lo8(61)
+ 383 01ba 70E0      		ldi r23,0
+ 384 01bc CD01      		movw r24,r26
+ 385 01be 0E94 0000 		call __divmodhi4
+ 386 01c2 DC01      		movw r26,r24
+ 387 01c4 CB01      		movw r24,r22
+ 130:../freeRTOS750/lib_time/gmtime_r.c ****         timeptr->tm_mon += result.quot * 2;
+ 389               	.LM35:
+ 390 01c6 F82E      		mov r15,r24
+ 391 01c8 FF0C      		lsl r15
+ 131:../freeRTOS750/lib_time/gmtime_r.c **** 
+ 132:../freeRTOS750/lib_time/gmtime_r.c ****         /* map into a month */
+ 133:../freeRTOS750/lib_time/gmtime_r.c ****         result = div(result.rem, 31);
+ 393               	.LM36:
+ 394 01ca 6FE1      		ldi r22,lo8(31)
+ 395 01cc 70E0      		ldi r23,0
+ 396 01ce CD01      		movw r24,r26
+ 397 01d0 0E94 0000 		call __divmodhi4
+ 398 01d4 DC01      		movw r26,r24
+ 399 01d6 CB01      		movw r24,r22
+ 126:../freeRTOS750/lib_time/gmtime_r.c ****         timeptr->tm_mon = 2 + result.quot * 5;
+ 401               	.LM37:
+ 402 01d8 282F      		mov r18,r24
+ 403 01da 2E5F      		subi r18,lo8(-(2))
+ 130:../freeRTOS750/lib_time/gmtime_r.c ****         timeptr->tm_mon += result.quot * 2;
+ 405               	.LM38:
+ 406 01dc 2E0D      		add r18,r14
+ 134:../freeRTOS750/lib_time/gmtime_r.c ****         timeptr->tm_mon += result.quot;
+ 408               	.LM39:
+ 409 01de 2F0D      		add r18,r15
+ 410 01e0 F801      		movw r30,r16
+ 411 01e2 2583      		std Z+5,r18
+ 412               	.L9:
+ 135:../freeRTOS750/lib_time/gmtime_r.c ****         timeptr->tm_mday = result.rem;
+ 414               	.LM40:
+ 415 01e4 A383      		std Z+3,r26
+ 136:../freeRTOS750/lib_time/gmtime_r.c ****     }
+ 137:../freeRTOS750/lib_time/gmtime_r.c **** 
+ 138:../freeRTOS750/lib_time/gmtime_r.c ****     /*
+ 139:../freeRTOS750/lib_time/gmtime_r.c ****             Cleanup and return
+ 140:../freeRTOS750/lib_time/gmtime_r.c ****         */
+ 141:../freeRTOS750/lib_time/gmtime_r.c ****     timeptr->tm_isdst = 0;  /* gmt is never in DST */
+ 417               	.LM41:
+ 418 01e6 F801      		movw r30,r16
+ 419 01e8 1386      		std Z+11,__zero_reg__
+ 420 01ea 1286      		std Z+10,__zero_reg__
+ 142:../freeRTOS750/lib_time/gmtime_r.c ****     timeptr->tm_mday++; /* tm_mday is 1 based */
+ 422               	.LM42:
+ 423 01ec 8381      		ldd r24,Z+3
+ 424 01ee 8F5F      		subi r24,lo8(-(1))
+ 425 01f0 8383      		std Z+3,r24
+ 426               	/* epilogue start */
+ 143:../freeRTOS750/lib_time/gmtime_r.c **** 
+ 144:../freeRTOS750/lib_time/gmtime_r.c **** }
+ 428               	.LM43:
+ 429 01f2 6096      		adiw r28,16
+ 430 01f4 0FB6      		in __tmp_reg__,__SREG__
+ 431 01f6 F894      		cli
+ 432 01f8 DEBF      		out __SP_H__,r29
+ 433 01fa 0FBE      		out __SREG__,__tmp_reg__
+ 434 01fc CDBF      		out __SP_L__,r28
+ 435 01fe DF91      		pop r29
+ 436 0200 CF91      		pop r28
+ 437 0202 1F91      		pop r17
+ 438 0204 0F91      		pop r16
+ 439 0206 FF90      		pop r15
+ 440 0208 EF90      		pop r14
+ 441 020a DF90      		pop r13
+ 442 020c CF90      		pop r12
+ 443 020e 0895      		ret
+ 450               	.Lscope1:
+ 452               		.stabd	78,0,0
+ 454               	.Letext0:
+ 455               		.ident	"GCC: (GNU) 4.7.2"
+DEFINED SYMBOLS
+                            *ABS*:00000000 gmtime_r.c
+     /tmp/ccOW5kSq.s:2      *ABS*:0000003e __SP_H__
+     /tmp/ccOW5kSq.s:3      *ABS*:0000003d __SP_L__
+     /tmp/ccOW5kSq.s:4      *ABS*:0000003f __SREG__
+     /tmp/ccOW5kSq.s:5      *ABS*:00000000 __tmp_reg__
+     /tmp/ccOW5kSq.s:6      *ABS*:00000001 __zero_reg__
+     /tmp/ccOW5kSq.s:85     .text:00000000 gmtime_r
+
+UNDEFINED SYMBOLS
+__udivmodsi4
+__divmodsi4
+__divmodhi4
+__udivmodhi4

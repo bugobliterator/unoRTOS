@@ -1,0 +1,986 @@
+   1               		.file	"spi.c"
+   2               	__SP_H__ = 0x3e
+   3               	__SP_L__ = 0x3d
+   4               	__SREG__ = 0x3f
+   5               	__tmp_reg__ = 0
+   6               	__zero_reg__ = 1
+   9               		.text
+  10               	.Ltext0:
+ 122               	.global	spiBegin
+ 124               	spiBegin:
+ 125               		.stabd	46,0,0
+   1:../freeRTOS750/lib_spi/spi.c **** /*
+   2:../freeRTOS750/lib_spi/spi.c ****  * Copyright (c) 2010 by Cristian Maglie <c.maglie@bug.st>
+   3:../freeRTOS750/lib_spi/spi.c ****  * SPI Master library for Arduino.
+   4:../freeRTOS750/lib_spi/spi.c ****  *
+   5:../freeRTOS750/lib_spi/spi.c ****  * This file is free software; you can redistribute it and/or modify
+   6:../freeRTOS750/lib_spi/spi.c ****  * it under the terms of either the GNU General Public License version 2
+   7:../freeRTOS750/lib_spi/spi.c ****  * or the GNU Lesser General Public License version 2.1, both as
+   8:../freeRTOS750/lib_spi/spi.c ****  * published by the Free Software Foundation.
+   9:../freeRTOS750/lib_spi/spi.c ****  */
+  10:../freeRTOS750/lib_spi/spi.c **** 
+  11:../freeRTOS750/lib_spi/spi.c **** // AVR include files.
+  12:../freeRTOS750/lib_spi/spi.c **** #include <avr/io.h>
+  13:../freeRTOS750/lib_spi/spi.c **** 
+  14:../freeRTOS750/lib_spi/spi.c **** #include <FreeRTOS.h>
+  15:../freeRTOS750/lib_spi/spi.c **** #include <semphr.h>
+  16:../freeRTOS750/lib_spi/spi.c **** #include <freeRTOSBoardDefs.h>
+  17:../freeRTOS750/lib_spi/spi.c **** #include <spi.h>
+  18:../freeRTOS750/lib_spi/spi.c **** 
+  19:../freeRTOS750/lib_spi/spi.c **** #if defined(portW5200)
+  20:../freeRTOS750/lib_spi/spi.c **** #include <w5200.h>
+  21:../freeRTOS750/lib_spi/spi.c **** #else
+  22:../freeRTOS750/lib_spi/spi.c **** #include <w5100.h>		// added this to allow the W5100 to add some features to spiSelect and spiDesel
+  23:../freeRTOS750/lib_spi/spi.c **** #endif
+  24:../freeRTOS750/lib_spi/spi.c **** 
+  25:../freeRTOS750/lib_spi/spi.c **** /* Declare a binary Semaphore flag for the SPI Bus. To ensure only single access to SPI Bus. */
+  26:../freeRTOS750/lib_spi/spi.c **** xSemaphoreHandle xSPISemaphore; // removed STATIC to allow ramfs.c to use same semaphore.
+  27:../freeRTOS750/lib_spi/spi.c **** 
+  28:../freeRTOS750/lib_spi/spi.c **** /*******************************************************/
+  29:../freeRTOS750/lib_spi/spi.c **** 
+  30:../freeRTOS750/lib_spi/spi.c **** void spiBegin(SPI_SLAVE_SELECT SS_pin)
+  31:../freeRTOS750/lib_spi/spi.c **** {
+ 127               	.LM0:
+ 128               	.LFBB1:
+ 129               	/* prologue: function */
+ 130               	/* frame size = 0 */
+ 131               	/* stack size = 0 */
+ 132               	.L__stack_usage = 0
+  32:../freeRTOS750/lib_spi/spi.c **** 	// Set direction register for SCK and MOSI pin.
+  33:../freeRTOS750/lib_spi/spi.c **** 	// MISO pin automatically overrides to INPUT.
+  34:../freeRTOS750/lib_spi/spi.c **** 	// The SS pin MUST be set as OUTPUT, but it can be used as
+  35:../freeRTOS750/lib_spi/spi.c **** 	// a general purpose output port (it doesn't influence
+  36:../freeRTOS750/lib_spi/spi.c **** 	// SPI operations).
+  37:../freeRTOS750/lib_spi/spi.c **** 
+  38:../freeRTOS750/lib_spi/spi.c **** 	// Warning: if the default SS pin ever becomes a LOW INPUT then SPI
+  39:../freeRTOS750/lib_spi/spi.c **** 	// automatically switches to Slave, so the data direction of
+  40:../freeRTOS750/lib_spi/spi.c **** 	// the SS pin MUST be kept as OUTPUT.
+  41:../freeRTOS750/lib_spi/spi.c **** 	// This is true even if an alternative SS pin is also being used.
+  42:../freeRTOS750/lib_spi/spi.c **** 	// Be warned!
+  43:../freeRTOS750/lib_spi/spi.c **** 
+  44:../freeRTOS750/lib_spi/spi.c **** 	// Set the MOSI and SCK to low, as is standardised.
+  45:../freeRTOS750/lib_spi/spi.c **** 	// Also, turn on internal pull-up resistor on MISO, to keep it defined.
+  46:../freeRTOS750/lib_spi/spi.c **** 
+  47:../freeRTOS750/lib_spi/spi.c **** 	uint8_t tmp;
+  48:../freeRTOS750/lib_spi/spi.c **** 
+  49:../freeRTOS750/lib_spi/spi.c **** 	switch (SS_pin)
+ 134               	.LM1:
+ 135 0000 8823      		tst r24
+ 136 0002 01F0      		breq .L3
+ 137 0004 8130      		cpi r24,lo8(1)
+ 138 0006 01F4      		brne .L12
+ 139 0008 00C0      		rjmp .L4
+ 140               	.L3:
+  50:../freeRTOS750/lib_spi/spi.c **** 	{
+  51:../freeRTOS750/lib_spi/spi.c **** 	case Wiznet:	// added for EtherMega Wiznet 5100/5200 support
+  52:../freeRTOS750/lib_spi/spi.c **** 		SPI_PORT_DIR |= SPI_BIT_MOSI | SPI_BIT_SCK | SPI_BIT_SS; // yes I know SPI_BIT_SS = SPI_BIT_SS_WI
+ 142               	.LM2:
+ 143 000a 84B1      		in r24,0x4
+ 144 000c 8C62      		ori r24,lo8(44)
+ 145 000e 84B9      		out 0x4,r24
+  53:../freeRTOS750/lib_spi/spi.c **** 		SPI_PORT_DIR &= ~SPI_BIT_MISO;
+ 147               	.LM3:
+ 148 0010 2498      		cbi 0x4,4
+  54:../freeRTOS750/lib_spi/spi.c **** 
+  55:../freeRTOS750/lib_spi/spi.c **** 		SPI_PORT |= SPI_BIT_MISO | SPI_BIT_SS;
+ 150               	.LM4:
+ 151 0012 85B1      		in r24,0x5
+ 152 0014 8461      		ori r24,lo8(20)
+ 153 0016 85B9      		out 0x5,r24
+  56:../freeRTOS750/lib_spi/spi.c **** 
+  57:../freeRTOS750/lib_spi/spi.c **** 		SPI_PORT_DIR |= SPI_BIT_SS_WIZNET;
+ 155               	.LM5:
+ 156 0018 229A      		sbi 0x4,2
+  58:../freeRTOS750/lib_spi/spi.c **** 		SPI_PORT |= SPI_BIT_SS_WIZNET;
+ 158               	.LM6:
+ 159 001a 2A9A      		sbi 0x5,2
+  59:../freeRTOS750/lib_spi/spi.c **** 		break;
+ 161               	.LM7:
+ 162 001c 00C0      		rjmp .L5
+ 163               	.L4:
+  60:../freeRTOS750/lib_spi/spi.c **** 
+  61:../freeRTOS750/lib_spi/spi.c **** 	case SDCard:	// added for the SD Card support with SS */
+  62:../freeRTOS750/lib_spi/spi.c **** 		SPI_PORT_DIR |= SPI_BIT_MOSI | SPI_BIT_SCK | SPI_BIT_SS;
+ 165               	.LM8:
+ 166 001e 84B1      		in r24,0x4
+ 167 0020 8C62      		ori r24,lo8(44)
+ 168 0022 84B9      		out 0x4,r24
+  63:../freeRTOS750/lib_spi/spi.c **** 		SPI_PORT_DIR &= ~SPI_BIT_MISO;
+ 170               	.LM9:
+ 171 0024 2498      		cbi 0x4,4
+  64:../freeRTOS750/lib_spi/spi.c **** 
+  65:../freeRTOS750/lib_spi/spi.c **** 		SPI_PORT |= SPI_BIT_MISO | SPI_BIT_SS;
+ 173               	.LM10:
+ 174 0026 85B1      		in r24,0x5
+ 175 0028 8461      		ori r24,lo8(20)
+ 176 002a 85B9      		out 0x5,r24
+  66:../freeRTOS750/lib_spi/spi.c **** 
+  67:../freeRTOS750/lib_spi/spi.c **** 		SPI_PORT_DIR_SS_SD |= SPI_BIT_SS_SD;
+ 178               	.LM11:
+ 179 002c 549A      		sbi 0xa,4
+  68:../freeRTOS750/lib_spi/spi.c **** 		SPI_PORT_SS_SD |= SPI_BIT_SS_SD;
+ 181               	.LM12:
+ 182 002e 5C9A      		sbi 0xb,4
+  69:../freeRTOS750/lib_spi/spi.c **** 		break;
+ 184               	.LM13:
+ 185 0030 00C0      		rjmp .L5
+ 186               	.L12:
+  70:../freeRTOS750/lib_spi/spi.c **** 
+  71:../freeRTOS750/lib_spi/spi.c **** 	case Default:	// default SS line for Arduino Mega2560 (EtherMega) & SD card SS for Goldilocks
+  72:../freeRTOS750/lib_spi/spi.c **** 	default:
+  73:../freeRTOS750/lib_spi/spi.c **** 		SPI_PORT_DIR |= SPI_BIT_MOSI | SPI_BIT_SCK | SPI_BIT_SS;
+ 188               	.LM14:
+ 189 0032 84B1      		in r24,0x4
+ 190 0034 8C62      		ori r24,lo8(44)
+ 191 0036 84B9      		out 0x4,r24
+  74:../freeRTOS750/lib_spi/spi.c **** 		SPI_PORT_DIR &= ~SPI_BIT_MISO;
+ 193               	.LM15:
+ 194 0038 2498      		cbi 0x4,4
+  75:../freeRTOS750/lib_spi/spi.c **** 
+  76:../freeRTOS750/lib_spi/spi.c **** 		SPI_PORT |= SPI_BIT_MISO | SPI_BIT_SS;
+ 196               	.LM16:
+ 197 003a 85B1      		in r24,0x5
+ 198 003c 8461      		ori r24,lo8(20)
+ 199 003e 85B9      		out 0x5,r24
+ 200               	.L5:
+  77:../freeRTOS750/lib_spi/spi.c **** 		break;
+  78:../freeRTOS750/lib_spi/spi.c **** 	}
+  79:../freeRTOS750/lib_spi/spi.c **** 
+  80:../freeRTOS750/lib_spi/spi.c **** 	// Set the control register to turn on the SPI interface as Master.
+  81:../freeRTOS750/lib_spi/spi.c **** 	SPCR |= _BV(MSTR) | _BV(SPE);
+ 202               	.LM17:
+ 203 0040 8CB5      		in r24,0x2c
+ 204 0042 8065      		ori r24,lo8(80)
+ 205 0044 8CBD      		out 0x2c,r24
+  82:../freeRTOS750/lib_spi/spi.c **** 
+  83:../freeRTOS750/lib_spi/spi.c **** 	// Reading SPI Status Register & SPI Data Register
+  84:../freeRTOS750/lib_spi/spi.c **** 	// has side effect of zeroing out both
+  85:../freeRTOS750/lib_spi/spi.c **** 	tmp = SPSR;
+ 207               	.LM18:
+ 208 0046 8DB5      		in r24,0x2d
+  86:../freeRTOS750/lib_spi/spi.c **** 	tmp = SPDR;
+ 210               	.LM19:
+ 211 0048 8EB5      		in r24,0x2e
+  87:../freeRTOS750/lib_spi/spi.c **** 
+  88:../freeRTOS750/lib_spi/spi.c ****     if( xSPISemaphore == NULL ) 					/* Check to see if the semaphore has not been created. */
+ 213               	.LM20:
+ 214 004a 8091 0000 		lds r24,xSPISemaphore
+ 215 004e 9091 0000 		lds r25,xSPISemaphore+1
+ 216 0052 892B      		or r24,r25
+ 217 0054 01F4      		brne .L1
+  89:../freeRTOS750/lib_spi/spi.c ****     	vSemaphoreCreateBinary( xSPISemaphore );	/* Then create the SPI bus binary semaphore */
+ 219               	.LM21:
+ 220 0056 43E0      		ldi r20,lo8(3)
+ 221 0058 60E0      		ldi r22,0
+ 222 005a 81E0      		ldi r24,lo8(1)
+ 223 005c 0E94 0000 		call xQueueGenericCreate
+ 224 0060 9093 0000 		sts xSPISemaphore+1,r25
+ 225 0064 8093 0000 		sts xSPISemaphore,r24
+ 226 0068 0097      		sbiw r24,0
+ 227 006a 01F0      		breq .L1
+ 229               	.LM22:
+ 230 006c 20E0      		ldi r18,0
+ 231 006e 40E0      		ldi r20,0
+ 232 0070 50E0      		ldi r21,0
+ 233 0072 60E0      		ldi r22,0
+ 234 0074 70E0      		ldi r23,0
+ 235 0076 0C94 0000 		jmp xQueueGenericSend
+ 236               	.L1:
+ 237 007a 0895      		ret
+ 239               	.Lscope1:
+ 241               		.stabd	78,0,0
+ 243               	.global	spiEnd
+ 245               	spiEnd:
+ 246               		.stabd	46,0,0
+  90:../freeRTOS750/lib_spi/spi.c **** }
+  91:../freeRTOS750/lib_spi/spi.c **** 
+  92:../freeRTOS750/lib_spi/spi.c **** 
+  93:../freeRTOS750/lib_spi/spi.c **** 
+  94:../freeRTOS750/lib_spi/spi.c **** void spiEnd()
+  95:../freeRTOS750/lib_spi/spi.c **** {
+ 248               	.LM23:
+ 249               	.LFBB2:
+ 250               	/* prologue: function */
+ 251               	/* frame size = 0 */
+ 252               	/* stack size = 0 */
+ 253               	.L__stack_usage = 0
+  96:../freeRTOS750/lib_spi/spi.c **** 	if( xSPISemaphore != NULL )
+ 255               	.LM24:
+ 256 007c 8091 0000 		lds r24,xSPISemaphore
+ 257 0080 9091 0000 		lds r25,xSPISemaphore+1
+ 258 0084 0097      		sbiw r24,0
+ 259 0086 01F0      		breq .L14
+  97:../freeRTOS750/lib_spi/spi.c **** 		vQueueDelete( xSPISemaphore );		/* FreeRTOS semaphore */
+ 261               	.LM25:
+ 262 0088 0E94 0000 		call vQueueDelete
+ 263               	.L14:
+  98:../freeRTOS750/lib_spi/spi.c **** 
+  99:../freeRTOS750/lib_spi/spi.c **** 	SPCR &= ~( _BV(MSTR) | _BV(SPE) );
+ 265               	.LM26:
+ 266 008c 8CB5      		in r24,0x2c
+ 267 008e 8F7A      		andi r24,lo8(-81)
+ 268 0090 8CBD      		out 0x2c,r24
+ 269 0092 0895      		ret
+ 271               	.Lscope2:
+ 273               		.stabd	78,0,0
+ 276               	.global	spiSetClockDivider
+ 278               	spiSetClockDivider:
+ 279               		.stabd	46,0,0
+ 100:../freeRTOS750/lib_spi/spi.c **** 	// Don't bother to tidy up. This function is not likely to be actually used.
+ 101:../freeRTOS750/lib_spi/spi.c **** }
+ 102:../freeRTOS750/lib_spi/spi.c **** 
+ 103:../freeRTOS750/lib_spi/spi.c **** inline void spiSetClockDivider(uint8_t rate)
+ 104:../freeRTOS750/lib_spi/spi.c **** {
+ 281               	.LM27:
+ 282               	.LFBB3:
+ 283               	/* prologue: function */
+ 284               	/* frame size = 0 */
+ 285               	/* stack size = 0 */
+ 286               	.L__stack_usage = 0
+ 105:../freeRTOS750/lib_spi/spi.c **** 	SPCR = (SPCR & ~SPI_CLOCK_MASK) | (rate & SPI_CLOCK_MASK);
+ 288               	.LM28:
+ 289 0094 2CB5      		in r18,0x2c
+ 290 0096 982F      		mov r25,r24
+ 291 0098 9370      		andi r25,lo8(3)
+ 292 009a 2C7F      		andi r18,lo8(-4)
+ 293 009c 922B      		or r25,r18
+ 294 009e 9CBD      		out 0x2c,r25
+ 106:../freeRTOS750/lib_spi/spi.c **** 	SPSR = (SPSR & ~SPI_2XCLOCK_MASK) | ((rate >> 2) & SPI_2XCLOCK_MASK);
+ 296               	.LM29:
+ 297 00a0 9DB5      		in r25,0x2d
+ 298 00a2 82FB      		bst r24,2
+ 299 00a4 8827      		clr r24
+ 300 00a6 80F9      		bld r24,0
+ 301 00a8 9E7F      		andi r25,lo8(-2)
+ 302 00aa 892B      		or r24,r25
+ 303 00ac 8DBD      		out 0x2d,r24
+ 304 00ae 0895      		ret
+ 306               	.Lscope3:
+ 308               		.stabd	78,0,0
+ 311               	.global	spiSetBitOrder
+ 313               	spiSetBitOrder:
+ 314               		.stabd	46,0,0
+ 107:../freeRTOS750/lib_spi/spi.c **** }
+ 108:../freeRTOS750/lib_spi/spi.c **** 
+ 109:../freeRTOS750/lib_spi/spi.c **** inline void spiSetBitOrder(uint8_t bitOrder)
+ 110:../freeRTOS750/lib_spi/spi.c **** {
+ 316               	.LM30:
+ 317               	.LFBB4:
+ 318               	/* prologue: function */
+ 319               	/* frame size = 0 */
+ 320               	/* stack size = 0 */
+ 321               	.L__stack_usage = 0
+ 111:../freeRTOS750/lib_spi/spi.c **** 	if(bitOrder == SPI_LSBFIRST) {
+ 323               	.LM31:
+ 324 00b0 8111      		cpse r24,__zero_reg__
+ 325 00b2 00C0      		rjmp .L20
+ 112:../freeRTOS750/lib_spi/spi.c **** 		SPCR |= _BV(DORD);
+ 327               	.LM32:
+ 328 00b4 8CB5      		in r24,0x2c
+ 329 00b6 8062      		ori r24,lo8(32)
+ 330 00b8 00C0      		rjmp .L22
+ 331               	.L20:
+ 113:../freeRTOS750/lib_spi/spi.c **** 	} else {
+ 114:../freeRTOS750/lib_spi/spi.c **** 		SPCR &= ~(_BV(DORD));
+ 333               	.LM33:
+ 334 00ba 8CB5      		in r24,0x2c
+ 335 00bc 8F7D      		andi r24,lo8(-33)
+ 336               	.L22:
+ 337 00be 8CBD      		out 0x2c,r24
+ 338 00c0 0895      		ret
+ 340               	.Lscope4:
+ 342               		.stabd	78,0,0
+ 345               	.global	spiSetDataMode
+ 347               	spiSetDataMode:
+ 348               		.stabd	46,0,0
+ 115:../freeRTOS750/lib_spi/spi.c **** 	}
+ 116:../freeRTOS750/lib_spi/spi.c **** }
+ 117:../freeRTOS750/lib_spi/spi.c **** 
+ 118:../freeRTOS750/lib_spi/spi.c **** inline void spiSetDataMode(uint8_t mode)
+ 119:../freeRTOS750/lib_spi/spi.c **** {
+ 350               	.LM34:
+ 351               	.LFBB5:
+ 352               	/* prologue: function */
+ 353               	/* frame size = 0 */
+ 354               	/* stack size = 0 */
+ 355               	.L__stack_usage = 0
+ 120:../freeRTOS750/lib_spi/spi.c **** 	SPCR = (SPCR & ~SPI_MODE_MASK) | mode;
+ 357               	.LM35:
+ 358 00c2 9CB5      		in r25,0x2c
+ 359 00c4 937F      		andi r25,lo8(-13)
+ 360 00c6 982B      		or r25,r24
+ 361 00c8 9CBD      		out 0x2c,r25
+ 362 00ca 0895      		ret
+ 364               	.Lscope5:
+ 366               		.stabd	78,0,0
+ 368               	.global	spiAttachInterrupt
+ 370               	spiAttachInterrupt:
+ 371               		.stabd	46,0,0
+ 121:../freeRTOS750/lib_spi/spi.c **** }
+ 122:../freeRTOS750/lib_spi/spi.c **** 
+ 123:../freeRTOS750/lib_spi/spi.c **** 
+ 124:../freeRTOS750/lib_spi/spi.c **** inline void spiAttachInterrupt()
+ 125:../freeRTOS750/lib_spi/spi.c **** {
+ 373               	.LM36:
+ 374               	.LFBB6:
+ 375               	/* prologue: function */
+ 376               	/* frame size = 0 */
+ 377               	/* stack size = 0 */
+ 378               	.L__stack_usage = 0
+ 126:../freeRTOS750/lib_spi/spi.c **** 	SPCR |= _BV(SPIE);
+ 380               	.LM37:
+ 381 00cc 8CB5      		in r24,0x2c
+ 382 00ce 8068      		ori r24,lo8(-128)
+ 383 00d0 8CBD      		out 0x2c,r24
+ 384 00d2 0895      		ret
+ 386               	.Lscope6:
+ 388               		.stabd	78,0,0
+ 390               	.global	spiDetachInterrupt
+ 392               	spiDetachInterrupt:
+ 393               		.stabd	46,0,0
+ 127:../freeRTOS750/lib_spi/spi.c **** }
+ 128:../freeRTOS750/lib_spi/spi.c **** 
+ 129:../freeRTOS750/lib_spi/spi.c **** inline void spiDetachInterrupt()
+ 130:../freeRTOS750/lib_spi/spi.c **** {
+ 395               	.LM38:
+ 396               	.LFBB7:
+ 397               	/* prologue: function */
+ 398               	/* frame size = 0 */
+ 399               	/* stack size = 0 */
+ 400               	.L__stack_usage = 0
+ 131:../freeRTOS750/lib_spi/spi.c **** 	SPCR &= ~_BV(SPIE);
+ 402               	.LM39:
+ 403 00d4 8CB5      		in r24,0x2c
+ 404 00d6 8F77      		andi r24,lo8(127)
+ 405 00d8 8CBD      		out 0x2c,r24
+ 406 00da 0895      		ret
+ 408               	.Lscope7:
+ 410               		.stabd	78,0,0
+ 413               	.global	spiSelect
+ 415               	spiSelect:
+ 416               		.stabd	46,0,0
+ 132:../freeRTOS750/lib_spi/spi.c **** }
+ 133:../freeRTOS750/lib_spi/spi.c **** 
+ 134:../freeRTOS750/lib_spi/spi.c **** /*-----------------------------------------------------------------------*/
+ 135:../freeRTOS750/lib_spi/spi.c **** /* Select the SPI device                                    */
+ 136:../freeRTOS750/lib_spi/spi.c **** /*-----------------------------------------------------------------------*/
+ 137:../freeRTOS750/lib_spi/spi.c **** 
+ 138:../freeRTOS750/lib_spi/spi.c **** uint8_t spiSelect(SPI_SLAVE_SELECT SS_pin)	/* 1:Successful, 0:Timeout */
+ 139:../freeRTOS750/lib_spi/spi.c **** {
+ 418               	.LM40:
+ 419               	.LFBB8:
+ 420 00dc CF93      		push r28
+ 421               	/* prologue: function */
+ 422               	/* frame size = 0 */
+ 423               	/* stack size = 1 */
+ 424               	.L__stack_usage = 1
+ 425 00de C82F      		mov r28,r24
+ 140:../freeRTOS750/lib_spi/spi.c **** 
+ 141:../freeRTOS750/lib_spi/spi.c **** 	if ( (xSemaphoreTake( xSPISemaphore, (SPI_TIMEOUT / portTICK_RATE_MS )) == pdTRUE )	)
+ 427               	.LM41:
+ 428 00e0 20E0      		ldi r18,0
+ 429 00e2 48EC      		ldi r20,lo8(-56)
+ 430 00e4 50E0      		ldi r21,0
+ 431 00e6 60E0      		ldi r22,0
+ 432 00e8 70E0      		ldi r23,0
+ 433 00ea 8091 0000 		lds r24,xSPISemaphore
+ 434 00ee 9091 0000 		lds r25,xSPISemaphore+1
+ 435 00f2 0E94 0000 		call xQueueGenericReceive
+ 436 00f6 8130      		cpi r24,lo8(1)
+ 437 00f8 01F4      		brne .L31
+ 142:../freeRTOS750/lib_spi/spi.c **** 	{
+ 143:../freeRTOS750/lib_spi/spi.c **** 
+ 144:../freeRTOS750/lib_spi/spi.c **** 		switch (SS_pin)
+ 439               	.LM42:
+ 440 00fa CC23      		tst r28
+ 441 00fc 01F0      		breq .L29
+ 442 00fe C130      		cpi r28,lo8(1)
+ 443 0100 01F4      		brne .L32
+ 444 0102 00C0      		rjmp .L30
+ 445               	.L29:
+ 145:../freeRTOS750/lib_spi/spi.c **** 		{
+ 146:../freeRTOS750/lib_spi/spi.c **** 		case Wiznet:	// added for EtherMega Wiznet 5100/5200 support
+ 147:../freeRTOS750/lib_spi/spi.c **** #if defined(__DEF_W5100_DFROBOT__) && defined(_W5100_H_)
+ 148:../freeRTOS750/lib_spi/spi.c **** 			W5100_SEN_ENABLE(1); // Enable SEN, to get on the SPI bus. PORT D7
+ 447               	.LM43:
+ 448 0104 579A      		sbi 0xa,7
+ 449 0106 5F9A      		sbi 0xb,7
+ 450 0108 00C0      		rjmp .L32
+ 451               	.L30:
+ 149:../freeRTOS750/lib_spi/spi.c **** #endif
+ 150:../freeRTOS750/lib_spi/spi.c **** 			SPI_PORT &= ~SPI_BIT_SS_WIZNET;
+ 151:../freeRTOS750/lib_spi/spi.c **** 			break;
+ 152:../freeRTOS750/lib_spi/spi.c **** 
+ 153:../freeRTOS750/lib_spi/spi.c **** 		case SDCard:	// added for  SD Card support
+ 154:../freeRTOS750/lib_spi/spi.c **** 			SPI_PORT_SS_SD &= ~SPI_BIT_SS_SD; // Pull SS low to select the card.
+ 453               	.LM44:
+ 454 010a 5C98      		cbi 0xb,4
+ 455               	.L33:
+ 155:../freeRTOS750/lib_spi/spi.c **** 			break;
+ 156:../freeRTOS750/lib_spi/spi.c **** 
+ 157:../freeRTOS750/lib_spi/spi.c **** 		case Default:	// default SS line for Arduino Uno
+ 158:../freeRTOS750/lib_spi/spi.c **** 		default:
+ 159:../freeRTOS750/lib_spi/spi.c **** 			SPI_PORT &= ~SPI_BIT_SS;
+ 160:../freeRTOS750/lib_spi/spi.c **** 			break;
+ 161:../freeRTOS750/lib_spi/spi.c **** 		}
+ 162:../freeRTOS750/lib_spi/spi.c **** 
+ 163:../freeRTOS750/lib_spi/spi.c **** 		return 1;	// OK /
+ 457               	.LM45:
+ 458 010c 81E0      		ldi r24,lo8(1)
+ 155:../freeRTOS750/lib_spi/spi.c **** 			break;
+ 460               	.LM46:
+ 461 010e 00C0      		rjmp .L27
+ 462               	.L32:
+ 159:../freeRTOS750/lib_spi/spi.c **** 			SPI_PORT &= ~SPI_BIT_SS;
+ 464               	.LM47:
+ 465 0110 2A98      		cbi 0x5,2
+ 466 0112 00C0      		rjmp .L33
+ 467               	.L31:
+ 164:../freeRTOS750/lib_spi/spi.c **** 	}
+ 165:../freeRTOS750/lib_spi/spi.c **** 	else
+ 166:../freeRTOS750/lib_spi/spi.c **** 		return 0;	// Timeout
+ 469               	.LM48:
+ 470 0114 80E0      		ldi r24,0
+ 471               	.L27:
+ 472               	/* epilogue start */
+ 167:../freeRTOS750/lib_spi/spi.c **** }
+ 474               	.LM49:
+ 475 0116 CF91      		pop r28
+ 476 0118 0895      		ret
+ 478               	.Lscope8:
+ 480               		.stabd	78,0,0
+ 483               	.global	spiDeselect
+ 485               	spiDeselect:
+ 486               		.stabd	46,0,0
+ 168:../freeRTOS750/lib_spi/spi.c **** 
+ 169:../freeRTOS750/lib_spi/spi.c **** 
+ 170:../freeRTOS750/lib_spi/spi.c **** /*-----------------------------------------------------------------------*/
+ 171:../freeRTOS750/lib_spi/spi.c **** /* Deselect the SPI device                                 */
+ 172:../freeRTOS750/lib_spi/spi.c **** /*-----------------------------------------------------------------------*/
+ 173:../freeRTOS750/lib_spi/spi.c **** 
+ 174:../freeRTOS750/lib_spi/spi.c **** void spiDeselect(SPI_SLAVE_SELECT SS_pin)
+ 175:../freeRTOS750/lib_spi/spi.c **** {
+ 488               	.LM50:
+ 489               	.LFBB9:
+ 490               	/* prologue: function */
+ 491               	/* frame size = 0 */
+ 492               	/* stack size = 0 */
+ 493               	.L__stack_usage = 0
+ 176:../freeRTOS750/lib_spi/spi.c **** 	// Pull SS high to Deselect the card.
+ 177:../freeRTOS750/lib_spi/spi.c **** 	switch (SS_pin)
+ 495               	.LM51:
+ 496 011a 8823      		tst r24
+ 497 011c 01F0      		breq .L36
+ 498 011e 8130      		cpi r24,lo8(1)
+ 499 0120 01F4      		brne .L39
+ 500 0122 00C0      		rjmp .L37
+ 501               	.L36:
+ 178:../freeRTOS750/lib_spi/spi.c **** 	{
+ 179:../freeRTOS750/lib_spi/spi.c **** 	case Wiznet:	// added for EtherMega Wiznet 5100/5200 support
+ 180:../freeRTOS750/lib_spi/spi.c **** 		SPI_PORT |= SPI_BIT_SS_WIZNET;
+ 503               	.LM52:
+ 504 0124 2A9A      		sbi 0x5,2
+ 181:../freeRTOS750/lib_spi/spi.c **** 
+ 182:../freeRTOS750/lib_spi/spi.c **** #if defined(__DEF_W5100_DFROBOT__) && defined(_W5100_H_)
+ 183:../freeRTOS750/lib_spi/spi.c **** 		W5100_SEN_ENABLE(0); // Disable SEN, to get off the SPI bus. PORT D7
+ 506               	.LM53:
+ 507 0126 579A      		sbi 0xa,7
+ 508 0128 5F98      		cbi 0xb,7
+ 509 012a 00C0      		rjmp .L38
+ 510               	.L37:
+ 184:../freeRTOS750/lib_spi/spi.c **** #endif
+ 185:../freeRTOS750/lib_spi/spi.c **** 		break;
+ 186:../freeRTOS750/lib_spi/spi.c **** 
+ 187:../freeRTOS750/lib_spi/spi.c **** 	case SDCard:	// added for  SD Card support
+ 188:../freeRTOS750/lib_spi/spi.c **** 		SPI_PORT_SS_SD |= SPI_BIT_SS_SD; // Pull SS high to deselect the card.
+ 512               	.LM54:
+ 513 012c 5C9A      		sbi 0xb,4
+ 189:../freeRTOS750/lib_spi/spi.c **** 		break;
+ 515               	.LM55:
+ 516 012e 00C0      		rjmp .L38
+ 517               	.L39:
+ 190:../freeRTOS750/lib_spi/spi.c **** 
+ 191:../freeRTOS750/lib_spi/spi.c **** 	case Default:	// default SS line for Arduino Uno
+ 192:../freeRTOS750/lib_spi/spi.c **** 	default:
+ 193:../freeRTOS750/lib_spi/spi.c **** 		SPI_PORT |= SPI_BIT_SS;
+ 519               	.LM56:
+ 520 0130 2A9A      		sbi 0x5,2
+ 521               	.L38:
+ 194:../freeRTOS750/lib_spi/spi.c **** 		break;
+ 195:../freeRTOS750/lib_spi/spi.c **** 	}
+ 196:../freeRTOS750/lib_spi/spi.c **** 
+ 197:../freeRTOS750/lib_spi/spi.c **** 	xSemaphoreGive( xSPISemaphore );	/* Free FreeRTOS semaphore to allow other SPI access */
+ 523               	.LM57:
+ 524 0132 20E0      		ldi r18,0
+ 525 0134 40E0      		ldi r20,0
+ 526 0136 50E0      		ldi r21,0
+ 527 0138 60E0      		ldi r22,0
+ 528 013a 70E0      		ldi r23,0
+ 529 013c 8091 0000 		lds r24,xSPISemaphore
+ 530 0140 9091 0000 		lds r25,xSPISemaphore+1
+ 531 0144 0C94 0000 		jmp xQueueGenericSend
+ 533               	.Lscope9:
+ 535               		.stabd	78,0,0
+ 538               	.global	spiTransfer
+ 540               	spiTransfer:
+ 541               		.stabd	46,0,0
+ 198:../freeRTOS750/lib_spi/spi.c **** }
+ 199:../freeRTOS750/lib_spi/spi.c **** 
+ 200:../freeRTOS750/lib_spi/spi.c **** 
+ 201:../freeRTOS750/lib_spi/spi.c **** 
+ 202:../freeRTOS750/lib_spi/spi.c **** inline uint8_t spiTransfer(uint8_t data)
+ 203:../freeRTOS750/lib_spi/spi.c **** {
+ 543               	.LM58:
+ 544               	.LFBB10:
+ 545               	/* prologue: function */
+ 546               	/* frame size = 0 */
+ 547               	/* stack size = 0 */
+ 548               	.L__stack_usage = 0
+ 204:../freeRTOS750/lib_spi/spi.c **** 	// Make sure you manually pull slave select low to indicate start of transfer.
+ 205:../freeRTOS750/lib_spi/spi.c **** 	// That is NOT done by this function..., because...
+ 206:../freeRTOS750/lib_spi/spi.c **** 	// Some devices need to have their SS held low across multiple transfer calls.
+ 207:../freeRTOS750/lib_spi/spi.c **** 	// Using spiSelect (SS_pin);
+ 208:../freeRTOS750/lib_spi/spi.c **** 
+ 209:../freeRTOS750/lib_spi/spi.c **** 	// If the SPI module has not been enabled yet, then return with nothing.
+ 210:../freeRTOS750/lib_spi/spi.c **** 	if ( !(SPCR & _BV(SPE)) ) return 0;
+ 550               	.LM59:
+ 551 0148 0CB4      		in __tmp_reg__,0x2c
+ 552 014a 06FC      		sbrc __tmp_reg__,6
+ 553 014c 00C0      		rjmp .L41
+ 554               	.L45:
+ 555 014e 80E0      		ldi r24,0
+ 556 0150 0895      		ret
+ 557               	.L41:
+ 211:../freeRTOS750/lib_spi/spi.c **** 
+ 212:../freeRTOS750/lib_spi/spi.c **** 	// The SPI module is enabled, but it is in slave mode, so we can not
+ 213:../freeRTOS750/lib_spi/spi.c **** 	// transmit the byte. This can happen if SSbar is an input and it went low.
+ 214:../freeRTOS750/lib_spi/spi.c **** 	// We will try to recover by setting the MSTR bit.
+ 215:../freeRTOS750/lib_spi/spi.c **** 	if ( !(SPCR & _BV(MSTR)) ) SPCR |= _BV(MSTR);
+ 559               	.LM60:
+ 560 0152 0CB4      		in __tmp_reg__,0x2c
+ 561 0154 04FC      		sbrc __tmp_reg__,4
+ 562 0156 00C0      		rjmp .L43
+ 564               	.LM61:
+ 565 0158 9CB5      		in r25,0x2c
+ 566 015a 9061      		ori r25,lo8(16)
+ 567 015c 9CBD      		out 0x2c,r25
+ 568               	.L43:
+ 216:../freeRTOS750/lib_spi/spi.c **** 
+ 217:../freeRTOS750/lib_spi/spi.c **** 	SPDR = data; 	// Begin transmission
+ 570               	.LM62:
+ 571 015e 8EBD      		out 0x2e,r24
+ 218:../freeRTOS750/lib_spi/spi.c **** 
+ 219:../freeRTOS750/lib_spi/spi.c **** 	while ( !(SPSR & _BV(SPIF)) )
+ 573               	.LM63:
+ 574 0160 00C0      		rjmp .L44
+ 575               	.L46:
+ 220:../freeRTOS750/lib_spi/spi.c **** 	{
+ 221:../freeRTOS750/lib_spi/spi.c **** 		if ( !(SPCR & _BV(MSTR)) ) return 0;
+ 577               	.LM64:
+ 578 0162 0CB4      		in __tmp_reg__,0x2c
+ 579 0164 04FE      		sbrs __tmp_reg__,4
+ 580 0166 00C0      		rjmp .L45
+ 581               	.L44:
+ 219:../freeRTOS750/lib_spi/spi.c **** 	while ( !(SPSR & _BV(SPIF)) )
+ 583               	.LM65:
+ 584 0168 0DB4      		in __tmp_reg__,0x2d
+ 585 016a 07FE      		sbrs __tmp_reg__,7
+ 586 016c 00C0      		rjmp .L46
+ 222:../freeRTOS750/lib_spi/spi.c **** 			// The SPI module has left master mode, so return.
+ 223:../freeRTOS750/lib_spi/spi.c **** 			// Otherwise, this will be an infinite loop.
+ 224:../freeRTOS750/lib_spi/spi.c **** 	}
+ 225:../freeRTOS750/lib_spi/spi.c **** 
+ 226:../freeRTOS750/lib_spi/spi.c **** 	return SPDR;
+ 588               	.LM66:
+ 589 016e 8EB5      		in r24,0x2e
+ 227:../freeRTOS750/lib_spi/spi.c **** 
+ 228:../freeRTOS750/lib_spi/spi.c **** 	// Make sure you pull slave select high to indicate end of transfer.
+ 229:../freeRTOS750/lib_spi/spi.c **** 	// That is NOT done by this function.
+ 230:../freeRTOS750/lib_spi/spi.c **** 	// Using spiDeselect (SS_pin);
+ 231:../freeRTOS750/lib_spi/spi.c **** }
+ 591               	.LM67:
+ 592 0170 0895      		ret
+ 594               	.Lscope10:
+ 596               		.stabd	78,0,0
+ 600               	.global	spiMultiByteTx
+ 602               	spiMultiByteTx:
+ 603               		.stabd	46,0,0
+ 232:../freeRTOS750/lib_spi/spi.c **** 
+ 233:../freeRTOS750/lib_spi/spi.c **** /*
+ 234:../freeRTOS750/lib_spi/spi.c ****  * In testing with a Freetronics EtherMega driving an SD card
+ 235:../freeRTOS750/lib_spi/spi.c ****  * the system achieved the following results.
+ 236:../freeRTOS750/lib_spi/spi.c ****  *
+ 237:../freeRTOS750/lib_spi/spi.c ****  * Single byte transfer MOSI 3.750uS MISO 3.6250us
+ 238:../freeRTOS750/lib_spi/spi.c ****  * Multi- byte transfer MOSI 1.333uS MISO 1.3750uS
+ 239:../freeRTOS750/lib_spi/spi.c ****  *
+ 240:../freeRTOS750/lib_spi/spi.c ****  * Performance increase MOSI 2.8x    MISO 2.64x
+ 241:../freeRTOS750/lib_spi/spi.c ****  *
+ 242:../freeRTOS750/lib_spi/spi.c ****  * Worth doing if you can!
+ 243:../freeRTOS750/lib_spi/spi.c ****  *
+ 244:../freeRTOS750/lib_spi/spi.c ****  */
+ 245:../freeRTOS750/lib_spi/spi.c **** 
+ 246:../freeRTOS750/lib_spi/spi.c **** uint8_t spiMultiByteTx(const uint8_t *data, const uint16_t length)
+ 247:../freeRTOS750/lib_spi/spi.c **** {
+ 605               	.LM68:
+ 606               	.LFBB11:
+ 607               	/* prologue: function */
+ 608               	/* frame size = 0 */
+ 609               	/* stack size = 0 */
+ 610               	.L__stack_usage = 0
+ 248:../freeRTOS750/lib_spi/spi.c **** 	uint16_t index = 0;
+ 249:../freeRTOS750/lib_spi/spi.c **** 	uint8_t TxByte;
+ 250:../freeRTOS750/lib_spi/spi.c **** 
+ 251:../freeRTOS750/lib_spi/spi.c **** 	// Make sure you manually pull slave select low to indicate start of transfer.
+ 252:../freeRTOS750/lib_spi/spi.c **** 	// That is NOT done by this function..., because...
+ 253:../freeRTOS750/lib_spi/spi.c **** 	// Some devices need to have their SS held low across multiple transfer calls.
+ 254:../freeRTOS750/lib_spi/spi.c **** 	// Using spiSelect (SS_pin);
+ 255:../freeRTOS750/lib_spi/spi.c **** 
+ 256:../freeRTOS750/lib_spi/spi.c **** 	// If the SPI module has not been enabled yet, then return with nothing.
+ 257:../freeRTOS750/lib_spi/spi.c **** 	if ( !(SPCR & _BV(SPE)) ) return 0;
+ 612               	.LM69:
+ 613 0172 0CB4      		in __tmp_reg__,0x2c
+ 614 0174 06FC      		sbrc __tmp_reg__,6
+ 615 0176 00C0      		rjmp .L51
+ 616               	.L54:
+ 617 0178 80E0      		ldi r24,0
+ 618 017a 0895      		ret
+ 619               	.L51:
+ 258:../freeRTOS750/lib_spi/spi.c **** 
+ 259:../freeRTOS750/lib_spi/spi.c **** 	// The SPI module is enabled, but it is in slave mode, so we can not
+ 260:../freeRTOS750/lib_spi/spi.c **** 	// transmit the byte.  This can happen if SSbar is an input and it went low.
+ 261:../freeRTOS750/lib_spi/spi.c **** 	// We will try to recover by setting the MSTR bit.
+ 262:../freeRTOS750/lib_spi/spi.c **** 	// Check this once only at the start. Assume that things don't change.
+ 263:../freeRTOS750/lib_spi/spi.c **** 	if ( !(SPCR & _BV(MSTR)) ) SPCR |= _BV(MSTR);
+ 621               	.LM70:
+ 622 017c 0CB4      		in __tmp_reg__,0x2c
+ 623 017e 04FC      		sbrc __tmp_reg__,4
+ 624 0180 00C0      		rjmp .L53
+ 626               	.LM71:
+ 627 0182 2CB5      		in r18,0x2c
+ 628 0184 2061      		ori r18,lo8(16)
+ 629 0186 2CBD      		out 0x2c,r18
+ 630               	.L53:
+ 264:../freeRTOS750/lib_spi/spi.c **** 	if ( !(SPCR & _BV(MSTR)) ) return 0;
+ 632               	.LM72:
+ 633 0188 0CB4      		in __tmp_reg__,0x2c
+ 634 018a 04FE      		sbrs __tmp_reg__,4
+ 635 018c 00C0      		rjmp .L54
+ 265:../freeRTOS750/lib_spi/spi.c **** 
+ 266:../freeRTOS750/lib_spi/spi.c **** 	SPDR = data[ index++ ]; // Begin transmission
+ 637               	.LM73:
+ 638 018e FC01      		movw r30,r24
+ 639 0190 2191      		ld r18,Z+
+ 640 0192 00C0      		rjmp .L65
+ 641               	.L57:
+ 267:../freeRTOS750/lib_spi/spi.c **** 	while (index < length)
+ 268:../freeRTOS750/lib_spi/spi.c **** 	{
+ 269:../freeRTOS750/lib_spi/spi.c **** 		TxByte = data[ index++ ]; // pre-load the byte to be transmitted
+ 643               	.LM74:
+ 644 0194 2191      		ld r18,Z+
+ 645               	.L56:
+ 270:../freeRTOS750/lib_spi/spi.c **** 		while ( !(SPSR & _BV(SPIF)) );
+ 647               	.LM75:
+ 648 0196 0DB4      		in __tmp_reg__,0x2d
+ 649 0198 07FE      		sbrs __tmp_reg__,7
+ 650 019a 00C0      		rjmp .L56
+ 651               	.L65:
+ 271:../freeRTOS750/lib_spi/spi.c **** 		SPDR = TxByte; // Continue transmission
+ 653               	.LM76:
+ 654 019c 2EBD      		out 0x2e,r18
+ 267:../freeRTOS750/lib_spi/spi.c **** 	while (index < length)
+ 656               	.LM77:
+ 657 019e 9F01      		movw r18,r30
+ 658 01a0 281B      		sub r18,r24
+ 659 01a2 390B      		sbc r19,r25
+ 660 01a4 2617      		cp r18,r22
+ 661 01a6 3707      		cpc r19,r23
+ 662 01a8 00F0      		brlo .L57
+ 663               	.L61:
+ 272:../freeRTOS750/lib_spi/spi.c **** 	}
+ 273:../freeRTOS750/lib_spi/spi.c **** 	while ( !(SPSR & _BV(SPIF)) );
+ 665               	.LM78:
+ 666 01aa 0DB4      		in __tmp_reg__,0x2d
+ 667 01ac 07FE      		sbrs __tmp_reg__,7
+ 668 01ae 00C0      		rjmp .L61
+ 274:../freeRTOS750/lib_spi/spi.c **** 	return 1;
+ 670               	.LM79:
+ 671 01b0 81E0      		ldi r24,lo8(1)
+ 275:../freeRTOS750/lib_spi/spi.c **** 
+ 276:../freeRTOS750/lib_spi/spi.c **** 	// Make sure you pull slave select high to indicate end of transfer.
+ 277:../freeRTOS750/lib_spi/spi.c **** 	// That is NOT done by this function.
+ 278:../freeRTOS750/lib_spi/spi.c **** 	// Using spiDeselect (SS_pin);
+ 279:../freeRTOS750/lib_spi/spi.c **** }
+ 673               	.LM80:
+ 674 01b2 0895      		ret
+ 679               	.Lscope11:
+ 681               		.stabd	78,0,0
+ 685               	.global	spiMultiByteRx
+ 687               	spiMultiByteRx:
+ 688               		.stabd	46,0,0
+ 280:../freeRTOS750/lib_spi/spi.c **** 
+ 281:../freeRTOS750/lib_spi/spi.c **** uint8_t spiMultiByteRx(uint8_t *data, const uint16_t length)
+ 282:../freeRTOS750/lib_spi/spi.c **** {
+ 690               	.LM81:
+ 691               	.LFBB12:
+ 692               	/* prologue: function */
+ 693               	/* frame size = 0 */
+ 694               	/* stack size = 0 */
+ 695               	.L__stack_usage = 0
+ 283:../freeRTOS750/lib_spi/spi.c **** 	uint16_t index = 0;
+ 284:../freeRTOS750/lib_spi/spi.c **** 	uint8_t RxByte;
+ 285:../freeRTOS750/lib_spi/spi.c **** 
+ 286:../freeRTOS750/lib_spi/spi.c **** 	// Make sure you manually pull slave select low to indicate start of transfer.
+ 287:../freeRTOS750/lib_spi/spi.c **** 	// That is NOT done by this function..., because...
+ 288:../freeRTOS750/lib_spi/spi.c **** 	// Some devices need to have their SS held low across multiple transfer calls.
+ 289:../freeRTOS750/lib_spi/spi.c **** 	// Using spiSelect (SS_pin);
+ 290:../freeRTOS750/lib_spi/spi.c **** 
+ 291:../freeRTOS750/lib_spi/spi.c **** 	// If the SPI module has not been enabled yet, then return with nothing.
+ 292:../freeRTOS750/lib_spi/spi.c **** 	if ( !(SPCR & _BV(SPE)) ) return 0;
+ 697               	.LM82:
+ 698 01b4 0CB4      		in __tmp_reg__,0x2c
+ 699 01b6 06FC      		sbrc __tmp_reg__,6
+ 700 01b8 00C0      		rjmp .L67
+ 701               	.L70:
+ 702 01ba 80E0      		ldi r24,0
+ 703 01bc 0895      		ret
+ 704               	.L67:
+ 293:../freeRTOS750/lib_spi/spi.c **** 
+ 294:../freeRTOS750/lib_spi/spi.c **** 	// The SPI module is enabled, but it is in slave mode, so we can not
+ 295:../freeRTOS750/lib_spi/spi.c **** 	// transmit the byte.  This can happen if SSbar is an input and it went low.
+ 296:../freeRTOS750/lib_spi/spi.c **** 	// We will try to recover by setting the MSTR bit.
+ 297:../freeRTOS750/lib_spi/spi.c **** 	// Check this once only at the start. Assume that things don't change.
+ 298:../freeRTOS750/lib_spi/spi.c **** 	if ( !(SPCR & _BV(MSTR)) ) SPCR |= _BV(MSTR);
+ 706               	.LM83:
+ 707 01be 0CB4      		in __tmp_reg__,0x2c
+ 708 01c0 04FC      		sbrc __tmp_reg__,4
+ 709 01c2 00C0      		rjmp .L69
+ 711               	.LM84:
+ 712 01c4 2CB5      		in r18,0x2c
+ 713 01c6 2061      		ori r18,lo8(16)
+ 714 01c8 2CBD      		out 0x2c,r18
+ 715               	.L69:
+ 299:../freeRTOS750/lib_spi/spi.c **** 	if ( !(SPCR & _BV(MSTR)) ) return 0;
+ 717               	.LM85:
+ 718 01ca 0CB4      		in __tmp_reg__,0x2c
+ 719 01cc 04FE      		sbrs __tmp_reg__,4
+ 720 01ce 00C0      		rjmp .L70
+ 300:../freeRTOS750/lib_spi/spi.c **** 
+ 301:../freeRTOS750/lib_spi/spi.c **** 	SPDR = 0xFF; // Begin dummy transmission
+ 722               	.LM86:
+ 723 01d0 2FEF      		ldi r18,lo8(-1)
+ 724 01d2 2EBD      		out 0x2e,r18
+ 302:../freeRTOS750/lib_spi/spi.c **** 	while (index < length - 1)
+ 726               	.LM87:
+ 727 01d4 FC01      		movw r30,r24
+ 728 01d6 6150      		subi r22,1
+ 729 01d8 7109      		sbc r23,__zero_reg__
+ 303:../freeRTOS750/lib_spi/spi.c **** 	{
+ 304:../freeRTOS750/lib_spi/spi.c **** 		while ( !(SPSR & _BV(SPIF)) );
+ 305:../freeRTOS750/lib_spi/spi.c **** 		RxByte = SPDR; // copy received byte
+ 306:../freeRTOS750/lib_spi/spi.c **** 		SPDR = 0xFF;   // Continue dummy transmission
+ 731               	.LM88:
+ 732 01da 4FEF      		ldi r20,lo8(-1)
+ 302:../freeRTOS750/lib_spi/spi.c **** 	while (index < length - 1)
+ 734               	.LM89:
+ 735 01dc 00C0      		rjmp .L71
+ 736               	.L77:
+ 304:../freeRTOS750/lib_spi/spi.c **** 		while ( !(SPSR & _BV(SPIF)) );
+ 738               	.LM90:
+ 739 01de 0DB4      		in __tmp_reg__,0x2d
+ 740 01e0 07FE      		sbrs __tmp_reg__,7
+ 741 01e2 00C0      		rjmp .L77
+ 305:../freeRTOS750/lib_spi/spi.c **** 		RxByte = SPDR; // copy received byte
+ 743               	.LM91:
+ 744 01e4 2EB5      		in r18,0x2e
+ 746               	.LM92:
+ 747 01e6 4EBD      		out 0x2e,r20
+ 307:../freeRTOS750/lib_spi/spi.c **** 		data [ index++ ] = RxByte;
+ 749               	.LM93:
+ 750 01e8 2193      		st Z+,r18
+ 751               	.L71:
+ 302:../freeRTOS750/lib_spi/spi.c **** 	while (index < length - 1)
+ 753               	.LM94:
+ 754 01ea 9F01      		movw r18,r30
+ 755 01ec 281B      		sub r18,r24
+ 756 01ee 390B      		sbc r19,r25
+ 757 01f0 2617      		cp r18,r22
+ 758 01f2 3707      		cpc r19,r23
+ 759 01f4 00F0      		brlo .L77
+ 760               	.L76:
+ 308:../freeRTOS750/lib_spi/spi.c **** 	}
+ 309:../freeRTOS750/lib_spi/spi.c **** 	while ( !(SPSR & _BV(SPIF)) );
+ 762               	.LM95:
+ 763 01f6 0DB4      		in __tmp_reg__,0x2d
+ 764 01f8 07FE      		sbrs __tmp_reg__,7
+ 765 01fa 00C0      		rjmp .L76
+ 310:../freeRTOS750/lib_spi/spi.c **** 
+ 311:../freeRTOS750/lib_spi/spi.c **** 	data [ index ] = SPDR;	// store the last byte that was read
+ 767               	.LM96:
+ 768 01fc 2EB5      		in r18,0x2e
+ 769 01fe FC01      		movw r30,r24
+ 770 0200 E60F      		add r30,r22
+ 771 0202 F71F      		adc r31,r23
+ 772 0204 2083      		st Z,r18
+ 312:../freeRTOS750/lib_spi/spi.c **** 	return 1;
+ 774               	.LM97:
+ 775 0206 81E0      		ldi r24,lo8(1)
+ 313:../freeRTOS750/lib_spi/spi.c **** 
+ 314:../freeRTOS750/lib_spi/spi.c **** 	// Make sure you pull slave select high to indicate end of transfer.
+ 315:../freeRTOS750/lib_spi/spi.c **** 	// That is NOT done by this function.
+ 316:../freeRTOS750/lib_spi/spi.c **** 	// Using spiDeselect (SS_pin);
+ 317:../freeRTOS750/lib_spi/spi.c **** }
+ 777               	.LM98:
+ 778 0208 0895      		ret
+ 783               	.Lscope12:
+ 785               		.stabd	78,0,0
+ 789               	.global	spiMultiByteTransfer
+ 791               	spiMultiByteTransfer:
+ 792               		.stabd	46,0,0
+ 318:../freeRTOS750/lib_spi/spi.c **** 
+ 319:../freeRTOS750/lib_spi/spi.c **** inline uint8_t spiMultiByteTransfer(uint8_t *data, const uint16_t length)
+ 320:../freeRTOS750/lib_spi/spi.c **** {
+ 794               	.LM99:
+ 795               	.LFBB13:
+ 796               	/* prologue: function */
+ 797               	/* frame size = 0 */
+ 798               	/* stack size = 0 */
+ 799               	.L__stack_usage = 0
+ 321:../freeRTOS750/lib_spi/spi.c **** 	uint16_t index = 0;
+ 322:../freeRTOS750/lib_spi/spi.c **** 	uint8_t TxByte, RxByte;
+ 323:../freeRTOS750/lib_spi/spi.c **** 
+ 324:../freeRTOS750/lib_spi/spi.c **** 	// Make sure you manually pull slave select low to indicate start of transfer.
+ 325:../freeRTOS750/lib_spi/spi.c **** 	// That is NOT done by this function..., because...
+ 326:../freeRTOS750/lib_spi/spi.c **** 	// Some devices need to have their SS held low across multiple transfer calls.
+ 327:../freeRTOS750/lib_spi/spi.c **** 	// Using spiSelect (SS_pin);
+ 328:../freeRTOS750/lib_spi/spi.c **** 
+ 329:../freeRTOS750/lib_spi/spi.c **** 	// If the SPI module has not been enabled yet, then return with nothing.
+ 330:../freeRTOS750/lib_spi/spi.c **** 	if ( !(SPCR & _BV(SPE)) ) return 0;
+ 801               	.LM100:
+ 802 020a 0CB4      		in __tmp_reg__,0x2c
+ 803 020c 06FC      		sbrc __tmp_reg__,6
+ 804 020e 00C0      		rjmp .L82
+ 805               	.L85:
+ 806 0210 80E0      		ldi r24,0
+ 807 0212 0895      		ret
+ 808               	.L82:
+ 331:../freeRTOS750/lib_spi/spi.c **** 
+ 332:../freeRTOS750/lib_spi/spi.c **** 	// The SPI module is enabled, but it is in slave mode, so we can not
+ 333:../freeRTOS750/lib_spi/spi.c **** 	// transmit the byte.  This can happen if SSbar is an input and it went low.
+ 334:../freeRTOS750/lib_spi/spi.c **** 	// We will try to recover by setting the MSTR bit.
+ 335:../freeRTOS750/lib_spi/spi.c **** 	// Check this once only at the start. Assume that things don't change.
+ 336:../freeRTOS750/lib_spi/spi.c **** 	if ( !(SPCR & _BV(MSTR)) ) SPCR |= _BV(MSTR);
+ 810               	.LM101:
+ 811 0214 0CB4      		in __tmp_reg__,0x2c
+ 812 0216 04FC      		sbrc __tmp_reg__,4
+ 813 0218 00C0      		rjmp .L84
+ 815               	.LM102:
+ 816 021a 2CB5      		in r18,0x2c
+ 817 021c 2061      		ori r18,lo8(16)
+ 818 021e 2CBD      		out 0x2c,r18
+ 819               	.L84:
+ 337:../freeRTOS750/lib_spi/spi.c **** 	if ( !(SPCR & _BV(MSTR)) ) return 0;
+ 821               	.LM103:
+ 822 0220 0CB4      		in __tmp_reg__,0x2c
+ 823 0222 04FE      		sbrs __tmp_reg__,4
+ 824 0224 00C0      		rjmp .L85
+ 338:../freeRTOS750/lib_spi/spi.c **** 
+ 339:../freeRTOS750/lib_spi/spi.c **** 	SPDR = data[ index ]; // Begin first byte transfer
+ 826               	.LM104:
+ 827 0226 FC01      		movw r30,r24
+ 828 0228 2191      		ld r18,Z+
+ 829 022a 2EBD      		out 0x2e,r18
+ 340:../freeRTOS750/lib_spi/spi.c **** 	while (index < length - 1)
+ 831               	.LM105:
+ 832 022c DC01      		movw r26,r24
+ 833 022e 6150      		subi r22,1
+ 834 0230 7109      		sbc r23,__zero_reg__
+ 835 0232 00C0      		rjmp .L86
+ 836               	.L88:
+ 341:../freeRTOS750/lib_spi/spi.c **** 	{
+ 342:../freeRTOS750/lib_spi/spi.c **** 		TxByte = data[ index + 1 ]; 	// pre-load the next byte to be transmitted, while transferring
+ 838               	.LM106:
+ 839 0234 3191      		ld r19,Z+
+ 840               	.L87:
+ 343:../freeRTOS750/lib_spi/spi.c **** 		while ( !(SPSR & _BV(SPIF)) ); 	// wait for the transfer success
+ 842               	.LM107:
+ 843 0236 0DB4      		in __tmp_reg__,0x2d
+ 844 0238 07FE      		sbrs __tmp_reg__,7
+ 845 023a 00C0      		rjmp .L87
+ 344:../freeRTOS750/lib_spi/spi.c **** 		RxByte = SPDR; 					// copy received byte
+ 847               	.LM108:
+ 848 023c 2EB5      		in r18,0x2e
+ 345:../freeRTOS750/lib_spi/spi.c **** 		SPDR = TxByte; 					// Continue transmission
+ 850               	.LM109:
+ 851 023e 3EBD      		out 0x2e,r19
+ 346:../freeRTOS750/lib_spi/spi.c **** 		data [ index++ ] = RxByte;		// store the byte that was read, while transferring
+ 853               	.LM110:
+ 854 0240 2D93      		st X+,r18
+ 855               	.L86:
+ 340:../freeRTOS750/lib_spi/spi.c **** 	while (index < length - 1)
+ 857               	.LM111:
+ 858 0242 9D01      		movw r18,r26
+ 859 0244 281B      		sub r18,r24
+ 860 0246 390B      		sbc r19,r25
+ 861 0248 2617      		cp r18,r22
+ 862 024a 3707      		cpc r19,r23
+ 863 024c 00F0      		brlo .L88
+ 864               	.L92:
+ 347:../freeRTOS750/lib_spi/spi.c **** 	}
+ 348:../freeRTOS750/lib_spi/spi.c **** 
+ 349:../freeRTOS750/lib_spi/spi.c **** 	while ( !(SPSR & _BV(SPIF)) );
+ 866               	.LM112:
+ 867 024e 0DB4      		in __tmp_reg__,0x2d
+ 868 0250 07FE      		sbrs __tmp_reg__,7
+ 869 0252 00C0      		rjmp .L92
+ 350:../freeRTOS750/lib_spi/spi.c **** 
+ 351:../freeRTOS750/lib_spi/spi.c **** 	data [ index ] = SPDR;	// store the last byte that was read
+ 871               	.LM113:
+ 872 0254 2EB5      		in r18,0x2e
+ 873 0256 FC01      		movw r30,r24
+ 874 0258 E60F      		add r30,r22
+ 875 025a F71F      		adc r31,r23
+ 876 025c 2083      		st Z,r18
+ 352:../freeRTOS750/lib_spi/spi.c **** 	return 1;
+ 878               	.LM114:
+ 879 025e 81E0      		ldi r24,lo8(1)
+ 353:../freeRTOS750/lib_spi/spi.c **** 
+ 354:../freeRTOS750/lib_spi/spi.c **** 	// Make sure you pull slave select high to indicate end of transfer.
+ 355:../freeRTOS750/lib_spi/spi.c **** 	// That is NOT done by this function.
+ 356:../freeRTOS750/lib_spi/spi.c **** 	// Using spiDeselect (SS_pin);
+ 357:../freeRTOS750/lib_spi/spi.c **** }
+ 881               	.LM115:
+ 882 0260 0895      		ret
+ 888               	.Lscope13:
+ 890               		.stabd	78,0,0
+ 891               		.comm	xSPISemaphore,2,1
+ 894               	.Letext0:
+ 895               		.ident	"GCC: (GNU) 4.7.2"
+ 896               	.global __do_clear_bss
+DEFINED SYMBOLS
+                            *ABS*:00000000 spi.c
+     /tmp/cc3xm4SG.s:2      *ABS*:0000003e __SP_H__
+     /tmp/cc3xm4SG.s:3      *ABS*:0000003d __SP_L__
+     /tmp/cc3xm4SG.s:4      *ABS*:0000003f __SREG__
+     /tmp/cc3xm4SG.s:5      *ABS*:00000000 __tmp_reg__
+     /tmp/cc3xm4SG.s:6      *ABS*:00000001 __zero_reg__
+     /tmp/cc3xm4SG.s:124    .text:00000000 spiBegin
+                            *COM*:00000002 xSPISemaphore
+     /tmp/cc3xm4SG.s:245    .text:0000007c spiEnd
+     /tmp/cc3xm4SG.s:278    .text:00000094 spiSetClockDivider
+     /tmp/cc3xm4SG.s:313    .text:000000b0 spiSetBitOrder
+     /tmp/cc3xm4SG.s:347    .text:000000c2 spiSetDataMode
+     /tmp/cc3xm4SG.s:370    .text:000000cc spiAttachInterrupt
+     /tmp/cc3xm4SG.s:392    .text:000000d4 spiDetachInterrupt
+     /tmp/cc3xm4SG.s:415    .text:000000dc spiSelect
+     /tmp/cc3xm4SG.s:485    .text:0000011a spiDeselect
+     /tmp/cc3xm4SG.s:540    .text:00000148 spiTransfer
+     /tmp/cc3xm4SG.s:602    .text:00000172 spiMultiByteTx
+     /tmp/cc3xm4SG.s:687    .text:000001b4 spiMultiByteRx
+     /tmp/cc3xm4SG.s:791    .text:0000020a spiMultiByteTransfer
+
+UNDEFINED SYMBOLS
+xQueueGenericCreate
+xQueueGenericSend
+vQueueDelete
+xQueueGenericReceive
+__do_clear_bss

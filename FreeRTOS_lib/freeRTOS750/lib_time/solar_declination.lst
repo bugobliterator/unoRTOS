@@ -1,0 +1,231 @@
+   1               		.file	"solar_declination.c"
+   2               	__SP_H__ = 0x3e
+   3               	__SP_L__ = 0x3d
+   4               	__SREG__ = 0x3f
+   5               	__tmp_reg__ = 0
+   6               	__zero_reg__ = 1
+   9               		.text
+  10               	.Ltext0:
+  80               	.global	__floatunsisf
+  81               	.global	__divsf3
+  82               	.global	__mulsf3
+  83               	.global	__addsf3
+  86               	.global	solar_declination
+  88               	solar_declination:
+  89               		.stabd	46,0,0
+   1:../freeRTOS750/lib_time/solar_declination.c **** /*
+   2:../freeRTOS750/lib_time/solar_declination.c ****  * (C)2012 Michael Duane Rice All rights reserved.
+   3:../freeRTOS750/lib_time/solar_declination.c ****  *
+   4:../freeRTOS750/lib_time/solar_declination.c ****  * Redistribution and use in source and binary forms, with or without
+   5:../freeRTOS750/lib_time/solar_declination.c ****  * modification, are permitted provided that the following conditions are
+   6:../freeRTOS750/lib_time/solar_declination.c ****  * met:
+   7:../freeRTOS750/lib_time/solar_declination.c ****  *
+   8:../freeRTOS750/lib_time/solar_declination.c ****  * Redistributions of source code must retain the above copyright notice, this
+   9:../freeRTOS750/lib_time/solar_declination.c ****  * list of conditions and the following disclaimer. Redistributions in binary
+  10:../freeRTOS750/lib_time/solar_declination.c ****  * form must reproduce the above copyright notice, this list of conditions
+  11:../freeRTOS750/lib_time/solar_declination.c ****  * and the following disclaimer in the documentation and/or other materials
+  12:../freeRTOS750/lib_time/solar_declination.c ****  * provided with the distribution. Neither the name of the copyright holders
+  13:../freeRTOS750/lib_time/solar_declination.c ****  * nor the names of contributors may be used to endorse or promote products
+  14:../freeRTOS750/lib_time/solar_declination.c ****  * derived from this software without specific prior written permission.
+  15:../freeRTOS750/lib_time/solar_declination.c ****  *
+  16:../freeRTOS750/lib_time/solar_declination.c ****  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  17:../freeRTOS750/lib_time/solar_declination.c ****  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  18:../freeRTOS750/lib_time/solar_declination.c ****  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  19:../freeRTOS750/lib_time/solar_declination.c ****  * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+  20:../freeRTOS750/lib_time/solar_declination.c ****  * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+  21:../freeRTOS750/lib_time/solar_declination.c ****  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+  22:../freeRTOS750/lib_time/solar_declination.c ****  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+  23:../freeRTOS750/lib_time/solar_declination.c ****  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+  24:../freeRTOS750/lib_time/solar_declination.c ****  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+  25:../freeRTOS750/lib_time/solar_declination.c ****  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+  26:../freeRTOS750/lib_time/solar_declination.c ****  * POSSIBILITY OF SUCH DAMAGE.
+  27:../freeRTOS750/lib_time/solar_declination.c ****  */
+  28:../freeRTOS750/lib_time/solar_declination.c **** 
+  29:../freeRTOS750/lib_time/solar_declination.c **** /* $Id$ */
+  30:../freeRTOS750/lib_time/solar_declination.c **** 
+  31:../freeRTOS750/lib_time/solar_declination.c **** /*
+  32:../freeRTOS750/lib_time/solar_declination.c ****     Were it not for the eccentricity of Earths orbit, this would be a trivial function.
+  33:../freeRTOS750/lib_time/solar_declination.c **** 
+  34:../freeRTOS750/lib_time/solar_declination.c ****     We compute the Earths orbital position with respect to perihelion, from which we derive a
+  35:../freeRTOS750/lib_time/solar_declination.c ****     'velocity correction factor'. We then compute the orbital angle with respect to the
+  36:../freeRTOS750/lib_time/solar_declination.c ****     December solstice, as 'modulated' by that correction factor.
+  37:../freeRTOS750/lib_time/solar_declination.c **** 
+  38:../freeRTOS750/lib_time/solar_declination.c ****     Due to the accumulation of rounding errors, the computed December solstice of 2135 will lag
+  39:../freeRTOS750/lib_time/solar_declination.c ****     the actual solstice by many hours. A fudge factor, 'LAG', distributes the error across
+  40:../freeRTOS750/lib_time/solar_declination.c ****     the 136 year range of this library.
+  41:../freeRTOS750/lib_time/solar_declination.c **** */
+  42:../freeRTOS750/lib_time/solar_declination.c **** 
+  43:../freeRTOS750/lib_time/solar_declination.c **** #include <time.h>
+  44:../freeRTOS750/lib_time/solar_declination.c **** #include <math.h>
+  45:../freeRTOS750/lib_time/solar_declination.c **** #include "ephemera_common.h"
+  46:../freeRTOS750/lib_time/solar_declination.c **** 
+  47:../freeRTOS750/lib_time/solar_declination.c **** #define LAG 38520
+  48:../freeRTOS750/lib_time/solar_declination.c **** 
+  49:../freeRTOS750/lib_time/solar_declination.c **** double
+  50:../freeRTOS750/lib_time/solar_declination.c **** solar_declination(const time_t * timer)
+  51:../freeRTOS750/lib_time/solar_declination.c **** {
+  91               	.LM0:
+  92               	.LFBB1:
+  93 0000 4F92      		push r4
+  94 0002 5F92      		push r5
+  95 0004 6F92      		push r6
+  96 0006 7F92      		push r7
+  97 0008 8F92      		push r8
+  98 000a 9F92      		push r9
+  99 000c AF92      		push r10
+ 100 000e BF92      		push r11
+ 101 0010 CF92      		push r12
+ 102 0012 DF92      		push r13
+ 103 0014 EF92      		push r14
+ 104 0016 FF92      		push r15
+ 105               	/* prologue: function */
+ 106               	/* frame size = 0 */
+ 107               	/* stack size = 12 */
+ 108               	.L__stack_usage = 12
+  52:../freeRTOS750/lib_time/solar_declination.c **** 
+  53:../freeRTOS750/lib_time/solar_declination.c ****     uint32_t        fT, oV;
+  54:../freeRTOS750/lib_time/solar_declination.c ****     double          dV, dT;
+  55:../freeRTOS750/lib_time/solar_declination.c **** 
+  56:../freeRTOS750/lib_time/solar_declination.c ****     /* Determine orbital angle relative to perihelion of January 1999 */
+  57:../freeRTOS750/lib_time/solar_declination.c ****     oV = *timer % ANOM_YEAR;
+ 110               	.LM1:
+ 111 0018 FC01      		movw r30,r24
+ 112 001a 8080      		ld r8,Z
+ 113 001c 9180      		ldd r9,Z+1
+ 114 001e A280      		ldd r10,Z+2
+ 115 0020 B380      		ldd r11,Z+3
+ 116 0022 C501      		movw r24,r10
+ 117 0024 B401      		movw r22,r8
+ 118 0026 21E2      		ldi r18,lo8(33)
+ 119 0028 3BE8      		ldi r19,lo8(-117)
+ 120 002a 41EE      		ldi r20,lo8(-31)
+ 121 002c 51E0      		ldi r21,lo8(1)
+ 122 002e 0E94 0000 		call __udivmodsi4
+  58:../freeRTOS750/lib_time/solar_declination.c ****     oV += PERIHELION;
+ 124               	.LM2:
+ 125 0032 6055      		subi r22,80
+ 126 0034 7642      		sbci r23,38
+ 127 0036 8242      		sbci r24,34
+ 128 0038 9E4F      		sbci r25,-2
+  59:../freeRTOS750/lib_time/solar_declination.c ****     dV = oV;
+ 130               	.LM3:
+ 131 003a 0E94 0000 		call __floatunsisf
+  60:../freeRTOS750/lib_time/solar_declination.c ****     dV /= ANOM_CYCLE;
+ 133               	.LM4:
+ 134 003e 21EB      		ldi r18,lo8(-79)
+ 135 0040 37E4      		ldi r19,lo8(71)
+ 136 0042 49E9      		ldi r20,lo8(-103)
+ 137 0044 5AE4      		ldi r21,lo8(74)
+ 138 0046 0E94 0000 		call __divsf3
+  61:../freeRTOS750/lib_time/solar_declination.c **** 
+  62:../freeRTOS750/lib_time/solar_declination.c ****     /* Derive velocity correction factor from the perihelion angle */
+  63:../freeRTOS750/lib_time/solar_declination.c ****     dV = sin(dV);
+ 140               	.LM5:
+ 141 004a 0E94 0000 		call sin
+ 142 004e 2B01      		movw r4,r22
+ 143 0050 3C01      		movw r6,r24
+  64:../freeRTOS750/lib_time/solar_declination.c ****     dV *= DELTA_V;
+  65:../freeRTOS750/lib_time/solar_declination.c **** 
+  66:../freeRTOS750/lib_time/solar_declination.c ****     /* Determine orbital angle relative to solstice of December 1999 */
+  67:../freeRTOS750/lib_time/solar_declination.c ****     fT = *timer % TROP_YEAR;
+ 145               	.LM6:
+ 146 0052 C501      		movw r24,r10
+ 147 0054 B401      		movw r22,r8
+ 148 0056 2DE3      		ldi r18,lo8(61)
+ 149 0058 35E8      		ldi r19,lo8(-123)
+ 150 005a 41EE      		ldi r20,lo8(-31)
+ 151 005c 51E0      		ldi r21,lo8(1)
+ 152 005e 0E94 0000 		call __udivmodsi4
+  68:../freeRTOS750/lib_time/solar_declination.c ****     fT += SOLSTICE + LAG;
+ 154               	.LM7:
+ 155 0062 6854      		subi r22,72
+ 156 0064 774A      		sbci r23,-89
+ 157 0066 824F      		sbci r24,-14
+ 158 0068 9F4F      		sbci r25,-1
+  69:../freeRTOS750/lib_time/solar_declination.c ****     dT = fT;
+ 160               	.LM8:
+ 161 006a 0E94 0000 		call __floatunsisf
+  70:../freeRTOS750/lib_time/solar_declination.c ****     dT /= TROP_CYCLE;
+ 163               	.LM9:
+ 164 006e 21ED      		ldi r18,lo8(-47)
+ 165 0070 35E4      		ldi r19,lo8(69)
+ 166 0072 49E9      		ldi r20,lo8(-103)
+ 167 0074 5AE4      		ldi r21,lo8(74)
+ 168 0076 0E94 0000 		call __divsf3
+ 169 007a 6B01      		movw r12,r22
+ 170 007c 7C01      		movw r14,r24
+  64:../freeRTOS750/lib_time/solar_declination.c ****     dV *= DELTA_V;
+ 172               	.LM10:
+ 173 007e 2FED      		ldi r18,lo8(-33)
+ 174 0080 33EE      		ldi r19,lo8(-29)
+ 175 0082 48E0      		ldi r20,lo8(8)
+ 176 0084 5DE3      		ldi r21,lo8(61)
+ 177 0086 C301      		movw r24,r6
+ 178 0088 B201      		movw r22,r4
+ 179 008a 0E94 0000 		call __mulsf3
+ 180 008e 9B01      		movw r18,r22
+ 181 0090 AC01      		movw r20,r24
+  71:../freeRTOS750/lib_time/solar_declination.c ****     dT += dV;
+ 183               	.LM11:
+ 184 0092 6C2D      		mov r22,r12
+ 185 0094 7D2D      		mov r23,r13
+ 186 0096 8E2D      		mov r24,r14
+ 187 0098 9F2D      		mov r25,r15
+ 188 009a 0E94 0000 		call __addsf3
+  72:../freeRTOS750/lib_time/solar_declination.c **** 
+  73:../freeRTOS750/lib_time/solar_declination.c ****     /* Finally having the solstice angle, we can compute the declination */
+  74:../freeRTOS750/lib_time/solar_declination.c ****     dT = cos(dT) * INCLINATION;
+ 190               	.LM12:
+ 191 009e 0E94 0000 		call cos
+ 192 00a2 2CE3      		ldi r18,lo8(60)
+ 193 00a4 36E7      		ldi r19,lo8(118)
+ 194 00a6 41ED      		ldi r20,lo8(-47)
+ 195 00a8 5EE3      		ldi r21,lo8(62)
+ 196 00aa 0E94 0000 		call __mulsf3
+  75:../freeRTOS750/lib_time/solar_declination.c **** 
+  76:../freeRTOS750/lib_time/solar_declination.c ****     return -dT;
+ 198               	.LM13:
+ 199 00ae DC01      		movw r26,r24
+ 200 00b0 CB01      		movw r24,r22
+ 201 00b2 B058      		subi r27,0x80
+  77:../freeRTOS750/lib_time/solar_declination.c **** }
+ 203               	.LM14:
+ 204 00b4 682F      		mov r22,r24
+ 205 00b6 792F      		mov r23,r25
+ 206 00b8 8A2F      		mov r24,r26
+ 207 00ba 9B2F      		mov r25,r27
+ 208               	/* epilogue start */
+ 209 00bc FF90      		pop r15
+ 210 00be EF90      		pop r14
+ 211 00c0 DF90      		pop r13
+ 212 00c2 CF90      		pop r12
+ 213 00c4 BF90      		pop r11
+ 214 00c6 AF90      		pop r10
+ 215 00c8 9F90      		pop r9
+ 216 00ca 8F90      		pop r8
+ 217 00cc 7F90      		pop r7
+ 218 00ce 6F90      		pop r6
+ 219 00d0 5F90      		pop r5
+ 220 00d2 4F90      		pop r4
+ 221 00d4 0895      		ret
+ 223               	.Lscope1:
+ 225               		.stabd	78,0,0
+ 227               	.Letext0:
+ 228               		.ident	"GCC: (GNU) 4.7.2"
+DEFINED SYMBOLS
+                            *ABS*:00000000 solar_declination.c
+     /tmp/ccmWKtg3.s:2      *ABS*:0000003e __SP_H__
+     /tmp/ccmWKtg3.s:3      *ABS*:0000003d __SP_L__
+     /tmp/ccmWKtg3.s:4      *ABS*:0000003f __SREG__
+     /tmp/ccmWKtg3.s:5      *ABS*:00000000 __tmp_reg__
+     /tmp/ccmWKtg3.s:6      *ABS*:00000001 __zero_reg__
+     /tmp/ccmWKtg3.s:88     .text:00000000 solar_declination
+
+UNDEFINED SYMBOLS
+__floatunsisf
+__divsf3
+__mulsf3
+__addsf3
+__udivmodsi4
+sin
+cos

@@ -1,0 +1,238 @@
+   1               		.file	"moon_phase.c"
+   2               	__SP_H__ = 0x3e
+   3               	__SP_L__ = 0x3d
+   4               	__SREG__ = 0x3f
+   5               	__tmp_reg__ = 0
+   6               	__zero_reg__ = 1
+   9               		.text
+  10               	.Ltext0:
+  80               	.global	__floatsisf
+  81               	.global	__divsf3
+  82               	.global	__mulsf3
+  83               	.global	__subsf3
+  84               	.global	__fixsfsi
+  87               	.global	moon_phase
+  89               	moon_phase:
+  90               		.stabd	46,0,0
+   1:../freeRTOS750/lib_time/moon_phase.c **** /*
+   2:../freeRTOS750/lib_time/moon_phase.c ****  * (C)2012 Michael Duane Rice All rights reserved.
+   3:../freeRTOS750/lib_time/moon_phase.c ****  *
+   4:../freeRTOS750/lib_time/moon_phase.c ****  * Redistribution and use in source and binary forms, with or without
+   5:../freeRTOS750/lib_time/moon_phase.c ****  * modification, are permitted provided that the following conditions are
+   6:../freeRTOS750/lib_time/moon_phase.c ****  * met:
+   7:../freeRTOS750/lib_time/moon_phase.c ****  *
+   8:../freeRTOS750/lib_time/moon_phase.c ****  * Redistributions of source code must retain the above copyright notice, this
+   9:../freeRTOS750/lib_time/moon_phase.c ****  * list of conditions and the following disclaimer. Redistributions in binary
+  10:../freeRTOS750/lib_time/moon_phase.c ****  * form must reproduce the above copyright notice, this list of conditions
+  11:../freeRTOS750/lib_time/moon_phase.c ****  * and the following disclaimer in the documentation and/or other materials
+  12:../freeRTOS750/lib_time/moon_phase.c ****  * provided with the distribution. Neither the name of the copyright holders
+  13:../freeRTOS750/lib_time/moon_phase.c ****  * nor the names of contributors may be used to endorse or promote products
+  14:../freeRTOS750/lib_time/moon_phase.c ****  * derived from this software without specific prior written permission.
+  15:../freeRTOS750/lib_time/moon_phase.c ****  *
+  16:../freeRTOS750/lib_time/moon_phase.c ****  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  17:../freeRTOS750/lib_time/moon_phase.c ****  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  18:../freeRTOS750/lib_time/moon_phase.c ****  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  19:../freeRTOS750/lib_time/moon_phase.c ****  * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+  20:../freeRTOS750/lib_time/moon_phase.c ****  * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+  21:../freeRTOS750/lib_time/moon_phase.c ****  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+  22:../freeRTOS750/lib_time/moon_phase.c ****  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+  23:../freeRTOS750/lib_time/moon_phase.c ****  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+  24:../freeRTOS750/lib_time/moon_phase.c ****  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+  25:../freeRTOS750/lib_time/moon_phase.c ****  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+  26:../freeRTOS750/lib_time/moon_phase.c ****  * POSSIBILITY OF SUCH DAMAGE.
+  27:../freeRTOS750/lib_time/moon_phase.c ****  */
+  28:../freeRTOS750/lib_time/moon_phase.c **** 
+  29:../freeRTOS750/lib_time/moon_phase.c **** /* $Id$ */
+  30:../freeRTOS750/lib_time/moon_phase.c **** 
+  31:../freeRTOS750/lib_time/moon_phase.c **** /*
+  32:../freeRTOS750/lib_time/moon_phase.c ****     Return an approximation to the phase of the moon. Since no attempt is made to account for
+  33:../freeRTOS750/lib_time/moon_phase.c ****     Sol, Jupiter or Venus, it will often be off by several hours.
+  34:../freeRTOS750/lib_time/moon_phase.c **** */
+  35:../freeRTOS750/lib_time/moon_phase.c **** 
+  36:../freeRTOS750/lib_time/moon_phase.c **** #include <time.h>
+  37:../freeRTOS750/lib_time/moon_phase.c **** #include <math.h>
+  38:../freeRTOS750/lib_time/moon_phase.c **** 
+  39:../freeRTOS750/lib_time/moon_phase.c **** int8_t
+  40:../freeRTOS750/lib_time/moon_phase.c **** moon_phase(const time_t * timestamp)
+  41:../freeRTOS750/lib_time/moon_phase.c **** {
+  92               	.LM0:
+  93               	.LFBB1:
+  94 0000 8F92      		push r8
+  95 0002 9F92      		push r9
+  96 0004 AF92      		push r10
+  97 0006 BF92      		push r11
+  98 0008 CF92      		push r12
+  99 000a DF92      		push r13
+ 100 000c EF92      		push r14
+ 101 000e FF92      		push r15
+ 102 0010 0F93      		push r16
+ 103 0012 1F93      		push r17
+ 104 0014 CF93      		push r28
+ 105 0016 DF93      		push r29
+ 106               	/* prologue: function */
+ 107               	/* frame size = 0 */
+ 108               	/* stack size = 12 */
+ 109               	.L__stack_usage = 12
+  42:../freeRTOS750/lib_time/moon_phase.c **** 	uint32_t        t;
+  43:../freeRTOS750/lib_time/moon_phase.c **** 	int32_t         n;
+  44:../freeRTOS750/lib_time/moon_phase.c **** 	double          mc;
+  45:../freeRTOS750/lib_time/moon_phase.c **** 
+  46:../freeRTOS750/lib_time/moon_phase.c **** 	/* refer to first new moon of the epoch */
+  47:../freeRTOS750/lib_time/moon_phase.c **** 	t = *timestamp - 1744800UL;
+ 111               	.LM1:
+ 112 0018 FC01      		movw r30,r24
+ 113 001a 6081      		ld r22,Z
+ 114 001c 7181      		ldd r23,Z+1
+ 115 001e 8281      		ldd r24,Z+2
+ 116 0020 9381      		ldd r25,Z+3
+ 117 0022 605A      		subi r22,-96
+ 118 0024 7F49      		sbci r23,-97
+ 119 0026 8A41      		sbci r24,26
+ 120 0028 9109      		sbc r25,__zero_reg__
+  48:../freeRTOS750/lib_time/moon_phase.c **** 
+  49:../freeRTOS750/lib_time/moon_phase.c **** 	/* constrain to 1 lunar cycle */
+  50:../freeRTOS750/lib_time/moon_phase.c **** 	n = t % 2551443UL;
+ 122               	.LM2:
+ 123 002a 23E9      		ldi r18,lo8(-109)
+ 124 002c 3EEE      		ldi r19,lo8(-18)
+ 125 002e 46E2      		ldi r20,lo8(38)
+ 126 0030 50E0      		ldi r21,0
+ 127 0032 0E94 0000 		call __udivmodsi4
+ 128 0036 4B01      		movw r8,r22
+ 129 0038 5C01      		movw r10,r24
+  51:../freeRTOS750/lib_time/moon_phase.c **** 
+  52:../freeRTOS750/lib_time/moon_phase.c **** 	/* offset by 1/2 lunar cycle */
+  53:../freeRTOS750/lib_time/moon_phase.c **** 	n -= 1275721L;
+ 131               	.LM3:
+ 132 003a F9E4      		ldi r31,73
+ 133 003c 8F1A      		sub r8,r31
+ 134 003e F7E7      		ldi r31,119
+ 135 0040 9F0A      		sbc r9,r31
+ 136 0042 F3E1      		ldi r31,19
+ 137 0044 AF0A      		sbc r10,r31
+ 138 0046 B108      		sbc r11,__zero_reg__
+  54:../freeRTOS750/lib_time/moon_phase.c **** 	mc = n;
+ 140               	.LM4:
+ 141 0048 C501      		movw r24,r10
+ 142 004a B401      		movw r22,r8
+ 143 004c 0E94 0000 		call __floatsisf
+  55:../freeRTOS750/lib_time/moon_phase.c **** 	mc /= 1275721.0;
+ 145               	.LM5:
+ 146 0050 28E4      		ldi r18,lo8(72)
+ 147 0052 3AEB      		ldi r19,lo8(-70)
+ 148 0054 4BE9      		ldi r20,lo8(-101)
+ 149 0056 59E4      		ldi r21,lo8(73)
+ 150 0058 0E94 0000 		call __divsf3
+  56:../freeRTOS750/lib_time/moon_phase.c **** 	mc *= M_PI;
+ 152               	.LM6:
+ 153 005c 2BED      		ldi r18,lo8(-37)
+ 154 005e 3FE0      		ldi r19,lo8(15)
+ 155 0060 49E4      		ldi r20,lo8(73)
+ 156 0062 50E4      		ldi r21,lo8(64)
+ 157 0064 0E94 0000 		call __mulsf3
+ 158 0068 8B01      		movw r16,r22
+ 159 006a D82F      		mov r29,r24
+ 160 006c C92F      		mov r28,r25
+  57:../freeRTOS750/lib_time/moon_phase.c **** 	mc = cos(mc) * sin(mc);
+ 162               	.LM7:
+ 163 006e 9E01      		movw r18,r28
+ 164 0070 712F      		mov r23,r17
+ 165 0072 832F      		mov r24,r19
+ 166 0074 922F      		mov r25,r18
+ 167 0076 0E94 0000 		call cos
+ 168 007a 6B01      		movw r12,r22
+ 169 007c 7C01      		movw r14,r24
+ 170 007e 9E01      		movw r18,r28
+ 171 0080 602F      		mov r22,r16
+ 172 0082 712F      		mov r23,r17
+ 173 0084 832F      		mov r24,r19
+ 174 0086 922F      		mov r25,r18
+ 175 0088 0E94 0000 		call sin
+ 176 008c 9B01      		movw r18,r22
+ 177 008e AC01      		movw r20,r24
+ 178 0090 C701      		movw r24,r14
+ 179 0092 B601      		movw r22,r12
+ 180 0094 0E94 0000 		call __mulsf3
+ 181 0098 8B01      		movw r16,r22
+ 182 009a D82F      		mov r29,r24
+ 183 009c C92F      		mov r28,r25
+  58:../freeRTOS750/lib_time/moon_phase.c **** 	mc *= 12.5;
+  59:../freeRTOS750/lib_time/moon_phase.c **** 
+  60:../freeRTOS750/lib_time/moon_phase.c **** 	/* scale to range - 100...+ 100 */
+  61:../freeRTOS750/lib_time/moon_phase.c **** 	n /= 12757L;
+ 185               	.LM8:
+ 186 009e C501      		movw r24,r10
+ 187 00a0 B401      		movw r22,r8
+ 188 00a2 25ED      		ldi r18,lo8(-43)
+ 189 00a4 31E3      		ldi r19,lo8(49)
+ 190 00a6 40E0      		ldi r20,0
+ 191 00a8 50E0      		ldi r21,0
+ 192 00aa 0E94 0000 		call __divmodsi4
+  62:../freeRTOS750/lib_time/moon_phase.c **** 	n -= mc;
+ 194               	.LM9:
+ 195 00ae CA01      		movw r24,r20
+ 196 00b0 B901      		movw r22,r18
+ 197 00b2 0E94 0000 		call __floatsisf
+ 198 00b6 6B01      		movw r12,r22
+ 199 00b8 7C01      		movw r14,r24
+  58:../freeRTOS750/lib_time/moon_phase.c **** 	mc *= 12.5;
+ 201               	.LM10:
+ 202 00ba 20E0      		ldi r18,0
+ 203 00bc 30E0      		ldi r19,0
+ 204 00be 48E4      		ldi r20,lo8(72)
+ 205 00c0 51E4      		ldi r21,lo8(65)
+ 206 00c2 DE01      		movw r26,r28
+ 207 00c4 602F      		mov r22,r16
+ 208 00c6 712F      		mov r23,r17
+ 209 00c8 8B2F      		mov r24,r27
+ 210 00ca 9A2F      		mov r25,r26
+ 211 00cc 0E94 0000 		call __mulsf3
+ 212 00d0 9B01      		movw r18,r22
+ 213 00d2 AC01      		movw r20,r24
+ 215               	.LM11:
+ 216 00d4 C701      		movw r24,r14
+ 217 00d6 B601      		movw r22,r12
+ 218 00d8 0E94 0000 		call __subsf3
+ 219 00dc 0E94 0000 		call __fixsfsi
+ 220 00e0 862F      		mov r24,r22
+ 221               	/* epilogue start */
+  63:../freeRTOS750/lib_time/moon_phase.c **** 
+  64:../freeRTOS750/lib_time/moon_phase.c **** 	return n;
+  65:../freeRTOS750/lib_time/moon_phase.c **** }
+ 223               	.LM12:
+ 224 00e2 DF91      		pop r29
+ 225 00e4 CF91      		pop r28
+ 226 00e6 1F91      		pop r17
+ 227 00e8 0F91      		pop r16
+ 228 00ea FF90      		pop r15
+ 229 00ec EF90      		pop r14
+ 230 00ee DF90      		pop r13
+ 231 00f0 CF90      		pop r12
+ 232 00f2 BF90      		pop r11
+ 233 00f4 AF90      		pop r10
+ 234 00f6 9F90      		pop r9
+ 235 00f8 8F90      		pop r8
+ 236 00fa 0895      		ret
+ 238               	.Lscope1:
+ 240               		.stabd	78,0,0
+ 242               	.Letext0:
+ 243               		.ident	"GCC: (GNU) 4.7.2"
+DEFINED SYMBOLS
+                            *ABS*:00000000 moon_phase.c
+     /tmp/cc0iUMpL.s:2      *ABS*:0000003e __SP_H__
+     /tmp/cc0iUMpL.s:3      *ABS*:0000003d __SP_L__
+     /tmp/cc0iUMpL.s:4      *ABS*:0000003f __SREG__
+     /tmp/cc0iUMpL.s:5      *ABS*:00000000 __tmp_reg__
+     /tmp/cc0iUMpL.s:6      *ABS*:00000001 __zero_reg__
+     /tmp/cc0iUMpL.s:89     .text:00000000 moon_phase
+
+UNDEFINED SYMBOLS
+__floatsisf
+__divsf3
+__mulsf3
+__subsf3
+__fixsfsi
+__udivmodsi4
+cos
+sin
+__divmodsi4

@@ -1,0 +1,2766 @@
+Archive member included because of file (symbol)
+
+/usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(acos.o)
+                              ../freeRTOS750/lib_time/daylight_seconds.o (acos)
+/usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(addsf3.o)
+                              ../freeRTOS750/lib_time/moon_phase.o (__subsf3)
+/usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(addsf3x.o)
+                              /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(acos.o) (__addsf3x)
+/usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(cmpsf2.o)
+                              ../freeRTOS750/lib_time/daylight_seconds.o (__ltsf2)
+/usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(cos.o)
+                              ../freeRTOS750/lib_time/moon_phase.o (cos)
+/usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(divsf3.o)
+                              ../freeRTOS750/lib_servo/servoPWM.o (__divsf3)
+/usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(divsf3x.o)
+                              /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(divsf3.o) (__divsf3x)
+/usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fixsfsi.o)
+                              ../freeRTOS750/lib_time/daylight_seconds.o (__fixsfsi)
+/usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fixunssfsi.o)
+                              ../freeRTOS750/lib_servo/servoPWM.o (__fixunssfsi)
+/usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(floatsisf.o)
+                              ../freeRTOS750/lib_servo/servoPWM.o (__floatunsisf)
+/usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_arccos.o)
+                              /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(acos.o) (__fp_arccos)
+/usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_cmp.o)
+                              /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(cmpsf2.o) (__fp_cmp)
+/usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_inf.o)
+                              /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(addsf3x.o) (__fp_inf)
+/usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_nan.o)
+                              /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(addsf3x.o) (__fp_nan)
+/usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_powser.o)
+                              /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_arccos.o) (__fp_powser)
+/usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_pscA.o)
+                              /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(addsf3x.o) (__fp_pscA)
+/usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_pscB.o)
+                              /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(addsf3x.o) (__fp_pscB)
+/usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_rempio2.o)
+                              /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(cos.o) (__fp_rempio2)
+/usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_round.o)
+                              /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(acos.o) (__fp_round)
+/usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_sinus.o)
+                              /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(cos.o) (__fp_sinus)
+/usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_split3.o)
+                              /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(addsf3x.o) (__fp_split3)
+/usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_zero.o)
+                              /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(addsf3x.o) (__fp_zero)
+/usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(gesf2.o)
+                              ../freeRTOS750/lib_time/daylight_seconds.o (__gtsf2)
+/usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(mulsf3.o)
+                              ../freeRTOS750/lib_servo/servoPWM.o (__mulsf3)
+/usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(mulsf3x.o)
+                              /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_arccos.o) (__mulsf3x)
+/usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(sin.o)
+                              ../freeRTOS750/lib_time/equation_of_time.o (sin)
+/usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(sqrt.o)
+                              /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_arccos.o) (sqrt)
+/usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(tan.o)
+                              ../freeRTOS750/lib_time/daylight_seconds.o (tan)
+/usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_mpack.o)
+                              /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(sqrt.o) (__fp_mpack)
+/usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_norm2.o)
+                              /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(sqrt.o) (__fp_norm2)
+/usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_powsodd.o)
+                              /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_sinus.o) (__fp_powsodd)
+/usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(inverse.o)
+                              /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(tan.o) (inverse)
+/usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_usmulhisi3.o)
+                              ../freeRTOS750/lib_time/mk_gmtime.o (__usmulhisi3)
+/usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_mulsi3.o)
+                              ../freeRTOS750/lib_time/mk_gmtime.o (__mulsi3)
+/usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_divmodqi4.o)
+                              ../freeRTOS750/lib_time/strftime.o (__divmodqi4)
+/usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_udivmodhi4.o)
+                              ../freeRTOS750/lib_time/gmtime_r.o (__udivmodhi4)
+/usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_divmodhi4.o)
+                              ../freeRTOS750/lib_time/asctime_r.o (__divmodhi4)
+/usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_udivmodsi4.o)
+                              ../freeRTOS750/lib_serial/lib_serial.o (__udivmodsi4)
+/usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_divmodsi4.o)
+                              ../freeRTOS750/lib_time/gmtime_r.o (__divmodsi4)
+/usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_udivdi3.o)
+                              ../freeRTOS750/lib_time/gm_sidereal.o (__umoddi3)
+/usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_muldi3.o)
+                              ../freeRTOS750/lib_time/gm_sidereal.o (__muldi3)
+/usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_udivmod64.o)
+                              /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_udivdi3.o) (__udivmod64)
+/usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_exit.o)
+                              /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/crtm328p.o (exit)
+/usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_tablejump.o)
+                              ../freeRTOS750/lib_time/strftime.o (__tablejump2__)
+/usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_copy_data.o)
+                              main.o (__do_copy_data)
+/usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_clear_bss.o)
+                              ../freeRTOS750/tasks.o (__do_clear_bss)
+/usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_bswapsi2.o)
+                              ../freeRTOS750/lib_iinchip/socket_util.o (__bswapsi2)
+/usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_lshrdi3.o)
+                              ../freeRTOS750/lib_time/gm_sidereal.o (__lshrdi3)
+/usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_umulhisi3.o)
+                              /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_usmulhisi3.o) (__umulhisi3)
+/usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_muluhisi3.o)
+                              /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_mulsi3.o) (__muluhisi3)
+/usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_udivmodqi4.o)
+                              /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_divmodqi4.o) (__udivmodqi4)
+/usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(malloc.o)
+                              ../freeRTOS750/MemMang/heap_3.o (malloc)
+/usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(strlen_P.o)
+                              ../freeRTOS750/lib_serial/lib_serial.o (__strlen_P)
+/usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(strtok.o)
+                              ../freeRTOS750/lib_iinchip/socket_util.o (strtok)
+/usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(memcpy.o)
+                              ../freeRTOS750/queue.o (memcpy)
+/usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(memset.o)
+                              ../freeRTOS750/tasks.o (memset)
+/usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(strcpy.o)
+                              ../freeRTOS750/lib_iinchip/socket_util.o (strcpy)
+/usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(strtok_r.o)
+                              /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(strtok.o) (strtok_r)
+/usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(sprintf.o)
+                              ../freeRTOS750/lib_time/strftime.o (sprintf)
+/usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(sprintf_p.o)
+                              ../freeRTOS750/lib_iinchip/socket_util.o (sprintf_P)
+/usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(vsnprintf.o)
+                              ../freeRTOS750/lib_serial/lib_serial.o (vsnprintf)
+/usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(vsnprintf_p.o)
+                              ../freeRTOS750/lib_serial/lib_serial.o (vsnprintf_P)
+/usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(vfprintf_std.o)
+                              /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(sprintf.o) (vfprintf)
+/usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(strnlen_P.o)
+                              /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(vfprintf_std.o) (strnlen_P)
+/usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(strnlen.o)
+                              /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(vfprintf_std.o) (strnlen)
+/usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(fputc.o)
+                              /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(vfprintf_std.o) (fputc)
+/usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(ultoa_invert.o)
+                              /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(vfprintf_std.o) (__ultoa_invert)
+/usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_prologue.o)
+                              /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(sprintf.o) (__prologue_saves__)
+/usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_epilogue.o)
+                              /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(malloc.o) (__epilogue_restores__)
+
+Allocating common symbols
+Common symbol       size              file
+
+__store             0x1a              ../freeRTOS750/lib_time/asc_store.o
+__latitude          0x4               ../freeRTOS750/lib_time/geo_location.o
+xSerialPort         0x1e              ../freeRTOS750/lib_serial/lib_serial.o
+xSPISemaphore       0x2               ../freeRTOS750/lib_spi/spi.o
+__brkval            0x2               /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(malloc.o)
+xI2CSemaphore       0x2               ../freeRTOS750/lib_i2c/i2cMultiMaster.o
+__longitude         0x4               ../freeRTOS750/lib_time/geo_location.o
+__dst_ptr           0x2               ../freeRTOS750/lib_time/dst_pointer.o
+__utc_offset        0x4               ../freeRTOS750/lib_time/utc_offset.o
+__flp               0x2               /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(malloc.o)
+__tm_store          0xc               ../freeRTOS750/lib_time/tm_store.o
+__system_time       0x4               ../freeRTOS750/lib_time/system_time.o
+
+Memory Configuration
+
+Name             Origin             Length             Attributes
+text             0x00000000         0x00020000         xr
+data             0x00800060         0x0000ffa0         rw !x
+eeprom           0x00810000         0x00010000         rw !x
+fuse             0x00820000         0x00000400         rw !x
+lock             0x00830000         0x00000400         rw !x
+signature        0x00840000         0x00000400         rw !x
+*default*        0x00000000         0xffffffff
+
+Linker script and memory map
+
+Address of section .data set to 0x800100
+LOAD /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/crtm328p.o
+LOAD main.o
+LOAD ../freeRTOS750/tasks.o
+LOAD ../freeRTOS750/queue.o
+LOAD ../freeRTOS750/list.o
+LOAD ../freeRTOS750/croutine.o
+LOAD ../freeRTOS750/portable/port.o
+LOAD ../freeRTOS750/lib_i2c/i2cMultiMaster.o
+LOAD ../freeRTOS750/lib_digitalAnalog/digitalAnalog.o
+LOAD ../freeRTOS750/lib_ext_ram/ext_ram.o
+LOAD ../freeRTOS750/lib_ext_ram/ramfs.o
+LOAD ../freeRTOS750/lib_hd44780/hd44780.o
+LOAD ../freeRTOS750/lib_i2c/i2cMultiMaster.o
+LOAD ../freeRTOS750/lib_iinchip/md5.o
+LOAD ../freeRTOS750/lib_iinchip/socket.o
+LOAD ../freeRTOS750/lib_iinchip/socket_util.o
+LOAD ../freeRTOS750/lib_iinchip/w5100.o
+LOAD ../freeRTOS750/lib_iinchip/w5200.o
+LOAD ../freeRTOS750/lib_rtc/rtc.o
+LOAD ../freeRTOS750/lib_serial/lib_serial.o
+LOAD ../freeRTOS750/lib_servo/servoPWM.o
+LOAD ../freeRTOS750/lib_spi/spi.o
+LOAD ../freeRTOS750/MemMang/heap_1.o
+LOAD ../freeRTOS750/MemMang/heap_2.o
+LOAD ../freeRTOS750/MemMang/heap_3.o
+LOAD ../freeRTOS750/MemMang/heap_4.o
+LOAD ../freeRTOS750/lib_time/asc_store.o
+LOAD ../freeRTOS750/lib_time/asctime.o
+LOAD ../freeRTOS750/lib_time/asctime_r.o
+LOAD ../freeRTOS750/lib_time/ctime.o
+LOAD ../freeRTOS750/lib_time/ctime_r.o
+LOAD ../freeRTOS750/lib_time/daylight_seconds.o
+LOAD ../freeRTOS750/lib_time/difftime.o
+LOAD ../freeRTOS750/lib_time/dst_pointer.o
+LOAD ../freeRTOS750/lib_time/equation_of_time.o
+LOAD ../freeRTOS750/lib_time/fatfs_time.o
+LOAD ../freeRTOS750/lib_time/geo_location.o
+LOAD ../freeRTOS750/lib_time/gm_sidereal.o
+LOAD ../freeRTOS750/lib_time/gmtime.o
+LOAD ../freeRTOS750/lib_time/gmtime_r.o
+LOAD ../freeRTOS750/lib_time/isLeap.o
+LOAD ../freeRTOS750/lib_time/isotime.o
+LOAD ../freeRTOS750/lib_time/isotime_r.o
+LOAD ../freeRTOS750/lib_time/iso_week_date.o
+LOAD ../freeRTOS750/lib_time/iso_week_date_r.o
+LOAD ../freeRTOS750/lib_time/lm_sidereal.o
+LOAD ../freeRTOS750/lib_time/localtime.o
+LOAD ../freeRTOS750/lib_time/localtime_r.o
+LOAD ../freeRTOS750/lib_time/mk_gmtime.o
+LOAD ../freeRTOS750/lib_time/mktime.o
+LOAD ../freeRTOS750/lib_time/month_length.o
+LOAD ../freeRTOS750/lib_time/moon_phase.o
+LOAD ../freeRTOS750/lib_time/print_lz.o
+LOAD ../freeRTOS750/lib_time/set_dst.o
+LOAD ../freeRTOS750/lib_time/set_position.o
+LOAD ../freeRTOS750/lib_time/set_system_time.o
+LOAD ../freeRTOS750/lib_time/set_zone.o
+LOAD ../freeRTOS750/lib_time/solar_declination.o
+LOAD ../freeRTOS750/lib_time/solar_noon.o
+LOAD ../freeRTOS750/lib_time/strftime.o
+LOAD ../freeRTOS750/lib_time/sun_rise.o
+LOAD ../freeRTOS750/lib_time/sun_set.o
+LOAD ../freeRTOS750/lib_time/system_time.o
+LOAD ../freeRTOS750/lib_time/time.o
+LOAD ../freeRTOS750/lib_time/tm_store.o
+LOAD ../freeRTOS750/lib_time/utc_offset.o
+LOAD ../freeRTOS750/lib_time/week_of_month.o
+LOAD ../freeRTOS750/lib_time/week_of_year.o
+LOAD ../freeRTOS750/lib_time/system_tick.o
+LOAD /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a
+LOAD /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a
+LOAD /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a
+LOAD /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a
+
+.hash
+ *(.hash)
+
+.dynsym
+ *(.dynsym)
+
+.dynstr
+ *(.dynstr)
+
+.gnu.version
+ *(.gnu.version)
+
+.gnu.version_d
+ *(.gnu.version_d)
+
+.gnu.version_r
+ *(.gnu.version_r)
+
+.rel.init
+ *(.rel.init)
+
+.rela.init
+ *(.rela.init)
+
+.rel.text
+ *(.rel.text)
+ *(.rel.text.*)
+ *(.rel.gnu.linkonce.t*)
+
+.rela.text
+ *(.rela.text)
+ *(.rela.text.*)
+ *(.rela.gnu.linkonce.t*)
+
+.rel.fini
+ *(.rel.fini)
+
+.rela.fini
+ *(.rela.fini)
+
+.rel.rodata
+ *(.rel.rodata)
+ *(.rel.rodata.*)
+ *(.rel.gnu.linkonce.r*)
+
+.rela.rodata
+ *(.rela.rodata)
+ *(.rela.rodata.*)
+ *(.rela.gnu.linkonce.r*)
+
+.rel.data
+ *(.rel.data)
+ *(.rel.data.*)
+ *(.rel.gnu.linkonce.d*)
+
+.rela.data
+ *(.rela.data)
+ *(.rela.data.*)
+ *(.rela.gnu.linkonce.d*)
+
+.rel.ctors
+ *(.rel.ctors)
+
+.rela.ctors
+ *(.rela.ctors)
+
+.rel.dtors
+ *(.rel.dtors)
+
+.rela.dtors
+ *(.rela.dtors)
+
+.rel.got
+ *(.rel.got)
+
+.rela.got
+ *(.rela.got)
+
+.rel.bss
+ *(.rel.bss)
+
+.rela.bss
+ *(.rela.bss)
+
+.rel.plt
+ *(.rel.plt)
+
+.rela.plt
+ *(.rela.plt)
+
+.text           0x00000000     0xaab6
+ *(.vectors)
+ .vectors       0x00000000       0x68 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/crtm328p.o
+                0x00000000                __vectors
+                0x00000000                __vector_default
+ *(.vectors)
+ *(.progmem.gcc*)
+ .progmem.gcc_sw_table
+                0x00000068       0xac ../freeRTOS750/lib_time/strftime.o
+ .progmem.gcc_fplib
+                0x00000114       0x28 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_arccos.o)
+ .progmem.gcc_fplib
+                0x0000013c       0x1e /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_sinus.o)
+ .progmem.gcc_fplib
+                0x0000015a       0x23 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(tan.o)
+ *(.progmem*)
+ .progmem.data  0x0000017d       0x82 main.o
+ .progmem.data  0x000001ff      0x167 ../freeRTOS750/lib_iinchip/socket_util.o
+ .progmem.data  0x00000366       0x3b ../freeRTOS750/lib_time/asctime_r.o
+                0x00000366                ascdays
+                0x0000037c                ascmonths
+ .progmem.data  0x000003a1       0x91 ../freeRTOS750/lib_time/strftime.o
+                0x000003a1                strfmonths
+                0x000003f8                strfwkdays
+                0x00000432                . = ALIGN (0x2)
+                0x00000432                __trampolines_start = .
+ *(.trampolines)
+ .trampolines   0x00000432        0x0 linker stubs
+ *(.trampolines*)
+                0x00000432                __trampolines_end = .
+ *(.jumptables)
+ *(.jumptables*)
+ *(.lowtext)
+ *(.lowtext*)
+                0x00000432                __ctors_start = .
+ *(.ctors)
+                0x00000432                __ctors_end = .
+                0x00000432                __dtors_start = .
+ *(.dtors)
+                0x00000432                __dtors_end = .
+ SORT(*)(.ctors)
+ SORT(*)(.dtors)
+ *(.init0)
+ .init0         0x00000432        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/crtm328p.o
+                0x00000432                __init
+ *(.init0)
+ *(.init1)
+ *(.init1)
+ *(.init2)
+ .init2         0x00000432        0xc /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/crtm328p.o
+ *(.init2)
+ *(.init3)
+ *(.init3)
+ *(.init4)
+ .init4         0x0000043e       0x16 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_copy_data.o)
+                0x0000043e                __do_copy_data
+ .init4         0x00000454       0x10 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_clear_bss.o)
+                0x00000454                __do_clear_bss
+ *(.init4)
+ *(.init5)
+ *(.init5)
+ *(.init6)
+ *(.init6)
+ *(.init7)
+ *(.init7)
+ *(.init8)
+ *(.init8)
+ *(.init9)
+ .init9         0x00000464        0x8 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/crtm328p.o
+ *(.init9)
+ *(.text)
+ .text          0x0000046c        0x4 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/crtm328p.o
+                0x0000046c                __vector_22
+                0x0000046c                __vector_12
+                0x0000046c                __bad_interrupt
+                0x0000046c                __vector_6
+                0x0000046c                __vector_3
+                0x0000046c                __vector_23
+                0x0000046c                __vector_25
+                0x0000046c                __vector_11
+                0x0000046c                __vector_13
+                0x0000046c                __vector_17
+                0x0000046c                __vector_7
+                0x0000046c                __vector_5
+                0x0000046c                __vector_4
+                0x0000046c                __vector_9
+                0x0000046c                __vector_2
+                0x0000046c                __vector_21
+                0x0000046c                __vector_15
+                0x0000046c                __vector_8
+                0x0000046c                __vector_10
+                0x0000046c                __vector_16
+                0x0000046c                __vector_20
+ .text          0x00000470       0xa8 main.o
+                0x0000050e                vApplicationIdleHook
+                0x00000512                vApplicationStackOverflowHook
+ .text          0x00000518      0x8d8 ../freeRTOS750/tasks.o
+                0x00000580                xTaskGenericCreate
+                0x0000078c                vTaskDelete
+                0x0000080c                vTaskStartScheduler
+                0x00000870                vTaskEndScheduler
+                0x0000087a                vTaskSuspendAll
+                0x00000886                xTaskGetTickCount
+                0x0000089c                xTaskGetTickCountFromISR
+                0x000008a8                uxTaskGetNumberOfTasks
+                0x000008ae                xTaskIncrementTick
+                0x00000a36                xTaskResumeAll
+                0x00000b8a                vTaskDelay
+                0x00000bd4                vTaskDelayUntil
+                0x00000c4a                vTaskSwitchContext
+                0x00000cc6                vTaskPlaceOnEventList
+                0x00000cfe                xTaskRemoveFromEventList
+                0x00000d7a                vTaskSetTimeOutState
+                0x00000d90                xTaskCheckForTimeOut
+                0x00000de8                vTaskMissedYield
+ .text          0x00000df0      0x778 ../freeRTOS750/queue.o
+                0x00000f3e                xQueueGenericReset
+                0x00000fbc                xQueueGenericCreate
+                0x00001014                xQueueGenericSend
+                0x00001144                xQueueGenericSendFromISR
+                0x000011a2                xQueueGenericReceive
+                0x000012ea                xQueueReceiveFromISR
+                0x00001346                xQueuePeekFromISR
+                0x00001374                uxQueueMessagesWaiting
+                0x00001384                uxQueueMessagesWaitingFromISR
+                0x0000138a                vQueueDelete
+                0x000013a2                xQueueIsQueueEmptyFromISR
+                0x000013ae                xQueueIsQueueFullFromISR
+                0x000013bc                xQueueCRSend
+                0x00001428                xQueueCRReceive
+                0x000014b4                xQueueCRSendFromISR
+                0x000014f2                xQueueCRReceiveFromISR
+ .text          0x00001568      0x11e ../freeRTOS750/list.o
+                0x00001568                vListInitialise
+                0x00001584                vListInitialiseItem
+                0x0000158c                vListInsertEnd
+                0x000015ce                vListInsert
+                0x0000163e                uxListRemove
+ .text          0x00001686      0x378 ../freeRTOS750/croutine.o
+                0x00001686                xCoRoutineCreate
+                0x0000176e                vCoRoutineAddToDelayedList
+                0x000017f2                vCoRoutineSchedule
+                0x000019b4                xCoRoutineRemoveFromEventList
+ .text          0x000019fe      0x346 ../freeRTOS750/portable/port.o
+                0x000019fe                pxPortInitialiseStack
+                0x00001b24                xPortStartScheduler
+                0x00001ba8                vPortEndScheduler
+                0x00001baa                vPortYield
+                0x00001c5c                vPortYieldFromTick
+                0x00001d3e                __vector_14
+ .text          0x00001d44      0x3e0 ../freeRTOS750/lib_i2c/i2cMultiMaster.o
+                0x00001d44                I2C_Slave_Initialise
+                0x00001d86                I2C_Master_Initialise
+                0x00001dd8                I2C_Slave_Start_Transceiver
+                0x00001df2                I2C_Master_Start_Transceiver
+                0x00001e0c                I2C_Slave_Start_Transceiver_With_Data
+                0x00001e40                I2C_Master_Start_Transceiver_With_Data
+                0x00001e88                I2C_Slave_Get_Data_From_Transceiver
+                0x00001ec0                I2C_Master_Get_Data_From_Transceiver
+                0x00001ef0                I2C_Check_Free_After_Stop
+                0x00001f06                I2C_Get_State_Info
+                0x00001f14                __vector_24
+ .text          0x00002124      0x29a ../freeRTOS750/lib_digitalAnalog/digitalAnalog.o
+                0x00002124                getIORegisters
+                0x000021b4                setDataDirection
+                0x000021d6                setOutputValue
+                0x00002206                getInputValue
+                0x00002214                setDIDValue
+                0x0000223a                setDigitalOutput
+                0x00002286                setDigitalInput
+                0x000022d0                disableDigitalInput
+                0x0000230a                isDigitalInputHigh
+                0x00002344                setAnalogMode
+                0x0000235c                getAnalogMode
+                0x00002368                analogIsConverting
+                0x00002374                startAnalogConversion
+                0x000023a2                analogConversionResult
+ .text          0x000023be        0x0 ../freeRTOS750/lib_ext_ram/ext_ram.o
+ .text          0x000023be        0x0 ../freeRTOS750/lib_ext_ram/ramfs.o
+ .text          0x000023be        0x0 ../freeRTOS750/lib_hd44780/hd44780.o
+ .text          0x000023be      0x3e0 ../freeRTOS750/lib_i2c/i2cMultiMaster.o
+ .text          0x0000279e     0x2854 ../freeRTOS750/lib_iinchip/md5.o
+                0x00002804                FF
+                0x000028e8                GG
+                0x000029d0                HH
+                0x00002a94                II
+                0x00004d6c                md5_init
+                0x00004dc0                md5_update
+                0x00004f28                md5_final
+ .text          0x00004ff2      0x93c ../freeRTOS750/lib_iinchip/socket.o
+                0x00004ff2                close
+                0x0000503e                socket
+                0x00005162                listen
+                0x000051b0                connect
+                0x000052d4                disconnect
+                0x00005312                send
+                0x00005430                recv
+                0x00005478                sendto
+                0x00005598                recvfrom
+                0x0000573e                macrawsend
+                0x00005830                macrawrecv
+ .text          0x0000592e      0x74c ../freeRTOS750/lib_iinchip/socket_util.o
+                0x0000592e                swaps
+                0x0000593e                swapl
+                0x00005944                D2C
+                0x00005960                C2D
+                0x00005982                ATOI
+                0x000059c6                ValidATOI
+                0x00005a3c                replacetochar
+                0x00005a50                inet_ntoa
+                0x00005ab2                inet_ntoa_pad
+                0x00005b14                inet_addr
+                0x00005bb2                VerifyIPAddress
+                0x00005c3e                GetDestAddr
+                0x00005cac                GetDestPort
+                0x00005ce2                htons
+                0x00005cf2                htonl
+                0x00005cf6                ntohs
+                0x00005d0c                ntohl
+                0x00005d10                CheckDestInLocal
+                0x00005d8c                getSocket
+                0x00005db4                checksum
+                0x00005e42                GetIPAddress
+                0x00005e94                GetGWAddress
+                0x00005ee6                GetSubMask
+                0x00005f34                GetMacAddress
+                0x00005f60                GetDestMacAddr
+                0x00005fa4                GetNetConfig
+ .text          0x0000607a      0xd24 ../freeRTOS750/lib_iinchip/w5100.o
+                0x0000607a                IINCHIP_getISR
+                0x00006086                IINCHIP_putISR
+                0x00006092                getIINCHIP_RxMAX
+                0x000060a4                getIINCHIP_TxMAX
+                0x000060b6                getIINCHIP_RxMASK
+                0x000060c8                getIINCHIP_TxMASK
+                0x000060da                getIINCHIP_RxBASE
+                0x000060ec                getIINCHIP_TxBASE
+                0x000060fe                IINCHIP_write
+                0x00006182                IINCHIP_read
+                0x00006204                IINCHIP_write_buf
+                0x000062c4                IINCHIP_read_buf
+                0x00006380                __vector_1
+                0x00006394                IINCHIP_sysinit
+                0x000065fa                setMR
+                0x00006604                IINCHIP_init
+                0x00006636                setGAR
+                0x00006668                getGWIP
+                0x0000669c                saveSUBR
+                0x000066b8                setSUBR
+                0x000066e8                clearSUBR
+                0x00006710                setSHAR
+                0x00006756                setSIPR
+                0x00006788                getIR
+                0x00006790                setRTR
+                0x000067aa                setRCR
+                0x000067b4                setIMR
+                0x000067be                getGAR
+                0x000067f2                getSHAR
+                0x0000683a                getSIPR
+                0x0000686e                getSn_DHAR
+                0x000068ca                setSn_DHAR
+                0x0000692e                getSn_DIPR
+                0x00006976                setSn_DIPR
+                0x000069c2                getSn_DPORT
+                0x000069f2                setSn_DPORT
+                0x00006a20                setSn_MSS
+                0x00006a4a                setSn_TTL
+                0x00006a58                setSn_PROTO
+                0x00006a66                getSn_IR
+                0x00006a74                getSn_SR
+                0x00006a82                getSn_TX_FSR
+                0x00006b06                getSn_RX_RSR
+                0x00006b8a                write_data
+                0x00006c12                send_data_processing
+                0x00006c92                read_data
+                0x00006d1e                recv_data_processing
+ .text          0x00006d9e        0x0 ../freeRTOS750/lib_iinchip/w5200.o
+ .text          0x00006d9e        0x0 ../freeRTOS750/lib_rtc/rtc.o
+ .text          0x00006d9e      0x9f0 ../freeRTOS750/lib_serial/lib_serial.o
+                0x00006d9e                xSerialFlush
+                0x00006dd0                xSerialAvailableChar
+                0x00006de4                xSerialGetChar
+                0x00006e38                xSerialPutChar
+                0x00006ef8                xSerialxPrint_P
+                0x00006f42                xSerialxPrint
+                0x00006f86                xSerialxPrintf_P
+                0x00006fe6                xSerialxPrintf
+                0x00007046                xSerialPrint_P
+                0x00007086                xSerialPrint
+                0x000070c2                xSerialPrintf_P
+                0x00007124                xSerialPrintf
+                0x00007186                xSerialPortInitMinimal
+                0x000072de                vSerialClose
+                0x00007326                avrSerialWrite
+                0x0000733e                avrSerialPrint_P
+                0x0000737a                avrSerialPrint
+                0x000073b2                avrSerialPrintf_P
+                0x00007406                avrSerialPrintf
+                0x0000745a                avrSerialRead
+                0x0000747e                avrSerialCheckRxComplete
+                0x00007486                avrSerialCheckTxReady
+                0x0000748e                avrSerialxCheckRxComplete
+                0x000074a2                avrSerialxRead
+                0x000074d8                avrSerialxCheckTxReady
+                0x000074ec                avrSerialxWrite
+                0x0000752c                avrSerialxPrint_P
+                0x00007576                avrSerialxPrint
+                0x000075ba                avrSerialxPrintf_P
+                0x00007610                avrSerialxPrintf
+                0x00007666                __vector_18
+                0x00007704                __vector_19
+ .text          0x0000778e       0xe8 ../freeRTOS750/lib_servo/servoPWM.o
+                0x0000778e                start_PWM_hardware
+                0x000077cc                stop_PWM_hardware
+                0x000077e2                set_PWM_hardware
+ .text          0x00007876      0x262 ../freeRTOS750/lib_spi/spi.o
+                0x00007876                spiBegin
+                0x000078f2                spiEnd
+                0x0000790a                spiSetClockDivider
+                0x00007926                spiSetBitOrder
+                0x00007938                spiSetDataMode
+                0x00007942                spiAttachInterrupt
+                0x0000794a                spiDetachInterrupt
+                0x00007952                spiSelect
+                0x00007990                spiDeselect
+                0x000079be                spiTransfer
+                0x000079e8                spiMultiByteTx
+                0x00007a2a                spiMultiByteRx
+                0x00007a80                spiMultiByteTransfer
+ .text          0x00007ad8       0x84 ../freeRTOS750/MemMang/heap_1.o
+                0x00007ad8                pvPortMalloc
+                0x00007b3c                vPortFree
+                0x00007b3e                vPortInitialiseBlocks
+                0x00007b48                xPortGetFreeHeapSize
+ .text          0x00007b5c      0x19e ../freeRTOS750/MemMang/heap_2.o
+ .text          0x00007cfa       0x68 ../freeRTOS750/MemMang/heap_3.o
+ .text          0x00007d62      0x252 ../freeRTOS750/MemMang/heap_4.o
+ .text          0x00007fb4        0x0 ../freeRTOS750/lib_time/asc_store.o
+ .text          0x00007fb4       0x16 ../freeRTOS750/lib_time/asctime.o
+                0x00007fb4                asctime
+ .text          0x00007fca      0x104 ../freeRTOS750/lib_time/asctime_r.o
+                0x00007fca                asctime_r
+ .text          0x000080ce       0x48 ../freeRTOS750/lib_time/ctime.o
+                0x000080ce                ctime
+ .text          0x00008116       0x44 ../freeRTOS750/lib_time/ctime_r.o
+                0x00008116                ctime_r
+ .text          0x0000815a       0xfa ../freeRTOS750/lib_time/daylight_seconds.o
+                0x0000815a                daylight_seconds
+ .text          0x00008254       0x22 ../freeRTOS750/lib_time/difftime.o
+                0x00008254                difftime
+ .text          0x00008276        0x0 ../freeRTOS750/lib_time/dst_pointer.o
+ .text          0x00008276      0x102 ../freeRTOS750/lib_time/equation_of_time.o
+                0x00008276                equation_of_time
+ .text          0x00008378       0xfc ../freeRTOS750/lib_time/fatfs_time.o
+                0x00008378                fatfs_time
+ .text          0x00008474        0x0 ../freeRTOS750/lib_time/geo_location.o
+ .text          0x00008474       0x8c ../freeRTOS750/lib_time/gm_sidereal.o
+                0x00008474                gm_sidereal
+ .text          0x00008500        0xe ../freeRTOS750/lib_time/gmtime.o
+                0x00008500                gmtime
+ .text          0x0000850e      0x210 ../freeRTOS750/lib_time/gmtime_r.o
+                0x0000850e                gmtime_r
+ .text          0x0000871e       0x28 ../freeRTOS750/lib_time/isLeap.o
+                0x0000871e                is_leap_year
+ .text          0x00008746       0x16 ../freeRTOS750/lib_time/isotime.o
+                0x00008746                isotime
+ .text          0x0000875c       0xba ../freeRTOS750/lib_time/isotime_r.o
+                0x0000875c                isotime_r
+ .text          0x00008816       0x1e ../freeRTOS750/lib_time/iso_week_date.o
+                0x00008816                iso_week_date
+ .text          0x00008834      0x120 ../freeRTOS750/lib_time/iso_week_date_r.o
+                0x00008834                iso_week_date_r
+ .text          0x00008954       0x5c ../freeRTOS750/lib_time/lm_sidereal.o
+                0x00008954                lm_sidereal
+ .text          0x000089b0        0xe ../freeRTOS750/lib_time/localtime.o
+                0x000089b0                localtime
+ .text          0x000089be       0xac ../freeRTOS750/lib_time/localtime_r.o
+                0x000089be                localtime_r
+ .text          0x00008a6a      0x170 ../freeRTOS750/lib_time/mk_gmtime.o
+                0x00008a6a                mk_gmtime
+ .text          0x00008bda       0xbc ../freeRTOS750/lib_time/mktime.o
+                0x00008bda                mktime
+ .text          0x00008c96       0x1a ../freeRTOS750/lib_time/month_length.o
+                0x00008c96                month_length
+ .text          0x00008cb0       0xfc ../freeRTOS750/lib_time/moon_phase.o
+                0x00008cb0                moon_phase
+ .text          0x00008dac       0x34 ../freeRTOS750/lib_time/print_lz.o
+                0x00008dac                __print_lz
+ .text          0x00008de0        0xa ../freeRTOS750/lib_time/set_dst.o
+                0x00008de0                set_dst
+ .text          0x00008dea       0x22 ../freeRTOS750/lib_time/set_position.o
+                0x00008dea                set_position
+ .text          0x00008e0c       0x18 ../freeRTOS750/lib_time/set_system_time.o
+                0x00008e0c                set_system_time
+ .text          0x00008e24       0x12 ../freeRTOS750/lib_time/set_zone.o
+                0x00008e24                set_zone
+ .text          0x00008e36       0xd6 ../freeRTOS750/lib_time/solar_declination.o
+                0x00008e36                solar_declination
+ .text          0x00008f0c       0xaa ../freeRTOS750/lib_time/solar_noon.o
+                0x00008f0c                solar_noon
+ .text          0x00008fb6      0x582 ../freeRTOS750/lib_time/strftime.o
+                0x00008fb6                pgm_copystring
+                0x00009030                strftime
+ .text          0x00009538       0x4a ../freeRTOS750/lib_time/sun_rise.o
+                0x00009538                sun_rise
+ .text          0x00009582       0x42 ../freeRTOS750/lib_time/sun_set.o
+                0x00009582                sun_set
+ .text          0x000095c4        0x0 ../freeRTOS750/lib_time/system_time.o
+ .text          0x000095c4       0x32 ../freeRTOS750/lib_time/time.o
+                0x000095c4                time
+ .text          0x000095f6        0x0 ../freeRTOS750/lib_time/tm_store.o
+ .text          0x000095f6        0x0 ../freeRTOS750/lib_time/utc_offset.o
+ .text          0x000095f6       0x54 ../freeRTOS750/lib_time/week_of_month.o
+                0x000095f6                week_of_month
+ .text          0x0000964a       0x4a ../freeRTOS750/lib_time/week_of_year.o
+                0x0000964a                week_of_year
+ .text          0x00009694       0x38 ../freeRTOS750/lib_time/system_tick.o
+                0x00009694                system_tick
+ .text          0x000096cc        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(acos.o)
+ .text          0x000096cc        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(addsf3.o)
+ .text          0x000096cc        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(addsf3x.o)
+ .text          0x000096cc        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(cmpsf2.o)
+ .text          0x000096cc        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(cos.o)
+ .text          0x000096cc        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(divsf3.o)
+ .text          0x000096cc        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(divsf3x.o)
+ .text          0x000096cc        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fixsfsi.o)
+ .text          0x000096cc        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fixunssfsi.o)
+ .text          0x000096cc        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(floatsisf.o)
+ .text          0x000096cc        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_arccos.o)
+ .text          0x000096cc        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_cmp.o)
+ .text          0x000096cc        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_inf.o)
+ .text          0x000096cc        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_nan.o)
+ .text          0x000096cc        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_powser.o)
+ .text          0x000096cc        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_pscA.o)
+ .text          0x000096cc        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_pscB.o)
+ .text          0x000096cc        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_rempio2.o)
+ .text          0x000096cc        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_round.o)
+ .text          0x000096cc        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_sinus.o)
+ .text          0x000096cc        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_split3.o)
+ .text          0x000096cc        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_zero.o)
+ .text          0x000096cc        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(gesf2.o)
+ .text          0x000096cc        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(mulsf3.o)
+ .text          0x000096cc        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(mulsf3x.o)
+ .text          0x000096cc        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(sin.o)
+ .text          0x000096cc        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(sqrt.o)
+ .text          0x000096cc        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(tan.o)
+ .text          0x000096cc        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_mpack.o)
+ .text          0x000096cc        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_norm2.o)
+ .text          0x000096cc        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_powsodd.o)
+ .text          0x000096cc        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(inverse.o)
+ .text          0x000096cc        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_usmulhisi3.o)
+ .text          0x000096cc        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_mulsi3.o)
+ .text          0x000096cc        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_divmodqi4.o)
+ .text          0x000096cc        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_udivmodhi4.o)
+ .text          0x000096cc        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_divmodhi4.o)
+ .text          0x000096cc        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_udivmodsi4.o)
+ .text          0x000096cc        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_divmodsi4.o)
+ .text          0x000096cc        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_udivdi3.o)
+ .text          0x000096cc        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_muldi3.o)
+ .text          0x000096cc        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_udivmod64.o)
+ .text          0x000096cc        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_exit.o)
+ .text          0x000096cc        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_tablejump.o)
+ .text          0x000096cc        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_copy_data.o)
+ .text          0x000096cc        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_clear_bss.o)
+ .text          0x000096cc        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_bswapsi2.o)
+ .text          0x000096cc        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_lshrdi3.o)
+ .text          0x000096cc        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_umulhisi3.o)
+ .text          0x000096cc        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_muluhisi3.o)
+ .text          0x000096cc        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_udivmodqi4.o)
+ .text          0x000096cc        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(malloc.o)
+ .text          0x000096cc        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(strlen_P.o)
+ .text          0x000096cc        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(strtok.o)
+ .text          0x000096cc        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(memcpy.o)
+ .text          0x000096cc        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(memset.o)
+ .text          0x000096cc        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(strcpy.o)
+ .text          0x000096cc        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(strtok_r.o)
+ .text          0x000096cc        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(sprintf.o)
+ .text          0x000096cc        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(sprintf_p.o)
+ .text          0x000096cc        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(vsnprintf.o)
+ .text          0x000096cc        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(vsnprintf_p.o)
+ .text          0x000096cc        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(vfprintf_std.o)
+ .text          0x000096cc        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(strnlen_P.o)
+ .text          0x000096cc        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(strnlen.o)
+ .text          0x000096cc        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(fputc.o)
+ .text          0x000096cc        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(ultoa_invert.o)
+ .text          0x000096cc        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_prologue.o)
+ .text          0x000096cc        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_epilogue.o)
+                0x000096cc                . = ALIGN (0x2)
+ *(.text.*)
+ .text.startup  0x000096cc       0xc4 main.o
+                0x000096cc                main
+ .text.avr-libc.fplib
+                0x00009790       0x1c /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(acos.o)
+                0x00009790                acos
+ .text.avr-libc.fplib
+                0x000097ac        0xa /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(addsf3.o)
+                0x000097ac                __subsf3
+                0x000097ae                __addsf3
+ .text.avr-libc.fplib
+                0x000097b6       0xc0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(addsf3x.o)
+                0x000097d0                __addsf3x
+ .text.avr-libc.fplib
+                0x00009876        0x8 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(cmpsf2.o)
+                0x00009876                __lesf2
+                0x00009876                __nesf2
+                0x00009876                __eqsf2
+                0x00009876                __cmpsf2
+                0x00009876                __ltsf2
+ .text.avr-libc.fplib
+                0x0000987e        0x6 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(cos.o)
+                0x0000987e                cos
+ .text.avr-libc.fplib
+                0x00009884        0x4 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(divsf3.o)
+                0x00009884                __divsf3
+ .text.avr-libc.fplib
+                0x00009888       0xcc /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(divsf3x.o)
+                0x0000989e                __divsf3x
+                0x000098a2                __divsf3_pse
+ .text.avr-libc.fplib
+                0x00009954        0xa /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fixsfsi.o)
+                0x00009954                __fixsfsi
+ .text.avr-libc.fplib
+                0x0000995e       0x58 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fixunssfsi.o)
+                0x0000995e                __fixunssfsi
+ .text.avr-libc.fplib
+                0x000099b6       0x7a /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(floatsisf.o)
+                0x000099b6                __floatunsisf
+                0x000099ba                __floatsisf
+ .text.avr-libc.fplib
+                0x00009a30       0x36 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_arccos.o)
+                0x00009a30                __fp_arccos
+ .text.avr-libc.fplib
+                0x00009a66       0x48 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_cmp.o)
+                0x00009a66                __fp_cmp
+ .text.avr-libc.fplib
+                0x00009aae        0xc /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_inf.o)
+                0x00009aae                __fp_inf
+ .text.avr-libc.fplib
+                0x00009aba        0x6 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_nan.o)
+                0x00009aba                __fp_nan
+ .text.avr-libc.fplib
+                0x00009ac0       0x4a /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_powser.o)
+                0x00009ac0                __fp_powser
+ .text.avr-libc.fplib
+                0x00009b0a        0xe /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_pscA.o)
+                0x00009b0a                __fp_pscA
+ .text.avr-libc.fplib
+                0x00009b18        0xe /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_pscB.o)
+                0x00009b18                __fp_pscB
+ .text.avr-libc.fplib
+                0x00009b26       0x50 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_rempio2.o)
+                0x00009b28                __fp_rempio2
+ .text.avr-libc.fplib
+                0x00009b76       0x22 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_round.o)
+                0x00009b76                __fp_round
+ .text.avr-libc.fplib
+                0x00009b98       0x22 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_sinus.o)
+                0x00009b98                __fp_sinus
+ .text.avr-libc.fplib
+                0x00009bba       0x44 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_split3.o)
+                0x00009bba                __fp_split3
+                0x00009bca                __fp_splitA
+ .text.avr-libc.fplib
+                0x00009bfe        0xe /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_zero.o)
+                0x00009bfe                __fp_zero
+                0x00009c00                __fp_szero
+ .text.avr-libc.fplib
+                0x00009c0c        0x8 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(gesf2.o)
+                0x00009c0c                __gtsf2
+                0x00009c0c                __gesf2
+ .text.avr-libc.fplib
+                0x00009c14        0x4 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(mulsf3.o)
+                0x00009c14                __mulsf3
+ .text.avr-libc.fplib
+                0x00009c18       0xc2 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(mulsf3x.o)
+                0x00009c2c                __mulsf3x
+                0x00009c30                __mulsf3_pse
+ .text.avr-libc.fplib
+                0x00009cda        0xc /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(sin.o)
+                0x00009cda                sin
+ .text.avr-libc.fplib
+                0x00009ce6       0x84 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(sqrt.o)
+                0x00009cee                sqrt
+ .text.avr-libc.fplib
+                0x00009d6a       0x40 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(tan.o)
+                0x00009d6a                tan
+ .text.avr-libc.fplib
+                0x00009daa       0x1c /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_mpack.o)
+                0x00009daa                __fp_mpack
+                0x00009dae                __fp_mpack_finite
+ .text.avr-libc.fplib
+                0x00009dc6        0xe /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_norm2.o)
+                0x00009dc6                __fp_norm2
+ .text.avr-libc.fplib
+                0x00009dd4       0x22 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_powsodd.o)
+                0x00009dd4                __fp_powsodd
+ .text.avr-libc.fplib
+                0x00009df6        0xe /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(inverse.o)
+                0x00009df6                inverse
+ .text.libgcc.mul
+                0x00009e04        0xe /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_usmulhisi3.o)
+                0x00009e04                __usmulhisi3
+                0x00009e08                __usmulhisi3_tail
+ .text.libgcc.div
+                0x00009e12        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_usmulhisi3.o)
+ .text.libgcc   0x00009e12        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_usmulhisi3.o)
+ .text.libgcc.prologue
+                0x00009e12        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_usmulhisi3.o)
+ .text.libgcc.builtins
+                0x00009e12        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_usmulhisi3.o)
+ .text.libgcc.fmul
+                0x00009e12        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_usmulhisi3.o)
+ .text.libgcc.mul
+                0x00009e12       0x20 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_mulsi3.o)
+                0x00009e12                __mulsi3
+ .text.libgcc.div
+                0x00009e32        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_mulsi3.o)
+ .text.libgcc   0x00009e32        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_mulsi3.o)
+ .text.libgcc.prologue
+                0x00009e32        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_mulsi3.o)
+ .text.libgcc.builtins
+                0x00009e32        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_mulsi3.o)
+ .text.libgcc.fmul
+                0x00009e32        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_mulsi3.o)
+ .text.libgcc.mul
+                0x00009e32        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_divmodqi4.o)
+ .text.libgcc.div
+                0x00009e32       0x1c /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_divmodqi4.o)
+                0x00009e32                __divmodqi4
+ .text.libgcc   0x00009e4e        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_divmodqi4.o)
+ .text.libgcc.prologue
+                0x00009e4e        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_divmodqi4.o)
+ .text.libgcc.builtins
+                0x00009e4e        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_divmodqi4.o)
+ .text.libgcc.fmul
+                0x00009e4e        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_divmodqi4.o)
+ .text.libgcc.mul
+                0x00009e4e        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_udivmodhi4.o)
+ .text.libgcc.div
+                0x00009e4e       0x28 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_udivmodhi4.o)
+                0x00009e4e                __udivmodhi4
+ .text.libgcc   0x00009e76        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_udivmodhi4.o)
+ .text.libgcc.prologue
+                0x00009e76        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_udivmodhi4.o)
+ .text.libgcc.builtins
+                0x00009e76        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_udivmodhi4.o)
+ .text.libgcc.fmul
+                0x00009e76        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_udivmodhi4.o)
+ .text.libgcc.mul
+                0x00009e76        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_divmodhi4.o)
+ .text.libgcc.div
+                0x00009e76       0x28 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_divmodhi4.o)
+                0x00009e76                __divmodhi4
+                0x00009e76                _div
+ .text.libgcc   0x00009e9e        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_divmodhi4.o)
+ .text.libgcc.prologue
+                0x00009e9e        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_divmodhi4.o)
+ .text.libgcc.builtins
+                0x00009e9e        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_divmodhi4.o)
+ .text.libgcc.fmul
+                0x00009e9e        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_divmodhi4.o)
+ .text.libgcc.mul
+                0x00009e9e        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_udivmodsi4.o)
+ .text.libgcc.div
+                0x00009e9e       0x44 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_udivmodsi4.o)
+                0x00009e9e                __udivmodsi4
+ .text.libgcc   0x00009ee2        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_udivmodsi4.o)
+ .text.libgcc.prologue
+                0x00009ee2        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_udivmodsi4.o)
+ .text.libgcc.builtins
+                0x00009ee2        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_udivmodsi4.o)
+ .text.libgcc.fmul
+                0x00009ee2        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_udivmodsi4.o)
+ .text.libgcc.mul
+                0x00009ee2        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_divmodsi4.o)
+ .text.libgcc.div
+                0x00009ee2       0x38 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_divmodsi4.o)
+                0x00009ee2                __divmodsi4
+ .text.libgcc   0x00009f1a        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_divmodsi4.o)
+ .text.libgcc.prologue
+                0x00009f1a        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_divmodsi4.o)
+ .text.libgcc.builtins
+                0x00009f1a        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_divmodsi4.o)
+ .text.libgcc.fmul
+                0x00009f1a        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_divmodsi4.o)
+ .text.libgcc.mul
+                0x00009f1a        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_udivdi3.o)
+ .text.libgcc.div
+                0x00009f1a       0x1c /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_udivdi3.o)
+                0x00009f1a                __umoddi3
+                0x00009f1e                __udivdi3
+                0x00009f20                __udivdi3_umoddi3
+ .text.libgcc   0x00009f36        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_udivdi3.o)
+ .text.libgcc.prologue
+                0x00009f36        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_udivdi3.o)
+ .text.libgcc.builtins
+                0x00009f36        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_udivdi3.o)
+ .text.libgcc.fmul
+                0x00009f36        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_udivdi3.o)
+ .text.libgcc.mul
+                0x00009f36       0xae /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_muldi3.o)
+                0x00009f36                __muldi3
+ .text.libgcc.div
+                0x00009fe4        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_muldi3.o)
+ .text.libgcc   0x00009fe4        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_muldi3.o)
+ .text.libgcc.prologue
+                0x00009fe4        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_muldi3.o)
+ .text.libgcc.builtins
+                0x00009fe4        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_muldi3.o)
+ .text.libgcc.fmul
+                0x00009fe4        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_muldi3.o)
+ .text.libgcc.mul
+                0x00009fe4        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_udivmod64.o)
+ .text.libgcc.div
+                0x00009fe4       0xa2 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_udivmod64.o)
+                0x00009fe4                __udivmod64
+ .text.libgcc   0x0000a086        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_udivmod64.o)
+ .text.libgcc.prologue
+                0x0000a086        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_udivmod64.o)
+ .text.libgcc.builtins
+                0x0000a086        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_udivmod64.o)
+ .text.libgcc.fmul
+                0x0000a086        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_udivmod64.o)
+ .text.libgcc.mul
+                0x0000a086        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_exit.o)
+ .text.libgcc.div
+                0x0000a086        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_exit.o)
+ .text.libgcc   0x0000a086        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_exit.o)
+ .text.libgcc.prologue
+                0x0000a086        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_exit.o)
+ .text.libgcc.builtins
+                0x0000a086        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_exit.o)
+ .text.libgcc.fmul
+                0x0000a086        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_exit.o)
+ .text.libgcc.mul
+                0x0000a086        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_tablejump.o)
+ .text.libgcc.div
+                0x0000a086        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_tablejump.o)
+ .text.libgcc   0x0000a086        0xc /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_tablejump.o)
+                0x0000a086                __tablejump2__
+                0x0000a08a                __tablejump__
+ .text.libgcc.prologue
+                0x0000a092        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_tablejump.o)
+ .text.libgcc.builtins
+                0x0000a092        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_tablejump.o)
+ .text.libgcc.fmul
+                0x0000a092        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_tablejump.o)
+ .text.libgcc.mul
+                0x0000a092        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_copy_data.o)
+ .text.libgcc.div
+                0x0000a092        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_copy_data.o)
+ .text.libgcc   0x0000a092        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_copy_data.o)
+ .text.libgcc.prologue
+                0x0000a092        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_copy_data.o)
+ .text.libgcc.builtins
+                0x0000a092        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_copy_data.o)
+ .text.libgcc.fmul
+                0x0000a092        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_copy_data.o)
+ .text.libgcc.mul
+                0x0000a092        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_clear_bss.o)
+ .text.libgcc.div
+                0x0000a092        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_clear_bss.o)
+ .text.libgcc   0x0000a092        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_clear_bss.o)
+ .text.libgcc.prologue
+                0x0000a092        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_clear_bss.o)
+ .text.libgcc.builtins
+                0x0000a092        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_clear_bss.o)
+ .text.libgcc.fmul
+                0x0000a092        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_clear_bss.o)
+ .text.libgcc.mul
+                0x0000a092        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_bswapsi2.o)
+ .text.libgcc.div
+                0x0000a092        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_bswapsi2.o)
+ .text.libgcc   0x0000a092        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_bswapsi2.o)
+ .text.libgcc.prologue
+                0x0000a092        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_bswapsi2.o)
+ .text.libgcc.builtins
+                0x0000a092        0xe /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_bswapsi2.o)
+                0x0000a092                __bswapsi2
+ .text.libgcc.fmul
+                0x0000a0a0        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_bswapsi2.o)
+ .text.libgcc.mul
+                0x0000a0a0        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_lshrdi3.o)
+ .text.libgcc.div
+                0x0000a0a0        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_lshrdi3.o)
+ .text.libgcc   0x0000a0a0        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_lshrdi3.o)
+ .text.libgcc.prologue
+                0x0000a0a0        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_lshrdi3.o)
+ .text.libgcc.builtins
+                0x0000a0a0       0x1e /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_lshrdi3.o)
+                0x0000a0a0                __lshrdi3
+ .text.libgcc.fmul
+                0x0000a0be        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_lshrdi3.o)
+ .text.libgcc.mul
+                0x0000a0be       0x18 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_umulhisi3.o)
+                0x0000a0be                __umulhisi3
+ .text.libgcc.div
+                0x0000a0d6        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_umulhisi3.o)
+ .text.libgcc   0x0000a0d6        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_umulhisi3.o)
+ .text.libgcc.prologue
+                0x0000a0d6        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_umulhisi3.o)
+ .text.libgcc.builtins
+                0x0000a0d6        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_umulhisi3.o)
+ .text.libgcc.fmul
+                0x0000a0d6        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_umulhisi3.o)
+ .text.libgcc.mul
+                0x0000a0d6       0x16 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_muluhisi3.o)
+                0x0000a0d6                __muluhisi3
+ .text.libgcc.div
+                0x0000a0ec        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_muluhisi3.o)
+ .text.libgcc   0x0000a0ec        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_muluhisi3.o)
+ .text.libgcc.prologue
+                0x0000a0ec        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_muluhisi3.o)
+ .text.libgcc.builtins
+                0x0000a0ec        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_muluhisi3.o)
+ .text.libgcc.fmul
+                0x0000a0ec        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_muluhisi3.o)
+ .text.libgcc.mul
+                0x0000a0ec        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_udivmodqi4.o)
+ .text.libgcc.div
+                0x0000a0ec       0x18 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_udivmodqi4.o)
+                0x0000a0ec                __udivmodqi4
+ .text.libgcc   0x0000a104        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_udivmodqi4.o)
+ .text.libgcc.prologue
+                0x0000a104        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_udivmodqi4.o)
+ .text.libgcc.builtins
+                0x0000a104        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_udivmodqi4.o)
+ .text.libgcc.fmul
+                0x0000a104        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_udivmodqi4.o)
+ .text.avr-libc
+                0x0000a104      0x26e /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(malloc.o)
+                0x0000a104                malloc
+                0x0000a23a                free
+ .text.avr-libc
+                0x0000a372       0x12 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(strlen_P.o)
+                0x0000a372                __strlen_P
+ .text.avr-libc
+                0x0000a384        0xa /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(strtok.o)
+                0x0000a384                strtok
+ .text.avr-libc
+                0x0000a38e       0x12 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(memcpy.o)
+                0x0000a38e                memcpy
+ .text.avr-libc
+                0x0000a3a0        0xe /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(memset.o)
+                0x0000a3a0                memset
+ .text.avr-libc
+                0x0000a3ae        0xe /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(strcpy.o)
+                0x0000a3ae                strcpy
+ .text.avr-libc
+                0x0000a3bc       0x4e /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(strtok_r.o)
+                0x0000a3bc                strtok_r
+ .text.avr-libc
+                0x0000a40a       0x48 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(sprintf.o)
+                0x0000a40a                sprintf
+ .text.avr-libc
+                0x0000a452       0x48 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(sprintf_p.o)
+                0x0000a452                sprintf_P
+ .text.avr-libc
+                0x0000a49a       0x58 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(vsnprintf.o)
+                0x0000a49a                vsnprintf
+ .text.avr-libc
+                0x0000a4f2       0x58 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(vsnprintf_p.o)
+                0x0000a4f2                vsnprintf_P
+ .text.avr-libc
+                0x0000a54a      0x3ba /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(vfprintf_std.o)
+                0x0000a54a                vfprintf
+ .text.avr-libc
+                0x0000a904       0x16 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(strnlen_P.o)
+                0x0000a904                strnlen_P
+ .text.avr-libc
+                0x0000a91a       0x16 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(strnlen.o)
+                0x0000a91a                strnlen
+ .text.avr-libc
+                0x0000a930       0x58 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(fputc.o)
+                0x0000a930                fputc
+ .text.avr-libc
+                0x0000a988       0xbc /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(ultoa_invert.o)
+                0x0000a988                __ultoa_invert
+ .text.libgcc.mul
+                0x0000aa44        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_prologue.o)
+ .text.libgcc.div
+                0x0000aa44        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_prologue.o)
+ .text.libgcc   0x0000aa44        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_prologue.o)
+ .text.libgcc.prologue
+                0x0000aa44       0x38 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_prologue.o)
+                0x0000aa44                __prologue_saves__
+ .text.libgcc.builtins
+                0x0000aa7c        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_prologue.o)
+ .text.libgcc.fmul
+                0x0000aa7c        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_prologue.o)
+ .text.libgcc.mul
+                0x0000aa7c        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_epilogue.o)
+ .text.libgcc.div
+                0x0000aa7c        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_epilogue.o)
+ .text.libgcc   0x0000aa7c        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_epilogue.o)
+ .text.libgcc.prologue
+                0x0000aa7c       0x36 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_epilogue.o)
+                0x0000aa7c                __epilogue_restores__
+ .text.libgcc.builtins
+                0x0000aab2        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_epilogue.o)
+ .text.libgcc.fmul
+                0x0000aab2        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_epilogue.o)
+                0x0000aab2                . = ALIGN (0x2)
+ *(.fini9)
+ .fini9         0x0000aab2        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_exit.o)
+                0x0000aab2                exit
+                0x0000aab2                _exit
+ *(.fini9)
+ *(.fini8)
+ *(.fini8)
+ *(.fini7)
+ *(.fini7)
+ *(.fini6)
+ *(.fini6)
+ *(.fini5)
+ *(.fini5)
+ *(.fini4)
+ *(.fini4)
+ *(.fini3)
+ *(.fini3)
+ *(.fini2)
+ *(.fini2)
+ *(.fini1)
+ *(.fini1)
+ *(.fini0)
+ .fini0         0x0000aab2        0x4 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_exit.o)
+ *(.fini0)
+                0x0000aab6                _etext = .
+
+.data           0x00800100       0xd2 load address 0x0000aab6
+                0x00800100                PROVIDE (__data_start, .)
+ *(.data)
+ .data          0x00800100        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/crtm328p.o
+ .data          0x00800100        0x0 main.o
+ .data          0x00800100        0x2 ../freeRTOS750/tasks.o
+ .data          0x00800102        0x0 ../freeRTOS750/queue.o
+ .data          0x00800102        0x0 ../freeRTOS750/list.o
+ .data          0x00800102        0x0 ../freeRTOS750/croutine.o
+ .data          0x00800102        0x0 ../freeRTOS750/portable/port.o
+ .data          0x00800102        0x1 ../freeRTOS750/lib_i2c/i2cMultiMaster.o
+ .data          0x00800103        0x0 ../freeRTOS750/lib_digitalAnalog/digitalAnalog.o
+ .data          0x00800103        0x0 ../freeRTOS750/lib_ext_ram/ext_ram.o
+ .data          0x00800103        0x0 ../freeRTOS750/lib_ext_ram/ramfs.o
+ .data          0x00800103        0x0 ../freeRTOS750/lib_hd44780/hd44780.o
+ .data          0x00800103        0x1 ../freeRTOS750/lib_i2c/i2cMultiMaster.o
+ .data          0x00800104       0x40 ../freeRTOS750/lib_iinchip/md5.o
+ .data          0x00800144        0x0 ../freeRTOS750/lib_iinchip/socket.o
+ .data          0x00800144        0x0 ../freeRTOS750/lib_iinchip/socket_util.o
+ .data          0x00800144        0x0 ../freeRTOS750/lib_iinchip/w5100.o
+ .data          0x00800144        0x0 ../freeRTOS750/lib_iinchip/w5200.o
+ .data          0x00800144        0x0 ../freeRTOS750/lib_rtc/rtc.o
+ .data          0x00800144        0x0 ../freeRTOS750/lib_serial/lib_serial.o
+ .data          0x00800144        0x0 ../freeRTOS750/lib_servo/servoPWM.o
+ .data          0x00800144        0x0 ../freeRTOS750/lib_spi/spi.o
+ .data          0x00800144        0x0 ../freeRTOS750/MemMang/heap_1.o
+ .data          0x00800144        0x2 ../freeRTOS750/MemMang/heap_2.o
+ .data          0x00800146        0x0 ../freeRTOS750/MemMang/heap_3.o
+ .data          0x00800146        0x2 ../freeRTOS750/MemMang/heap_4.o
+ .data          0x00800148        0x2 ../freeRTOS750/lib_time/asc_store.o
+                0x00800148                __asc_store
+ .data          0x0080014a        0x0 ../freeRTOS750/lib_time/asctime.o
+ .data          0x0080014a        0x0 ../freeRTOS750/lib_time/asctime_r.o
+ .data          0x0080014a        0x0 ../freeRTOS750/lib_time/ctime.o
+ .data          0x0080014a        0x0 ../freeRTOS750/lib_time/ctime_r.o
+ .data          0x0080014a        0x0 ../freeRTOS750/lib_time/daylight_seconds.o
+ .data          0x0080014a        0x0 ../freeRTOS750/lib_time/difftime.o
+ .data          0x0080014a        0x0 ../freeRTOS750/lib_time/dst_pointer.o
+ .data          0x0080014a        0x0 ../freeRTOS750/lib_time/equation_of_time.o
+ .data          0x0080014a        0x0 ../freeRTOS750/lib_time/fatfs_time.o
+ .data          0x0080014a        0x0 ../freeRTOS750/lib_time/geo_location.o
+ .data          0x0080014a        0x0 ../freeRTOS750/lib_time/gm_sidereal.o
+ .data          0x0080014a        0x0 ../freeRTOS750/lib_time/gmtime.o
+ .data          0x0080014a        0x0 ../freeRTOS750/lib_time/gmtime_r.o
+ .data          0x0080014a        0x0 ../freeRTOS750/lib_time/isLeap.o
+ .data          0x0080014a        0x0 ../freeRTOS750/lib_time/isotime.o
+ .data          0x0080014a        0x0 ../freeRTOS750/lib_time/isotime_r.o
+ .data          0x0080014a        0x0 ../freeRTOS750/lib_time/iso_week_date.o
+ .data          0x0080014a        0x0 ../freeRTOS750/lib_time/iso_week_date_r.o
+ .data          0x0080014a        0x0 ../freeRTOS750/lib_time/lm_sidereal.o
+ .data          0x0080014a        0x0 ../freeRTOS750/lib_time/localtime.o
+ .data          0x0080014a        0x0 ../freeRTOS750/lib_time/localtime_r.o
+ .data          0x0080014a        0x0 ../freeRTOS750/lib_time/mk_gmtime.o
+ .data          0x0080014a        0x0 ../freeRTOS750/lib_time/mktime.o
+ .data          0x0080014a        0x0 ../freeRTOS750/lib_time/month_length.o
+ .data          0x0080014a        0x0 ../freeRTOS750/lib_time/moon_phase.o
+ .data          0x0080014a        0x0 ../freeRTOS750/lib_time/print_lz.o
+ .data          0x0080014a        0x0 ../freeRTOS750/lib_time/set_dst.o
+ .data          0x0080014a        0x0 ../freeRTOS750/lib_time/set_position.o
+ .data          0x0080014a        0x0 ../freeRTOS750/lib_time/set_system_time.o
+ .data          0x0080014a        0x0 ../freeRTOS750/lib_time/set_zone.o
+ .data          0x0080014a        0x0 ../freeRTOS750/lib_time/solar_declination.o
+ .data          0x0080014a        0x0 ../freeRTOS750/lib_time/solar_noon.o
+ .data          0x0080014a        0x0 ../freeRTOS750/lib_time/strftime.o
+ .data          0x0080014a        0x0 ../freeRTOS750/lib_time/sun_rise.o
+ .data          0x0080014a        0x0 ../freeRTOS750/lib_time/sun_set.o
+ .data          0x0080014a        0x0 ../freeRTOS750/lib_time/system_time.o
+ .data          0x0080014a        0x0 ../freeRTOS750/lib_time/time.o
+ .data          0x0080014a        0x0 ../freeRTOS750/lib_time/tm_store.o
+ .data          0x0080014a        0x0 ../freeRTOS750/lib_time/utc_offset.o
+ .data          0x0080014a        0x0 ../freeRTOS750/lib_time/week_of_month.o
+ .data          0x0080014a        0x0 ../freeRTOS750/lib_time/week_of_year.o
+ .data          0x0080014a        0x0 ../freeRTOS750/lib_time/system_tick.o
+ .data          0x0080014a        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(acos.o)
+ .data          0x0080014a        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(addsf3.o)
+ .data          0x0080014a        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(addsf3x.o)
+ .data          0x0080014a        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(cmpsf2.o)
+ .data          0x0080014a        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(cos.o)
+ .data          0x0080014a        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(divsf3.o)
+ .data          0x0080014a        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(divsf3x.o)
+ .data          0x0080014a        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fixsfsi.o)
+ .data          0x0080014a        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fixunssfsi.o)
+ .data          0x0080014a        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(floatsisf.o)
+ .data          0x0080014a        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_arccos.o)
+ .data          0x0080014a        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_cmp.o)
+ .data          0x0080014a        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_inf.o)
+ .data          0x0080014a        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_nan.o)
+ .data          0x0080014a        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_powser.o)
+ .data          0x0080014a        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_pscA.o)
+ .data          0x0080014a        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_pscB.o)
+ .data          0x0080014a        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_rempio2.o)
+ .data          0x0080014a        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_round.o)
+ .data          0x0080014a        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_sinus.o)
+ .data          0x0080014a        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_split3.o)
+ .data          0x0080014a        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_zero.o)
+ .data          0x0080014a        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(gesf2.o)
+ .data          0x0080014a        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(mulsf3.o)
+ .data          0x0080014a        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(mulsf3x.o)
+ .data          0x0080014a        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(sin.o)
+ .data          0x0080014a        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(sqrt.o)
+ .data          0x0080014a        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(tan.o)
+ .data          0x0080014a        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_mpack.o)
+ .data          0x0080014a        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_norm2.o)
+ .data          0x0080014a        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_powsodd.o)
+ .data          0x0080014a        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(inverse.o)
+ .data          0x0080014a        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_usmulhisi3.o)
+ .data          0x0080014a        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_mulsi3.o)
+ .data          0x0080014a        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_divmodqi4.o)
+ .data          0x0080014a        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_udivmodhi4.o)
+ .data          0x0080014a        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_divmodhi4.o)
+ .data          0x0080014a        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_udivmodsi4.o)
+ .data          0x0080014a        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_divmodsi4.o)
+ .data          0x0080014a        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_udivdi3.o)
+ .data          0x0080014a        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_muldi3.o)
+ .data          0x0080014a        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_udivmod64.o)
+ .data          0x0080014a        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_exit.o)
+ .data          0x0080014a        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_tablejump.o)
+ .data          0x0080014a        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_copy_data.o)
+ .data          0x0080014a        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_clear_bss.o)
+ .data          0x0080014a        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_bswapsi2.o)
+ .data          0x0080014a        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_lshrdi3.o)
+ .data          0x0080014a        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_umulhisi3.o)
+ .data          0x0080014a        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_muluhisi3.o)
+ .data          0x0080014a        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_udivmodqi4.o)
+ .data          0x0080014a        0x6 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(malloc.o)
+                0x0080014a                __malloc_heap_end
+                0x0080014c                __malloc_heap_start
+                0x0080014e                __malloc_margin
+ .data          0x00800150        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(strlen_P.o)
+ .data          0x00800150        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(strtok.o)
+ .data          0x00800150        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(memcpy.o)
+ .data          0x00800150        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(memset.o)
+ .data          0x00800150        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(strcpy.o)
+ .data          0x00800150        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(strtok_r.o)
+ .data          0x00800150        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(sprintf.o)
+ .data          0x00800150        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(sprintf_p.o)
+ .data          0x00800150        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(vsnprintf.o)
+ .data          0x00800150        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(vsnprintf_p.o)
+ .data          0x00800150        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(vfprintf_std.o)
+ .data          0x00800150        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(strnlen_P.o)
+ .data          0x00800150        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(strnlen.o)
+ .data          0x00800150        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(fputc.o)
+ .data          0x00800150        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(ultoa_invert.o)
+ .data          0x00800150        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_prologue.o)
+ .data          0x00800150        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_epilogue.o)
+ *(.data*)
+ *(.rodata)
+ *(.rodata*)
+ .rodata.str1.1
+                0x00800150       0x10 main.o
+ .rodata.str1.1
+                0x00800160        0x5 ../freeRTOS750/tasks.o
+ .rodata.str1.1
+                0x00800165        0x2 ../freeRTOS750/lib_iinchip/socket_util.o
+ .rodata.str1.1
+                0x00800167       0x6b ../freeRTOS750/lib_time/strftime.o
+                                 0x7f (size before relaxing)
+ *(.gnu.linkonce.d*)
+                0x008001d2                . = ALIGN (0x2)
+                0x008001d2                _edata = .
+                0x008001d2                PROVIDE (__data_end, .)
+
+.bss            0x008001d2     0x1322
+                0x008001d2                PROVIDE (__bss_start, .)
+ *(.bss)
+ .bss           0x008001d2        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/crtm328p.o
+ .bss           0x008001d2        0x0 main.o
+ .bss           0x008001d2       0x59 ../freeRTOS750/tasks.o
+                0x008001d2                pxCurrentTCB
+ .bss           0x0080022b        0x0 ../freeRTOS750/queue.o
+ .bss           0x0080022b        0x0 ../freeRTOS750/list.o
+ .bss           0x0080022b       0x3a ../freeRTOS750/croutine.o
+                0x0080022b                pxCurrentCoRoutine
+ .bss           0x00800265        0x4 ../freeRTOS750/portable/port.o
+ .bss           0x00800269       0x14 ../freeRTOS750/lib_i2c/i2cMultiMaster.o
+                0x00800269                I2C_statusReg
+ .bss           0x0080027d        0x0 ../freeRTOS750/lib_digitalAnalog/digitalAnalog.o
+ .bss           0x0080027d        0x0 ../freeRTOS750/lib_ext_ram/ext_ram.o
+ .bss           0x0080027d        0x0 ../freeRTOS750/lib_ext_ram/ramfs.o
+ .bss           0x0080027d        0x0 ../freeRTOS750/lib_hd44780/hd44780.o
+ .bss           0x0080027d       0x14 ../freeRTOS750/lib_i2c/i2cMultiMaster.o
+ .bss           0x00800291        0x0 ../freeRTOS750/lib_iinchip/md5.o
+ .bss           0x00800291        0x2 ../freeRTOS750/lib_iinchip/socket.o
+ .bss           0x00800293       0x20 ../freeRTOS750/lib_iinchip/socket_util.o
+ .bss           0x008002b3       0x38 ../freeRTOS750/lib_iinchip/w5100.o
+ .bss           0x008002eb        0x0 ../freeRTOS750/lib_iinchip/w5200.o
+ .bss           0x008002eb        0x0 ../freeRTOS750/lib_rtc/rtc.o
+ .bss           0x008002eb        0x0 ../freeRTOS750/lib_serial/lib_serial.o
+ .bss           0x008002eb        0x0 ../freeRTOS750/lib_servo/servoPWM.o
+ .bss           0x008002eb        0x0 ../freeRTOS750/lib_spi/spi.o
+ .bss           0x008002eb      0x5e0 ../freeRTOS750/MemMang/heap_1.o
+ .bss           0x008008cb      0x5e5 ../freeRTOS750/MemMang/heap_2.o
+ .bss           0x00800eb0        0x0 ../freeRTOS750/MemMang/heap_3.o
+ .bss           0x00800eb0      0x5e4 ../freeRTOS750/MemMang/heap_4.o
+ .bss           0x00801494        0x0 ../freeRTOS750/lib_time/asc_store.o
+ .bss           0x00801494        0x0 ../freeRTOS750/lib_time/asctime.o
+ .bss           0x00801494        0x0 ../freeRTOS750/lib_time/asctime_r.o
+ .bss           0x00801494        0x0 ../freeRTOS750/lib_time/ctime.o
+ .bss           0x00801494        0x0 ../freeRTOS750/lib_time/ctime_r.o
+ .bss           0x00801494        0x0 ../freeRTOS750/lib_time/daylight_seconds.o
+ .bss           0x00801494        0x0 ../freeRTOS750/lib_time/difftime.o
+ .bss           0x00801494        0x0 ../freeRTOS750/lib_time/dst_pointer.o
+ .bss           0x00801494        0x0 ../freeRTOS750/lib_time/equation_of_time.o
+ .bss           0x00801494        0x0 ../freeRTOS750/lib_time/fatfs_time.o
+ .bss           0x00801494        0x0 ../freeRTOS750/lib_time/geo_location.o
+ .bss           0x00801494        0x0 ../freeRTOS750/lib_time/gm_sidereal.o
+ .bss           0x00801494        0x0 ../freeRTOS750/lib_time/gmtime.o
+ .bss           0x00801494        0x0 ../freeRTOS750/lib_time/gmtime_r.o
+ .bss           0x00801494        0x0 ../freeRTOS750/lib_time/isLeap.o
+ .bss           0x00801494        0x0 ../freeRTOS750/lib_time/isotime.o
+ .bss           0x00801494        0x0 ../freeRTOS750/lib_time/isotime_r.o
+ .bss           0x00801494        0x0 ../freeRTOS750/lib_time/iso_week_date.o
+ .bss           0x00801494        0x0 ../freeRTOS750/lib_time/iso_week_date_r.o
+ .bss           0x00801494        0x0 ../freeRTOS750/lib_time/lm_sidereal.o
+ .bss           0x00801494        0x0 ../freeRTOS750/lib_time/localtime.o
+ .bss           0x00801494        0x0 ../freeRTOS750/lib_time/localtime_r.o
+ .bss           0x00801494        0x0 ../freeRTOS750/lib_time/mk_gmtime.o
+ .bss           0x00801494        0x0 ../freeRTOS750/lib_time/mktime.o
+ .bss           0x00801494        0x0 ../freeRTOS750/lib_time/month_length.o
+ .bss           0x00801494        0x0 ../freeRTOS750/lib_time/moon_phase.o
+ .bss           0x00801494        0x0 ../freeRTOS750/lib_time/print_lz.o
+ .bss           0x00801494        0x0 ../freeRTOS750/lib_time/set_dst.o
+ .bss           0x00801494        0x0 ../freeRTOS750/lib_time/set_position.o
+ .bss           0x00801494        0x0 ../freeRTOS750/lib_time/set_system_time.o
+ .bss           0x00801494        0x0 ../freeRTOS750/lib_time/set_zone.o
+ .bss           0x00801494        0x0 ../freeRTOS750/lib_time/solar_declination.o
+ .bss           0x00801494        0x0 ../freeRTOS750/lib_time/solar_noon.o
+ .bss           0x00801494        0x0 ../freeRTOS750/lib_time/strftime.o
+ .bss           0x00801494        0x0 ../freeRTOS750/lib_time/sun_rise.o
+ .bss           0x00801494        0x0 ../freeRTOS750/lib_time/sun_set.o
+ .bss           0x00801494        0x0 ../freeRTOS750/lib_time/system_time.o
+ .bss           0x00801494        0x0 ../freeRTOS750/lib_time/time.o
+ .bss           0x00801494        0x0 ../freeRTOS750/lib_time/tm_store.o
+ .bss           0x00801494        0x0 ../freeRTOS750/lib_time/utc_offset.o
+ .bss           0x00801494        0x0 ../freeRTOS750/lib_time/week_of_month.o
+ .bss           0x00801494        0x0 ../freeRTOS750/lib_time/week_of_year.o
+ .bss           0x00801494        0x0 ../freeRTOS750/lib_time/system_tick.o
+ .bss           0x00801494        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(acos.o)
+ .bss           0x00801494        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(addsf3.o)
+ .bss           0x00801494        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(addsf3x.o)
+ .bss           0x00801494        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(cmpsf2.o)
+ .bss           0x00801494        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(cos.o)
+ .bss           0x00801494        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(divsf3.o)
+ .bss           0x00801494        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(divsf3x.o)
+ .bss           0x00801494        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fixsfsi.o)
+ .bss           0x00801494        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fixunssfsi.o)
+ .bss           0x00801494        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(floatsisf.o)
+ .bss           0x00801494        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_arccos.o)
+ .bss           0x00801494        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_cmp.o)
+ .bss           0x00801494        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_inf.o)
+ .bss           0x00801494        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_nan.o)
+ .bss           0x00801494        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_powser.o)
+ .bss           0x00801494        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_pscA.o)
+ .bss           0x00801494        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_pscB.o)
+ .bss           0x00801494        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_rempio2.o)
+ .bss           0x00801494        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_round.o)
+ .bss           0x00801494        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_sinus.o)
+ .bss           0x00801494        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_split3.o)
+ .bss           0x00801494        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_zero.o)
+ .bss           0x00801494        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(gesf2.o)
+ .bss           0x00801494        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(mulsf3.o)
+ .bss           0x00801494        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(mulsf3x.o)
+ .bss           0x00801494        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(sin.o)
+ .bss           0x00801494        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(sqrt.o)
+ .bss           0x00801494        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(tan.o)
+ .bss           0x00801494        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_mpack.o)
+ .bss           0x00801494        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_norm2.o)
+ .bss           0x00801494        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_powsodd.o)
+ .bss           0x00801494        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(inverse.o)
+ .bss           0x00801494        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_usmulhisi3.o)
+ .bss           0x00801494        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_mulsi3.o)
+ .bss           0x00801494        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_divmodqi4.o)
+ .bss           0x00801494        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_udivmodhi4.o)
+ .bss           0x00801494        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_divmodhi4.o)
+ .bss           0x00801494        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_udivmodsi4.o)
+ .bss           0x00801494        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_divmodsi4.o)
+ .bss           0x00801494        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_udivdi3.o)
+ .bss           0x00801494        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_muldi3.o)
+ .bss           0x00801494        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_udivmod64.o)
+ .bss           0x00801494        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_exit.o)
+ .bss           0x00801494        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_tablejump.o)
+ .bss           0x00801494        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_copy_data.o)
+ .bss           0x00801494        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_clear_bss.o)
+ .bss           0x00801494        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_bswapsi2.o)
+ .bss           0x00801494        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_lshrdi3.o)
+ .bss           0x00801494        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_umulhisi3.o)
+ .bss           0x00801494        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_muluhisi3.o)
+ .bss           0x00801494        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_udivmodqi4.o)
+ .bss           0x00801494        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(malloc.o)
+ .bss           0x00801494        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(strlen_P.o)
+ .bss           0x00801494        0x2 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(strtok.o)
+ .bss           0x00801496        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(memcpy.o)
+ .bss           0x00801496        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(memset.o)
+ .bss           0x00801496        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(strcpy.o)
+ .bss           0x00801496        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(strtok_r.o)
+ .bss           0x00801496        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(sprintf.o)
+ .bss           0x00801496        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(sprintf_p.o)
+ .bss           0x00801496        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(vsnprintf.o)
+ .bss           0x00801496        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(vsnprintf_p.o)
+ .bss           0x00801496        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(vfprintf_std.o)
+ .bss           0x00801496        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(strnlen_P.o)
+ .bss           0x00801496        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(strnlen.o)
+ .bss           0x00801496        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(fputc.o)
+ .bss           0x00801496        0x0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(ultoa_invert.o)
+ .bss           0x00801496        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_prologue.o)
+ .bss           0x00801496        0x0 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_epilogue.o)
+ *(.bss*)
+ *(COMMON)
+ COMMON         0x00801496        0x2 ../freeRTOS750/lib_i2c/i2cMultiMaster.o
+                0x00801496                xI2CSemaphore
+ COMMON         0x00801498       0x1e ../freeRTOS750/lib_serial/lib_serial.o
+                0x00801498                xSerialPort
+ COMMON         0x008014b6        0x2 ../freeRTOS750/lib_spi/spi.o
+                0x008014b6                xSPISemaphore
+ COMMON         0x008014b8       0x1a ../freeRTOS750/lib_time/asc_store.o
+                0x008014b8                __store
+ COMMON         0x008014d2        0x2 ../freeRTOS750/lib_time/dst_pointer.o
+                0x008014d2                __dst_ptr
+ COMMON         0x008014d4        0x8 ../freeRTOS750/lib_time/geo_location.o
+                0x008014d4                __latitude
+                0x008014d8                __longitude
+ COMMON         0x008014dc        0x4 ../freeRTOS750/lib_time/system_time.o
+                0x008014dc                __system_time
+ COMMON         0x008014e0        0xc ../freeRTOS750/lib_time/tm_store.o
+                0x008014e0                __tm_store
+ COMMON         0x008014ec        0x4 ../freeRTOS750/lib_time/utc_offset.o
+                0x008014ec                __utc_offset
+ COMMON         0x008014f0        0x4 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(malloc.o)
+                0x008014f0                __brkval
+                0x008014f2                __flp
+                0x008014f4                PROVIDE (__bss_end, .)
+                0x0000aab6                __data_load_start = LOADADDR (.data)
+                0x0000ab88                __data_load_end = (__data_load_start + SIZEOF (.data))
+
+.noinit         0x008014f4        0x0
+                0x008014f4                PROVIDE (__noinit_start, .)
+ *(.noinit*)
+                0x008014f4                PROVIDE (__noinit_end, .)
+                0x008014f4                _end = .
+                0x008014f4                PROVIDE (__heap_start, .)
+
+.eeprom         0x00810000        0x0
+ *(.eeprom*)
+                0x00810000                __eeprom_end = .
+
+.fuse
+ *(.fuse)
+ *(.lfuse)
+ *(.hfuse)
+ *(.efuse)
+
+.lock
+ *(.lock*)
+
+.signature
+ *(.signature*)
+
+.stab           0x00000000    0x1b1f8
+ *(.stab)
+ .stab          0x00000000      0x6cc /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/crtm328p.o
+ .stab          0x000006cc      0x8f4 main.o
+                                0x900 (size before relaxing)
+ .stab          0x00000fc0     0x1638 ../freeRTOS750/tasks.o
+                               0x19bc (size before relaxing)
+ .stab          0x000025f8     0x1680 ../freeRTOS750/queue.o
+                               0x1a40 (size before relaxing)
+ .stab          0x00003c78      0x51c ../freeRTOS750/list.o
+                                0x804 (size before relaxing)
+ .stab          0x00004194      0x81c ../freeRTOS750/croutine.o
+                                0xb7c (size before relaxing)
+ .stab          0x000049b0      0x6d8 ../freeRTOS750/portable/port.o
+                                0xa5c (size before relaxing)
+ .stab          0x00005088      0xba0 ../freeRTOS750/lib_i2c/i2cMultiMaster.o
+                                0xdc8 (size before relaxing)
+ .stab          0x00005c28      0x954 ../freeRTOS750/lib_digitalAnalog/digitalAnalog.o
+                                0xb28 (size before relaxing)
+ .stab          0x0000657c      0x168 ../freeRTOS750/lib_ext_ram/ext_ram.o
+                                0x3b4 (size before relaxing)
+ .stab          0x000066e4      0x1e0 ../freeRTOS750/lib_ext_ram/ramfs.o
+                                0x5ac (size before relaxing)
+ .stab          0x000068c4      0x180 ../freeRTOS750/lib_hd44780/hd44780.o
+                                0x408 (size before relaxing)
+ .stab          0x00006a44      0x9d8 ../freeRTOS750/lib_i2c/i2cMultiMaster.o
+                                0xdc8 (size before relaxing)
+ .stab          0x0000741c      0xe88 ../freeRTOS750/lib_iinchip/md5.o
+                               0x1068 (size before relaxing)
+ .stab          0x000082a4     0x10d4 ../freeRTOS750/lib_iinchip/socket.o
+                               0x1320 (size before relaxing)
+ .stab          0x00009378     0x12b4 ../freeRTOS750/lib_iinchip/socket_util.o
+                               0x1704 (size before relaxing)
+ .stab          0x0000a62c     0x210c ../freeRTOS750/lib_iinchip/w5100.o
+                               0x2604 (size before relaxing)
+ .stab          0x0000c738      0x1ec ../freeRTOS750/lib_iinchip/w5200.o
+                                0x6e4 (size before relaxing)
+ .stab          0x0000c924      0x1bc ../freeRTOS750/lib_rtc/rtc.o
+                                0x594 (size before relaxing)
+ .stab          0x0000cae0     0x1de8 ../freeRTOS750/lib_serial/lib_serial.o
+                               0x2214 (size before relaxing)
+ .stab          0x0000e8c8      0x36c ../freeRTOS750/lib_servo/servoPWM.o
+                                0x6c0 (size before relaxing)
+ .stab          0x0000ec34      0xad4 ../freeRTOS750/lib_spi/spi.o
+                                0xe4c (size before relaxing)
+ .stab          0x0000f708      0x390 ../freeRTOS750/MemMang/heap_1.o
+                                0x720 (size before relaxing)
+ .stab          0x0000fa98      0x5ac ../freeRTOS750/MemMang/heap_2.o
+                                0x93c (size before relaxing)
+ .stab          0x00010044      0x2ac ../freeRTOS750/MemMang/heap_3.o
+                                0x63c (size before relaxing)
+ .stab          0x000102f0      0x654 ../freeRTOS750/MemMang/heap_4.o
+                                0x9e4 (size before relaxing)
+ .stab          0x00010944      0x144 ../freeRTOS750/lib_time/asc_store.o
+                                0x384 (size before relaxing)
+ .stab          0x00010a88      0x18c ../freeRTOS750/lib_time/asctime.o
+                                0x3cc (size before relaxing)
+ .stab          0x00010c14      0x2dc ../freeRTOS750/lib_time/asctime_r.o
+                                0x51c (size before relaxing)
+ .stab          0x00010ef0      0x1bc ../freeRTOS750/lib_time/ctime.o
+                                0x3fc (size before relaxing)
+ .stab          0x000110ac      0x1c8 ../freeRTOS750/lib_time/ctime_r.o
+                                0x408 (size before relaxing)
+ .stab          0x00011274      0x210 ../freeRTOS750/lib_time/daylight_seconds.o
+                                0x450 (size before relaxing)
+ .stab          0x00011484      0x198 ../freeRTOS750/lib_time/difftime.o
+                                0x3d8 (size before relaxing)
+ .stab          0x0001161c      0x138 ../freeRTOS750/lib_time/dst_pointer.o
+                                0x378 (size before relaxing)
+ .stab          0x00011754      0x24c ../freeRTOS750/lib_time/equation_of_time.o
+                                0x48c (size before relaxing)
+ .stab          0x000119a0      0x240 ../freeRTOS750/lib_time/fatfs_time.o
+                                0x480 (size before relaxing)
+ .stab          0x00011be0       0xfc ../freeRTOS750/lib_time/geo_location.o
+                                0x108 (size before relaxing)
+ .stab          0x00011cdc      0x1c8 ../freeRTOS750/lib_time/gm_sidereal.o
+                                0x408 (size before relaxing)
+ .stab          0x00011ea4      0x18c ../freeRTOS750/lib_time/gmtime.o
+                                0x3cc (size before relaxing)
+ .stab          0x00012030      0x3c0 ../freeRTOS750/lib_time/gmtime_r.o
+                                0x600 (size before relaxing)
+ .stab          0x000123f0      0x1bc ../freeRTOS750/lib_time/isLeap.o
+                                0x21c (size before relaxing)
+ .stab          0x000125ac      0x18c ../freeRTOS750/lib_time/isotime.o
+                                0x3cc (size before relaxing)
+ .stab          0x00012738      0x27c ../freeRTOS750/lib_time/isotime_r.o
+                                0x4bc (size before relaxing)
+ .stab          0x000129b4      0x1a4 ../freeRTOS750/lib_time/iso_week_date.o
+                                0x3e4 (size before relaxing)
+ .stab          0x00012b58      0x330 ../freeRTOS750/lib_time/iso_week_date_r.o
+                                0x570 (size before relaxing)
+ .stab          0x00012e88      0x1a4 ../freeRTOS750/lib_time/lm_sidereal.o
+                                0x3e4 (size before relaxing)
+ .stab          0x0001302c      0x18c ../freeRTOS750/lib_time/localtime.o
+                                0x3cc (size before relaxing)
+ .stab          0x000131b8      0x228 ../freeRTOS750/lib_time/localtime_r.o
+                                0x468 (size before relaxing)
+ .stab          0x000133e0      0x2e8 ../freeRTOS750/lib_time/mk_gmtime.o
+                                0x528 (size before relaxing)
+ .stab          0x000136c8      0x210 ../freeRTOS750/lib_time/mktime.o
+                                0x450 (size before relaxing)
+ .stab          0x000138d8      0x1c8 ../freeRTOS750/lib_time/month_length.o
+                                0x408 (size before relaxing)
+ .stab          0x00013aa0      0x204 ../freeRTOS750/lib_time/moon_phase.o
+                                0x444 (size before relaxing)
+ .stab          0x00013ca4      0x198 ../freeRTOS750/lib_time/print_lz.o
+                                0x1f8 (size before relaxing)
+ .stab          0x00013e3c      0x180 ../freeRTOS750/lib_time/set_dst.o
+                                0x3c0 (size before relaxing)
+ .stab          0x00013fbc      0x150 ../freeRTOS750/lib_time/set_position.o
+                                0x15c (size before relaxing)
+ .stab          0x0001410c      0x198 ../freeRTOS750/lib_time/set_system_time.o
+                                0x3d8 (size before relaxing)
+ .stab          0x000142a4      0x150 ../freeRTOS750/lib_time/set_zone.o
+                                0x2c4 (size before relaxing)
+ .stab          0x000143f4      0x21c ../freeRTOS750/lib_time/solar_declination.o
+                                0x45c (size before relaxing)
+ .stab          0x00014610      0x1d4 ../freeRTOS750/lib_time/solar_noon.o
+                                0x414 (size before relaxing)
+ .stab          0x000147e4      0x7ec ../freeRTOS750/lib_time/strftime.o
+                                0xa68 (size before relaxing)
+ .stab          0x00014fd0      0x1a4 ../freeRTOS750/lib_time/sun_rise.o
+                                0x3e4 (size before relaxing)
+ .stab          0x00015174      0x1a4 ../freeRTOS750/lib_time/sun_set.o
+                                0x3e4 (size before relaxing)
+ .stab          0x00015318      0x138 ../freeRTOS750/lib_time/system_time.o
+                                0x378 (size before relaxing)
+ .stab          0x00015450      0x1e0 ../freeRTOS750/lib_time/time.o
+                                0x420 (size before relaxing)
+ .stab          0x00015630      0x138 ../freeRTOS750/lib_time/tm_store.o
+                                0x378 (size before relaxing)
+ .stab          0x00015768      0x108 ../freeRTOS750/lib_time/utc_offset.o
+                                0x27c (size before relaxing)
+ .stab          0x00015870      0x1e0 ../freeRTOS750/lib_time/week_of_month.o
+                                0x420 (size before relaxing)
+ .stab          0x00015a50      0x1f8 ../freeRTOS750/lib_time/week_of_year.o
+                                0x438 (size before relaxing)
+ .stab          0x00015c48      0x108 ../freeRTOS750/lib_time/system_tick.o
+                                0x114 (size before relaxing)
+ .stab          0x00015d50       0xd8 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(acos.o)
+                                 0xe4 (size before relaxing)
+ .stab          0x00015e28       0x78 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(addsf3.o)
+                                 0x84 (size before relaxing)
+ .stab          0x00015ea0      0x4bc /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(addsf3x.o)
+                                0x4c8 (size before relaxing)
+ .stab          0x0001635c       0x90 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(cmpsf2.o)
+                                 0x9c (size before relaxing)
+ .stab          0x000163ec       0x54 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(cos.o)
+                                 0x60 (size before relaxing)
+ .stab          0x00016440       0x48 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(divsf3.o)
+                                 0x54 (size before relaxing)
+ .stab          0x00016488      0x510 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(divsf3x.o)
+                                0x51c (size before relaxing)
+ .stab          0x00016998       0x6c /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fixsfsi.o)
+                                 0x78 (size before relaxing)
+ .stab          0x00016a04      0x240 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fixunssfsi.o)
+                                0x24c (size before relaxing)
+ .stab          0x00016c44      0x318 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(floatsisf.o)
+                                0x324 (size before relaxing)
+ .stab          0x00016f5c      0x174 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_arccos.o)
+                                0x180 (size before relaxing)
+ .stab          0x000170d0      0x1e0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_cmp.o)
+                                0x1ec (size before relaxing)
+ .stab          0x000172b0       0x78 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_inf.o)
+                                 0x84 (size before relaxing)
+ .stab          0x00017328       0x54 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_nan.o)
+                                 0x60 (size before relaxing)
+ .stab          0x0001737c      0x1ec /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_powser.o)
+                                0x1f8 (size before relaxing)
+ .stab          0x00017568       0x84 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_pscA.o)
+                                 0x90 (size before relaxing)
+ .stab          0x000175ec       0x84 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_pscB.o)
+                                 0x90 (size before relaxing)
+ .stab          0x00017670      0x21c /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_rempio2.o)
+                                0x228 (size before relaxing)
+ .stab          0x0001788c       0xfc /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_round.o)
+                                0x108 (size before relaxing)
+ .stab          0x00017988       0xfc /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_sinus.o)
+                                0x108 (size before relaxing)
+ .stab          0x00017a84      0x1d4 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_split3.o)
+                                0x1e0 (size before relaxing)
+ .stab          0x00017c58       0x90 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_zero.o)
+                                 0x9c (size before relaxing)
+ .stab          0x00017ce8       0x6c /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(gesf2.o)
+                                 0x78 (size before relaxing)
+ .stab          0x00017d54       0x48 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(mulsf3.o)
+                                 0x54 (size before relaxing)
+ .stab          0x00017d9c      0x4d4 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(mulsf3x.o)
+                                0x4e0 (size before relaxing)
+ .stab          0x00018270       0x78 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(sin.o)
+                                 0x84 (size before relaxing)
+ .stab          0x000182e8      0x354 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(sqrt.o)
+                                0x360 (size before relaxing)
+ .stab          0x0001863c      0x1b0 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(tan.o)
+                                0x1bc (size before relaxing)
+ .stab          0x000187ec       0xe4 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_mpack.o)
+                                 0xf0 (size before relaxing)
+ .stab          0x000188d0       0x84 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_norm2.o)
+                                 0x90 (size before relaxing)
+ .stab          0x00018954       0xfc /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_powsodd.o)
+                                0x108 (size before relaxing)
+ .stab          0x00018a50       0x84 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(inverse.o)
+                                 0x90 (size before relaxing)
+ .stab          0x00018ad4      0x78c /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(malloc.o)
+                                0x798 (size before relaxing)
+ .stab          0x00019260       0x84 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(strlen_P.o)
+                                 0x90 (size before relaxing)
+ .stab          0x000192e4      0x198 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(strtok.o)
+                                0x1a4 (size before relaxing)
+ .stab          0x0001947c       0x84 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(memcpy.o)
+                                 0x90 (size before relaxing)
+ .stab          0x00019500       0x6c /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(memset.o)
+                                 0x78 (size before relaxing)
+ .stab          0x0001956c       0x6c /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(strcpy.o)
+                                 0x78 (size before relaxing)
+ .stab          0x000195d8      0x204 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(strtok_r.o)
+                                0x210 (size before relaxing)
+ .stab          0x000197dc      0x240 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(sprintf.o)
+                                0x3e4 (size before relaxing)
+ .stab          0x00019a1c      0x204 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(sprintf_p.o)
+                                0x3e4 (size before relaxing)
+ .stab          0x00019c20      0x21c /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(vsnprintf.o)
+                                0x3fc (size before relaxing)
+ .stab          0x00019e3c      0x21c /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(vsnprintf_p.o)
+                                0x3fc (size before relaxing)
+ .stab          0x0001a058      0xa14 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(vfprintf_std.o)
+                                0xc24 (size before relaxing)
+ .stab          0x0001aa6c       0x9c /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(strnlen_P.o)
+                                 0xa8 (size before relaxing)
+ .stab          0x0001ab08       0x9c /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(strnlen.o)
+                                 0xa8 (size before relaxing)
+ .stab          0x0001aba4      0x1d4 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(fputc.o)
+                                0x3b4 (size before relaxing)
+ .stab          0x0001ad78      0x480 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(ultoa_invert.o)
+                                0x48c (size before relaxing)
+
+.stabstr        0x00000000     0x8db2
+ *(.stabstr)
+ .stabstr       0x00000000     0x8db2 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/crtm328p.o
+
+.stab.excl
+ *(.stab.excl)
+
+.stab.exclstr
+ *(.stab.exclstr)
+
+.stab.index
+ *(.stab.index)
+
+.stab.indexstr
+ *(.stab.indexstr)
+
+.comment        0x00000000       0x22
+ *(.comment)
+ .comment       0x00000000       0x11 main.o
+                                 0x12 (size before relaxing)
+ .comment       0x00000000       0x12 ../freeRTOS750/tasks.o
+ .comment       0x00000000       0x12 ../freeRTOS750/queue.o
+ .comment       0x00000000       0x12 ../freeRTOS750/list.o
+ .comment       0x00000000       0x12 ../freeRTOS750/croutine.o
+ .comment       0x00000000       0x12 ../freeRTOS750/portable/port.o
+ .comment       0x00000000       0x12 ../freeRTOS750/lib_i2c/i2cMultiMaster.o
+ .comment       0x00000000       0x12 ../freeRTOS750/lib_digitalAnalog/digitalAnalog.o
+ .comment       0x00000000       0x12 ../freeRTOS750/lib_ext_ram/ext_ram.o
+ .comment       0x00000000       0x12 ../freeRTOS750/lib_ext_ram/ramfs.o
+ .comment       0x00000000       0x12 ../freeRTOS750/lib_hd44780/hd44780.o
+ .comment       0x00000000       0x12 ../freeRTOS750/lib_i2c/i2cMultiMaster.o
+ .comment       0x00000000       0x12 ../freeRTOS750/lib_iinchip/md5.o
+ .comment       0x00000000       0x12 ../freeRTOS750/lib_iinchip/socket.o
+ .comment       0x00000000       0x12 ../freeRTOS750/lib_iinchip/socket_util.o
+ .comment       0x00000000       0x12 ../freeRTOS750/lib_iinchip/w5100.o
+ .comment       0x00000000       0x12 ../freeRTOS750/lib_iinchip/w5200.o
+ .comment       0x00000000       0x12 ../freeRTOS750/lib_rtc/rtc.o
+ .comment       0x00000000       0x12 ../freeRTOS750/lib_serial/lib_serial.o
+ .comment       0x00000000       0x12 ../freeRTOS750/lib_servo/servoPWM.o
+ .comment       0x00000000       0x12 ../freeRTOS750/lib_spi/spi.o
+ .comment       0x00000000       0x12 ../freeRTOS750/MemMang/heap_1.o
+ .comment       0x00000000       0x12 ../freeRTOS750/MemMang/heap_2.o
+ .comment       0x00000000       0x12 ../freeRTOS750/MemMang/heap_3.o
+ .comment       0x00000000       0x12 ../freeRTOS750/MemMang/heap_4.o
+ .comment       0x00000000       0x12 ../freeRTOS750/lib_time/asc_store.o
+ .comment       0x00000000       0x12 ../freeRTOS750/lib_time/asctime.o
+ .comment       0x00000000       0x12 ../freeRTOS750/lib_time/asctime_r.o
+ .comment       0x00000000       0x12 ../freeRTOS750/lib_time/ctime.o
+ .comment       0x00000000       0x12 ../freeRTOS750/lib_time/ctime_r.o
+ .comment       0x00000000       0x12 ../freeRTOS750/lib_time/daylight_seconds.o
+ .comment       0x00000000       0x12 ../freeRTOS750/lib_time/difftime.o
+ .comment       0x00000000       0x12 ../freeRTOS750/lib_time/dst_pointer.o
+ .comment       0x00000000       0x12 ../freeRTOS750/lib_time/equation_of_time.o
+ .comment       0x00000000       0x12 ../freeRTOS750/lib_time/fatfs_time.o
+ .comment       0x00000000       0x12 ../freeRTOS750/lib_time/geo_location.o
+ .comment       0x00000000       0x12 ../freeRTOS750/lib_time/gm_sidereal.o
+ .comment       0x00000000       0x12 ../freeRTOS750/lib_time/gmtime.o
+ .comment       0x00000000       0x12 ../freeRTOS750/lib_time/gmtime_r.o
+ .comment       0x00000000       0x12 ../freeRTOS750/lib_time/isLeap.o
+ .comment       0x00000000       0x12 ../freeRTOS750/lib_time/isotime.o
+ .comment       0x00000000       0x12 ../freeRTOS750/lib_time/isotime_r.o
+ .comment       0x00000000       0x12 ../freeRTOS750/lib_time/iso_week_date.o
+ .comment       0x00000000       0x12 ../freeRTOS750/lib_time/iso_week_date_r.o
+ .comment       0x00000000       0x12 ../freeRTOS750/lib_time/lm_sidereal.o
+ .comment       0x00000000       0x12 ../freeRTOS750/lib_time/localtime.o
+ .comment       0x00000000       0x12 ../freeRTOS750/lib_time/localtime_r.o
+ .comment       0x00000000       0x12 ../freeRTOS750/lib_time/mk_gmtime.o
+ .comment       0x00000000       0x12 ../freeRTOS750/lib_time/mktime.o
+ .comment       0x00000000       0x12 ../freeRTOS750/lib_time/month_length.o
+ .comment       0x00000000       0x12 ../freeRTOS750/lib_time/moon_phase.o
+ .comment       0x00000000       0x12 ../freeRTOS750/lib_time/print_lz.o
+ .comment       0x00000000       0x12 ../freeRTOS750/lib_time/set_dst.o
+ .comment       0x00000000       0x12 ../freeRTOS750/lib_time/set_position.o
+ .comment       0x00000000       0x12 ../freeRTOS750/lib_time/set_system_time.o
+ .comment       0x00000000       0x12 ../freeRTOS750/lib_time/set_zone.o
+ .comment       0x00000000       0x12 ../freeRTOS750/lib_time/solar_declination.o
+ .comment       0x00000000       0x12 ../freeRTOS750/lib_time/solar_noon.o
+ .comment       0x00000000       0x12 ../freeRTOS750/lib_time/strftime.o
+ .comment       0x00000000       0x12 ../freeRTOS750/lib_time/sun_rise.o
+ .comment       0x00000000       0x12 ../freeRTOS750/lib_time/sun_set.o
+ .comment       0x00000000       0x12 ../freeRTOS750/lib_time/system_time.o
+ .comment       0x00000000       0x12 ../freeRTOS750/lib_time/time.o
+ .comment       0x00000000       0x12 ../freeRTOS750/lib_time/tm_store.o
+ .comment       0x00000000       0x12 ../freeRTOS750/lib_time/utc_offset.o
+ .comment       0x00000000       0x12 ../freeRTOS750/lib_time/week_of_month.o
+ .comment       0x00000000       0x12 ../freeRTOS750/lib_time/week_of_year.o
+ .comment       0x00000011       0x11 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(malloc.o)
+                                 0x12 (size before relaxing)
+ .comment       0x00000000       0x12 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(strtok.o)
+ .comment       0x00000000       0x12 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(sprintf.o)
+ .comment       0x00000000       0x12 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(sprintf_p.o)
+ .comment       0x00000000       0x12 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(vsnprintf.o)
+ .comment       0x00000000       0x12 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(vsnprintf_p.o)
+ .comment       0x00000000       0x12 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(vfprintf_std.o)
+ .comment       0x00000000       0x12 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(fputc.o)
+
+.debug
+ *(.debug)
+
+.line
+ *(.line)
+
+.debug_srcinfo
+ *(.debug_srcinfo)
+
+.debug_sfnames
+ *(.debug_sfnames)
+
+.debug_aranges
+ *(.debug_aranges)
+
+.debug_pubnames
+ *(.debug_pubnames)
+
+.debug_info
+ *(.debug_info)
+ *(.gnu.linkonce.wi.*)
+
+.debug_abbrev
+ *(.debug_abbrev)
+
+.debug_line
+ *(.debug_line)
+
+.debug_frame
+ *(.debug_frame)
+
+.debug_str
+ *(.debug_str)
+
+.debug_loc
+ *(.debug_loc)
+
+.debug_macinfo
+ *(.debug_macinfo)
+OUTPUT(rtosdemo.elf elf32-avr)
+LOAD linker stubs
+
+Cross Reference Table
+
+Symbol                                            File
+ATOI                                              ../freeRTOS750/lib_iinchip/socket_util.o
+C2D                                               ../freeRTOS750/lib_iinchip/socket_util.o
+CheckDestInLocal                                  ../freeRTOS750/lib_iinchip/socket_util.o
+D2C                                               ../freeRTOS750/lib_iinchip/socket_util.o
+FF                                                ../freeRTOS750/lib_iinchip/md5.o
+GG                                                ../freeRTOS750/lib_iinchip/md5.o
+GetDestAddr                                       ../freeRTOS750/lib_iinchip/socket_util.o
+GetDestMacAddr                                    ../freeRTOS750/lib_iinchip/socket_util.o
+GetDestPort                                       ../freeRTOS750/lib_iinchip/socket_util.o
+GetGWAddress                                      ../freeRTOS750/lib_iinchip/socket_util.o
+GetIPAddress                                      ../freeRTOS750/lib_iinchip/socket_util.o
+GetMacAddress                                     ../freeRTOS750/lib_iinchip/socket_util.o
+GetNetConfig                                      ../freeRTOS750/lib_iinchip/socket_util.o
+GetSubMask                                        ../freeRTOS750/lib_iinchip/socket_util.o
+HH                                                ../freeRTOS750/lib_iinchip/md5.o
+I2C_Check_Free_After_Stop                         ../freeRTOS750/lib_i2c/i2cMultiMaster.o
+                                                  ../freeRTOS750/lib_i2c/i2cMultiMaster.o
+I2C_Get_State_Info                                ../freeRTOS750/lib_i2c/i2cMultiMaster.o
+                                                  ../freeRTOS750/lib_i2c/i2cMultiMaster.o
+I2C_Master_Get_Data_From_Transceiver              ../freeRTOS750/lib_i2c/i2cMultiMaster.o
+                                                  ../freeRTOS750/lib_i2c/i2cMultiMaster.o
+I2C_Master_Initialise                             ../freeRTOS750/lib_i2c/i2cMultiMaster.o
+                                                  ../freeRTOS750/lib_i2c/i2cMultiMaster.o
+I2C_Master_Start_Transceiver                      ../freeRTOS750/lib_i2c/i2cMultiMaster.o
+                                                  ../freeRTOS750/lib_i2c/i2cMultiMaster.o
+I2C_Master_Start_Transceiver_With_Data            ../freeRTOS750/lib_i2c/i2cMultiMaster.o
+                                                  ../freeRTOS750/lib_i2c/i2cMultiMaster.o
+I2C_Slave_Get_Data_From_Transceiver               ../freeRTOS750/lib_i2c/i2cMultiMaster.o
+                                                  ../freeRTOS750/lib_i2c/i2cMultiMaster.o
+I2C_Slave_Initialise                              ../freeRTOS750/lib_i2c/i2cMultiMaster.o
+                                                  ../freeRTOS750/lib_i2c/i2cMultiMaster.o
+I2C_Slave_Start_Transceiver                       ../freeRTOS750/lib_i2c/i2cMultiMaster.o
+                                                  ../freeRTOS750/lib_i2c/i2cMultiMaster.o
+I2C_Slave_Start_Transceiver_With_Data             ../freeRTOS750/lib_i2c/i2cMultiMaster.o
+                                                  ../freeRTOS750/lib_i2c/i2cMultiMaster.o
+I2C_statusReg                                     ../freeRTOS750/lib_i2c/i2cMultiMaster.o
+                                                  ../freeRTOS750/lib_i2c/i2cMultiMaster.o
+II                                                ../freeRTOS750/lib_iinchip/md5.o
+IINCHIP_getISR                                    ../freeRTOS750/lib_iinchip/w5100.o
+IINCHIP_init                                      ../freeRTOS750/lib_iinchip/w5100.o
+IINCHIP_putISR                                    ../freeRTOS750/lib_iinchip/w5100.o
+IINCHIP_read                                      ../freeRTOS750/lib_iinchip/w5100.o
+                                                  ../freeRTOS750/lib_iinchip/socket_util.o
+                                                  ../freeRTOS750/lib_iinchip/socket.o
+IINCHIP_read_buf                                  ../freeRTOS750/lib_iinchip/w5100.o
+IINCHIP_sysinit                                   ../freeRTOS750/lib_iinchip/w5100.o
+IINCHIP_write                                     ../freeRTOS750/lib_iinchip/w5100.o
+                                                  ../freeRTOS750/lib_iinchip/socket.o
+IINCHIP_write_buf                                 ../freeRTOS750/lib_iinchip/w5100.o
+ValidATOI                                         ../freeRTOS750/lib_iinchip/socket_util.o
+VerifyIPAddress                                   ../freeRTOS750/lib_iinchip/socket_util.o
+__addsf3                                          /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(addsf3.o)
+                                                  ../freeRTOS750/lib_time/solar_declination.o
+                                                  ../freeRTOS750/lib_time/equation_of_time.o
+__addsf3x                                         /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(addsf3x.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(tan.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_sinus.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_powser.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(addsf3.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(acos.o)
+__asc_store                                       ../freeRTOS750/lib_time/asc_store.o
+                                                  ../freeRTOS750/lib_time/iso_week_date.o
+                                                  ../freeRTOS750/lib_time/isotime.o
+                                                  ../freeRTOS750/lib_time/ctime.o
+                                                  ../freeRTOS750/lib_time/asctime.o
+__bad_interrupt                                   /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/crtm328p.o
+__brkval                                          /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(malloc.o)
+__bss_end                                         /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_clear_bss.o)
+__bss_start                                       /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_clear_bss.o)
+__bswapsi2                                        /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_bswapsi2.o)
+                                                  ../freeRTOS750/lib_iinchip/socket_util.o
+__cmpsf2                                          /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(cmpsf2.o)
+__data_end                                        /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_copy_data.o)
+__data_load_start                                 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_copy_data.o)
+__data_start                                      /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_copy_data.o)
+__divmodhi4                                       /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_divmodhi4.o)
+                                                  ../freeRTOS750/lib_time/week_of_year.o
+                                                  ../freeRTOS750/lib_time/week_of_month.o
+                                                  ../freeRTOS750/lib_time/strftime.o
+                                                  ../freeRTOS750/lib_time/print_lz.o
+                                                  ../freeRTOS750/lib_time/mk_gmtime.o
+                                                  ../freeRTOS750/lib_time/iso_week_date_r.o
+                                                  ../freeRTOS750/lib_time/isotime_r.o
+                                                  ../freeRTOS750/lib_time/isLeap.o
+                                                  ../freeRTOS750/lib_time/gmtime_r.o
+                                                  ../freeRTOS750/lib_time/asctime_r.o
+__divmodqi4                                       /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_divmodqi4.o)
+                                                  ../freeRTOS750/lib_time/strftime.o
+__divmodsi4                                       /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_divmodsi4.o)
+                                                  ../freeRTOS750/lib_time/sun_set.o
+                                                  ../freeRTOS750/lib_time/sun_rise.o
+                                                  ../freeRTOS750/lib_time/strftime.o
+                                                  ../freeRTOS750/lib_time/solar_noon.o
+                                                  ../freeRTOS750/lib_time/moon_phase.o
+                                                  ../freeRTOS750/lib_time/lm_sidereal.o
+                                                  ../freeRTOS750/lib_time/gmtime_r.o
+__divsf3                                          /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(divsf3.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(inverse.o)
+                                                  ../freeRTOS750/lib_time/solar_declination.o
+                                                  ../freeRTOS750/lib_time/moon_phase.o
+                                                  ../freeRTOS750/lib_time/equation_of_time.o
+                                                  ../freeRTOS750/lib_time/daylight_seconds.o
+                                                  ../freeRTOS750/lib_servo/servoPWM.o
+__divsf3_pse                                      /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(divsf3x.o)
+__divsf3x                                         /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(divsf3x.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(divsf3.o)
+__do_clear_bss                                    /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_clear_bss.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(strtok.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(malloc.o)
+                                                  ../freeRTOS750/lib_time/utc_offset.o
+                                                  ../freeRTOS750/lib_time/tm_store.o
+                                                  ../freeRTOS750/lib_time/system_time.o
+                                                  ../freeRTOS750/lib_time/geo_location.o
+                                                  ../freeRTOS750/lib_time/dst_pointer.o
+                                                  ../freeRTOS750/lib_time/asc_store.o
+                                                  ../freeRTOS750/MemMang/heap_4.o
+                                                  ../freeRTOS750/MemMang/heap_2.o
+                                                  ../freeRTOS750/MemMang/heap_1.o
+                                                  ../freeRTOS750/lib_spi/spi.o
+                                                  ../freeRTOS750/lib_serial/lib_serial.o
+                                                  ../freeRTOS750/lib_iinchip/w5100.o
+                                                  ../freeRTOS750/lib_iinchip/socket_util.o
+                                                  ../freeRTOS750/lib_iinchip/socket.o
+                                                  ../freeRTOS750/lib_i2c/i2cMultiMaster.o
+                                                  ../freeRTOS750/lib_i2c/i2cMultiMaster.o
+                                                  ../freeRTOS750/portable/port.o
+                                                  ../freeRTOS750/croutine.o
+                                                  ../freeRTOS750/tasks.o
+__do_copy_data                                    /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_copy_data.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(malloc.o)
+                                                  ../freeRTOS750/lib_time/strftime.o
+                                                  ../freeRTOS750/lib_time/asc_store.o
+                                                  ../freeRTOS750/MemMang/heap_4.o
+                                                  ../freeRTOS750/MemMang/heap_2.o
+                                                  ../freeRTOS750/lib_iinchip/socket_util.o
+                                                  ../freeRTOS750/lib_iinchip/md5.o
+                                                  ../freeRTOS750/lib_i2c/i2cMultiMaster.o
+                                                  ../freeRTOS750/lib_i2c/i2cMultiMaster.o
+                                                  ../freeRTOS750/tasks.o
+                                                  main.o
+__dst_ptr                                         ../freeRTOS750/lib_time/set_dst.o
+                                                  ../freeRTOS750/lib_time/mktime.o
+                                                  ../freeRTOS750/lib_time/localtime_r.o
+                                                  ../freeRTOS750/lib_time/dst_pointer.o
+__epilogue_restores__                             /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_epilogue.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(vfprintf_std.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(vsnprintf_p.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(vsnprintf.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(sprintf_p.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(sprintf.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(malloc.o)
+__eqsf2                                           /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(cmpsf2.o)
+__fixsfsi                                         /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fixsfsi.o)
+                                                  ../freeRTOS750/lib_time/moon_phase.o
+                                                  ../freeRTOS750/lib_time/equation_of_time.o
+                                                  ../freeRTOS750/lib_time/daylight_seconds.o
+__fixunssfsi                                      /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fixunssfsi.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fixsfsi.o)
+                                                  ../freeRTOS750/lib_servo/servoPWM.o
+__floatsisf                                       /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(floatsisf.o)
+                                                  ../freeRTOS750/lib_time/moon_phase.o
+                                                  ../freeRTOS750/lib_time/equation_of_time.o
+                                                  ../freeRTOS750/lib_time/daylight_seconds.o
+__floatunsisf                                     /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(floatsisf.o)
+                                                  ../freeRTOS750/lib_time/solar_declination.o
+                                                  ../freeRTOS750/lib_servo/servoPWM.o
+__flp                                             /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(malloc.o)
+__fp_arccos                                       /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_arccos.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(acos.o)
+__fp_cmp                                          /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_cmp.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(gesf2.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(cmpsf2.o)
+__fp_inf                                          /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_inf.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(mulsf3x.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(divsf3x.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(addsf3x.o)
+__fp_mpack                                        /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_mpack.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(sqrt.o)
+__fp_mpack_finite                                 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_mpack.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_rempio2.o)
+__fp_nan                                          /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_nan.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(sqrt.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(mulsf3x.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_rempio2.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(divsf3x.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(addsf3x.o)
+__fp_norm2                                        /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_norm2.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(sqrt.o)
+__fp_powser                                       /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_powser.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_powsodd.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_arccos.o)
+__fp_powsodd                                      /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_powsodd.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(tan.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_sinus.o)
+__fp_pscA                                         /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_pscA.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(mulsf3x.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(divsf3x.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(addsf3x.o)
+__fp_pscB                                         /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_pscB.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(mulsf3x.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(divsf3x.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(addsf3x.o)
+__fp_rempio2                                      /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_rempio2.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(tan.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(sin.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(cos.o)
+__fp_round                                        /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_round.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(tan.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(mulsf3.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_sinus.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_arccos.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(divsf3.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(addsf3.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(acos.o)
+__fp_sinus                                        /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_sinus.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(sin.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(cos.o)
+__fp_split3                                       /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_split3.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(mulsf3x.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(divsf3x.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(addsf3x.o)
+__fp_splitA                                       /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_split3.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(sqrt.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_rempio2.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fixunssfsi.o)
+__fp_szero                                        /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_zero.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(mulsf3x.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fixsfsi.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(divsf3x.o)
+__fp_zero                                         /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_zero.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fixunssfsi.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(addsf3x.o)
+__gesf2                                           /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(gesf2.o)
+__gtsf2                                           /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(gesf2.o)
+                                                  ../freeRTOS750/lib_time/daylight_seconds.o
+__heap_end                                        /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/crtm328p.o
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(malloc.o)
+__heap_start                                      /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(malloc.o)
+__init                                            /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/crtm328p.o
+__latitude                                        ../freeRTOS750/lib_time/set_position.o
+                                                  ../freeRTOS750/lib_time/geo_location.o
+                                                  ../freeRTOS750/lib_time/daylight_seconds.o
+__lesf2                                           /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(cmpsf2.o)
+__longitude                                       ../freeRTOS750/lib_time/solar_noon.o
+                                                  ../freeRTOS750/lib_time/set_position.o
+                                                  ../freeRTOS750/lib_time/lm_sidereal.o
+                                                  ../freeRTOS750/lib_time/geo_location.o
+__lshrdi3                                         /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_lshrdi3.o)
+                                                  ../freeRTOS750/lib_time/gm_sidereal.o
+__ltsf2                                           /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(cmpsf2.o)
+                                                  ../freeRTOS750/lib_time/daylight_seconds.o
+__malloc_heap_end                                 /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(malloc.o)
+__malloc_heap_start                               /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(malloc.o)
+__malloc_margin                                   /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(malloc.o)
+__muldi3                                          /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_muldi3.o)
+                                                  ../freeRTOS750/lib_time/gm_sidereal.o
+__mulsf3                                          /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(mulsf3.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_powsodd.o)
+                                                  ../freeRTOS750/lib_time/solar_declination.o
+                                                  ../freeRTOS750/lib_time/moon_phase.o
+                                                  ../freeRTOS750/lib_time/equation_of_time.o
+                                                  ../freeRTOS750/lib_time/daylight_seconds.o
+                                                  ../freeRTOS750/lib_servo/servoPWM.o
+__mulsf3_pse                                      /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(mulsf3x.o)
+__mulsf3x                                         /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(mulsf3x.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(mulsf3.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_powser.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_arccos.o)
+__mulsi3                                          /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_mulsi3.o)
+                                                  ../freeRTOS750/lib_time/mk_gmtime.o
+__muluhisi3                                       /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_muluhisi3.o)
+                                                  /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_mulsi3.o)
+__nesf2                                           /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(cmpsf2.o)
+__print_lz                                        ../freeRTOS750/lib_time/print_lz.o
+                                                  ../freeRTOS750/lib_time/isotime_r.o
+                                                  ../freeRTOS750/lib_time/asctime_r.o
+__prologue_saves__                                /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_prologue.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(vfprintf_std.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(vsnprintf_p.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(vsnprintf.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(sprintf_p.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(sprintf.o)
+__stack                                           /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/crtm328p.o
+__store                                           ../freeRTOS750/lib_time/asc_store.o
+__strlen_P                                        /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(strlen_P.o)
+                                                  ../freeRTOS750/lib_serial/lib_serial.o
+__subsf3                                          /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(addsf3.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_arccos.o)
+                                                  ../freeRTOS750/lib_time/moon_phase.o
+__system_time                                     ../freeRTOS750/lib_time/system_tick.o
+                                                  ../freeRTOS750/lib_time/time.o
+                                                  ../freeRTOS750/lib_time/system_time.o
+                                                  ../freeRTOS750/lib_time/set_system_time.o
+__tablejump2__                                    /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_tablejump.o)
+                                                  ../freeRTOS750/lib_time/strftime.o
+__tablejump__                                     /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_tablejump.o)
+__tm_store                                        ../freeRTOS750/lib_time/tm_store.o
+                                                  ../freeRTOS750/lib_time/localtime.o
+                                                  ../freeRTOS750/lib_time/gmtime.o
+__udivdi3                                         /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_udivdi3.o)
+__udivdi3_umoddi3                                 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_udivdi3.o)
+__udivmod64                                       /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_udivmod64.o)
+                                                  /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_udivdi3.o)
+__udivmodhi4                                      /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_udivmodhi4.o)
+                                                  /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_divmodhi4.o)
+                                                  ../freeRTOS750/lib_time/iso_week_date_r.o
+                                                  ../freeRTOS750/lib_time/gmtime_r.o
+__udivmodqi4                                      /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_udivmodqi4.o)
+                                                  /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_divmodqi4.o)
+__udivmodsi4                                      /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_udivmodsi4.o)
+                                                  /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_divmodsi4.o)
+                                                  ../freeRTOS750/lib_time/solar_noon.o
+                                                  ../freeRTOS750/lib_time/solar_declination.o
+                                                  ../freeRTOS750/lib_time/moon_phase.o
+                                                  ../freeRTOS750/lib_time/gmtime_r.o
+                                                  ../freeRTOS750/lib_time/equation_of_time.o
+                                                  ../freeRTOS750/lib_serial/lib_serial.o
+__ultoa_invert                                    /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(ultoa_invert.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(vfprintf_std.o)
+__umoddi3                                         /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_udivdi3.o)
+                                                  ../freeRTOS750/lib_time/gm_sidereal.o
+__umulhisi3                                       /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_umulhisi3.o)
+                                                  /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_muluhisi3.o)
+                                                  /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_muldi3.o)
+                                                  /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_usmulhisi3.o)
+__usmulhisi3                                      /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_usmulhisi3.o)
+                                                  ../freeRTOS750/lib_time/mk_gmtime.o
+__usmulhisi3_tail                                 /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_usmulhisi3.o)
+__utc_offset                                      ../freeRTOS750/lib_time/utc_offset.o
+                                                  ../freeRTOS750/lib_time/strftime.o
+                                                  ../freeRTOS750/lib_time/set_zone.o
+                                                  ../freeRTOS750/lib_time/mktime.o
+                                                  ../freeRTOS750/lib_time/localtime_r.o
+__vector_1                                        ../freeRTOS750/lib_iinchip/w5100.o
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/crtm328p.o
+__vector_10                                       /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/crtm328p.o
+__vector_11                                       /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/crtm328p.o
+__vector_12                                       /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/crtm328p.o
+__vector_13                                       /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/crtm328p.o
+__vector_14                                       ../freeRTOS750/portable/port.o
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/crtm328p.o
+__vector_15                                       /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/crtm328p.o
+__vector_16                                       /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/crtm328p.o
+__vector_17                                       /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/crtm328p.o
+__vector_18                                       ../freeRTOS750/lib_serial/lib_serial.o
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/crtm328p.o
+__vector_19                                       ../freeRTOS750/lib_serial/lib_serial.o
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/crtm328p.o
+__vector_2                                        /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/crtm328p.o
+__vector_20                                       /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/crtm328p.o
+__vector_21                                       /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/crtm328p.o
+__vector_22                                       /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/crtm328p.o
+__vector_23                                       /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/crtm328p.o
+__vector_24                                       ../freeRTOS750/lib_i2c/i2cMultiMaster.o
+                                                  ../freeRTOS750/lib_i2c/i2cMultiMaster.o
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/crtm328p.o
+__vector_25                                       /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/crtm328p.o
+__vector_3                                        /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/crtm328p.o
+__vector_4                                        /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/crtm328p.o
+__vector_5                                        /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/crtm328p.o
+__vector_6                                        /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/crtm328p.o
+__vector_7                                        /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/crtm328p.o
+__vector_8                                        /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/crtm328p.o
+__vector_9                                        /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/crtm328p.o
+__vector_default                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/crtm328p.o
+__vectors                                         /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/crtm328p.o
+_div                                              /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_divmodhi4.o)
+_exit                                             /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_exit.o)
+acos                                              /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(acos.o)
+                                                  ../freeRTOS750/lib_time/daylight_seconds.o
+analogConversionResult                            ../freeRTOS750/lib_digitalAnalog/digitalAnalog.o
+analogIsConverting                                ../freeRTOS750/lib_digitalAnalog/digitalAnalog.o
+ascdays                                           ../freeRTOS750/lib_time/asctime_r.o
+ascmonths                                         ../freeRTOS750/lib_time/asctime_r.o
+asctime                                           ../freeRTOS750/lib_time/asctime.o
+asctime_r                                         ../freeRTOS750/lib_time/asctime_r.o
+                                                  ../freeRTOS750/lib_time/strftime.o
+                                                  ../freeRTOS750/lib_time/ctime_r.o
+                                                  ../freeRTOS750/lib_time/ctime.o
+                                                  ../freeRTOS750/lib_time/asctime.o
+avrSerialCheckRxComplete                          ../freeRTOS750/lib_serial/lib_serial.o
+avrSerialCheckTxReady                             ../freeRTOS750/lib_serial/lib_serial.o
+avrSerialPrint                                    ../freeRTOS750/lib_serial/lib_serial.o
+avrSerialPrint_P                                  ../freeRTOS750/lib_serial/lib_serial.o
+avrSerialPrintf                                   ../freeRTOS750/lib_serial/lib_serial.o
+avrSerialPrintf_P                                 ../freeRTOS750/lib_serial/lib_serial.o
+avrSerialRead                                     ../freeRTOS750/lib_serial/lib_serial.o
+avrSerialWrite                                    ../freeRTOS750/lib_serial/lib_serial.o
+avrSerialxCheckRxComplete                         ../freeRTOS750/lib_serial/lib_serial.o
+avrSerialxCheckTxReady                            ../freeRTOS750/lib_serial/lib_serial.o
+avrSerialxPrint                                   ../freeRTOS750/lib_serial/lib_serial.o
+avrSerialxPrint_P                                 ../freeRTOS750/lib_serial/lib_serial.o
+                                                  main.o
+avrSerialxPrintf                                  ../freeRTOS750/lib_serial/lib_serial.o
+avrSerialxPrintf_P                                ../freeRTOS750/lib_serial/lib_serial.o
+                                                  main.o
+avrSerialxRead                                    ../freeRTOS750/lib_serial/lib_serial.o
+avrSerialxWrite                                   ../freeRTOS750/lib_serial/lib_serial.o
+checksum                                          ../freeRTOS750/lib_iinchip/socket_util.o
+clearSUBR                                         ../freeRTOS750/lib_iinchip/w5100.o
+                                                  ../freeRTOS750/lib_iinchip/socket_util.o
+                                                  ../freeRTOS750/lib_iinchip/socket.o
+close                                             ../freeRTOS750/lib_iinchip/socket.o
+connect                                           ../freeRTOS750/lib_iinchip/socket.o
+cos                                               /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(cos.o)
+                                                  ../freeRTOS750/lib_time/solar_declination.o
+                                                  ../freeRTOS750/lib_time/moon_phase.o
+ctime                                             ../freeRTOS750/lib_time/ctime.o
+ctime_r                                           ../freeRTOS750/lib_time/ctime_r.o
+daylight_seconds                                  ../freeRTOS750/lib_time/daylight_seconds.o
+                                                  ../freeRTOS750/lib_time/sun_set.o
+                                                  ../freeRTOS750/lib_time/sun_rise.o
+difftime                                          ../freeRTOS750/lib_time/difftime.o
+disableDigitalInput                               ../freeRTOS750/lib_digitalAnalog/digitalAnalog.o
+disconnect                                        ../freeRTOS750/lib_iinchip/socket.o
+equation_of_time                                  ../freeRTOS750/lib_time/equation_of_time.o
+                                                  ../freeRTOS750/lib_time/solar_noon.o
+exit                                              /usr/lib/gcc/avr/4.7.2/avr5/libgcc.a(_exit.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/crtm328p.o
+fatfs_time                                        ../freeRTOS750/lib_time/fatfs_time.o
+fputc                                             /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(fputc.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(vfprintf_std.o)
+free                                              /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(malloc.o)
+                                                  ../freeRTOS750/MemMang/heap_3.o
+getAnalogMode                                     ../freeRTOS750/lib_digitalAnalog/digitalAnalog.o
+getGAR                                            ../freeRTOS750/lib_iinchip/w5100.o
+getGWIP                                           ../freeRTOS750/lib_iinchip/w5100.o
+getIINCHIP_RxBASE                                 ../freeRTOS750/lib_iinchip/w5100.o
+getIINCHIP_RxMASK                                 ../freeRTOS750/lib_iinchip/w5100.o
+getIINCHIP_RxMAX                                  ../freeRTOS750/lib_iinchip/w5100.o
+getIINCHIP_TxBASE                                 ../freeRTOS750/lib_iinchip/w5100.o
+getIINCHIP_TxMASK                                 ../freeRTOS750/lib_iinchip/w5100.o
+getIINCHIP_TxMAX                                  ../freeRTOS750/lib_iinchip/w5100.o
+                                                  ../freeRTOS750/lib_iinchip/socket.o
+getIORegisters                                    ../freeRTOS750/lib_digitalAnalog/digitalAnalog.o
+getIR                                             ../freeRTOS750/lib_iinchip/w5100.o
+getInputValue                                     ../freeRTOS750/lib_digitalAnalog/digitalAnalog.o
+getSHAR                                           ../freeRTOS750/lib_iinchip/w5100.o
+getSIPR                                           ../freeRTOS750/lib_iinchip/w5100.o
+getSn_DHAR                                        ../freeRTOS750/lib_iinchip/w5100.o
+getSn_DIPR                                        ../freeRTOS750/lib_iinchip/w5100.o
+getSn_DPORT                                       ../freeRTOS750/lib_iinchip/w5100.o
+getSn_IR                                          ../freeRTOS750/lib_iinchip/w5100.o
+                                                  ../freeRTOS750/lib_iinchip/socket.o
+getSn_RX_RSR                                      ../freeRTOS750/lib_iinchip/w5100.o
+getSn_SR                                          ../freeRTOS750/lib_iinchip/w5100.o
+                                                  ../freeRTOS750/lib_iinchip/socket_util.o
+getSn_TX_FSR                                      ../freeRTOS750/lib_iinchip/w5100.o
+                                                  ../freeRTOS750/lib_iinchip/socket.o
+getSocket                                         ../freeRTOS750/lib_iinchip/socket_util.o
+gm_sidereal                                       ../freeRTOS750/lib_time/gm_sidereal.o
+                                                  ../freeRTOS750/lib_time/lm_sidereal.o
+gmtime                                            ../freeRTOS750/lib_time/gmtime.o
+gmtime_r                                          ../freeRTOS750/lib_time/gmtime_r.o
+                                                  ../freeRTOS750/lib_time/localtime_r.o
+                                                  ../freeRTOS750/lib_time/gmtime.o
+htonl                                             ../freeRTOS750/lib_iinchip/socket_util.o
+htons                                             ../freeRTOS750/lib_iinchip/socket_util.o
+inet_addr                                         ../freeRTOS750/lib_iinchip/socket_util.o
+inet_ntoa                                         ../freeRTOS750/lib_iinchip/socket_util.o
+inet_ntoa_pad                                     ../freeRTOS750/lib_iinchip/socket_util.o
+inverse                                           /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(inverse.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(tan.o)
+isDigitalInputHigh                                ../freeRTOS750/lib_digitalAnalog/digitalAnalog.o
+is_leap_year                                      ../freeRTOS750/lib_time/isLeap.o
+                                                  ../freeRTOS750/lib_time/month_length.o
+                                                  ../freeRTOS750/lib_time/mk_gmtime.o
+                                                  ../freeRTOS750/lib_time/iso_week_date_r.o
+iso_week_date                                     ../freeRTOS750/lib_time/iso_week_date.o
+iso_week_date_r                                   ../freeRTOS750/lib_time/iso_week_date_r.o
+                                                  ../freeRTOS750/lib_time/strftime.o
+                                                  ../freeRTOS750/lib_time/iso_week_date.o
+isotime                                           ../freeRTOS750/lib_time/isotime.o
+isotime_r                                         ../freeRTOS750/lib_time/isotime_r.o
+                                                  ../freeRTOS750/lib_time/isotime.o
+listen                                            ../freeRTOS750/lib_iinchip/socket.o
+lm_sidereal                                       ../freeRTOS750/lib_time/lm_sidereal.o
+localtime                                         ../freeRTOS750/lib_time/localtime.o
+localtime_r                                       ../freeRTOS750/lib_time/localtime_r.o
+                                                  ../freeRTOS750/lib_time/mktime.o
+                                                  ../freeRTOS750/lib_time/localtime.o
+                                                  ../freeRTOS750/lib_time/ctime_r.o
+                                                  ../freeRTOS750/lib_time/ctime.o
+macrawrecv                                        ../freeRTOS750/lib_iinchip/socket.o
+macrawsend                                        ../freeRTOS750/lib_iinchip/socket.o
+main                                              main.o
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/crtm328p.o
+malloc                                            /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(malloc.o)
+                                                  ../freeRTOS750/MemMang/heap_3.o
+md5_final                                         ../freeRTOS750/lib_iinchip/md5.o
+md5_init                                          ../freeRTOS750/lib_iinchip/md5.o
+md5_update                                        ../freeRTOS750/lib_iinchip/md5.o
+memcpy                                            /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(memcpy.o)
+                                                  ../freeRTOS750/lib_iinchip/md5.o
+                                                  ../freeRTOS750/queue.o
+memset                                            /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(memset.o)
+                                                  ../freeRTOS750/tasks.o
+mk_gmtime                                         ../freeRTOS750/lib_time/mk_gmtime.o
+                                                  ../freeRTOS750/lib_time/mktime.o
+mktime                                            ../freeRTOS750/lib_time/mktime.o
+month_length                                      ../freeRTOS750/lib_time/month_length.o
+moon_phase                                        ../freeRTOS750/lib_time/moon_phase.o
+ntohl                                             ../freeRTOS750/lib_iinchip/socket_util.o
+ntohs                                             ../freeRTOS750/lib_iinchip/socket_util.o
+pgm_copystring                                    ../freeRTOS750/lib_time/strftime.o
+pvPortMalloc                                      ../freeRTOS750/MemMang/heap_4.o
+                                                  ../freeRTOS750/MemMang/heap_3.o
+                                                  ../freeRTOS750/MemMang/heap_2.o
+                                                  ../freeRTOS750/MemMang/heap_1.o
+                                                  ../freeRTOS750/lib_serial/lib_serial.o
+                                                  ../freeRTOS750/croutine.o
+                                                  ../freeRTOS750/queue.o
+                                                  ../freeRTOS750/tasks.o
+pxCurrentCoRoutine                                ../freeRTOS750/croutine.o
+pxCurrentTCB                                      ../freeRTOS750/tasks.o
+                                                  ../freeRTOS750/portable/port.o
+pxPortInitialiseStack                             ../freeRTOS750/portable/port.o
+                                                  ../freeRTOS750/tasks.o
+read_data                                         ../freeRTOS750/lib_iinchip/w5100.o
+                                                  ../freeRTOS750/lib_iinchip/socket.o
+recv                                              ../freeRTOS750/lib_iinchip/socket.o
+recv_data_processing                              ../freeRTOS750/lib_iinchip/w5100.o
+                                                  ../freeRTOS750/lib_iinchip/socket.o
+recvfrom                                          ../freeRTOS750/lib_iinchip/socket.o
+replacetochar                                     ../freeRTOS750/lib_iinchip/socket_util.o
+saveSUBR                                          ../freeRTOS750/lib_iinchip/w5100.o
+send                                              ../freeRTOS750/lib_iinchip/socket.o
+send_data_processing                              ../freeRTOS750/lib_iinchip/w5100.o
+                                                  ../freeRTOS750/lib_iinchip/socket.o
+sendto                                            ../freeRTOS750/lib_iinchip/socket.o
+setAnalogMode                                     ../freeRTOS750/lib_digitalAnalog/digitalAnalog.o
+setDIDValue                                       ../freeRTOS750/lib_digitalAnalog/digitalAnalog.o
+setDataDirection                                  ../freeRTOS750/lib_digitalAnalog/digitalAnalog.o
+setDigitalInput                                   ../freeRTOS750/lib_digitalAnalog/digitalAnalog.o
+setDigitalOutput                                  ../freeRTOS750/lib_digitalAnalog/digitalAnalog.o
+setGAR                                            ../freeRTOS750/lib_iinchip/w5100.o
+setIMR                                            ../freeRTOS750/lib_iinchip/w5100.o
+setMR                                             ../freeRTOS750/lib_iinchip/w5100.o
+setOutputValue                                    ../freeRTOS750/lib_digitalAnalog/digitalAnalog.o
+setRCR                                            ../freeRTOS750/lib_iinchip/w5100.o
+setRTR                                            ../freeRTOS750/lib_iinchip/w5100.o
+setSHAR                                           ../freeRTOS750/lib_iinchip/w5100.o
+setSIPR                                           ../freeRTOS750/lib_iinchip/w5100.o
+setSUBR                                           ../freeRTOS750/lib_iinchip/w5100.o
+                                                  ../freeRTOS750/lib_iinchip/socket_util.o
+                                                  ../freeRTOS750/lib_iinchip/socket.o
+setSn_DHAR                                        ../freeRTOS750/lib_iinchip/w5100.o
+setSn_DIPR                                        ../freeRTOS750/lib_iinchip/w5100.o
+setSn_DPORT                                       ../freeRTOS750/lib_iinchip/w5100.o
+setSn_MSS                                         ../freeRTOS750/lib_iinchip/w5100.o
+setSn_PROTO                                       ../freeRTOS750/lib_iinchip/w5100.o
+setSn_TTL                                         ../freeRTOS750/lib_iinchip/w5100.o
+set_PWM_hardware                                  ../freeRTOS750/lib_servo/servoPWM.o
+set_dst                                           ../freeRTOS750/lib_time/set_dst.o
+set_position                                      ../freeRTOS750/lib_time/set_position.o
+set_system_time                                   ../freeRTOS750/lib_time/set_system_time.o
+set_zone                                          ../freeRTOS750/lib_time/set_zone.o
+sin                                               /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(sin.o)
+                                                  ../freeRTOS750/lib_time/solar_declination.o
+                                                  ../freeRTOS750/lib_time/moon_phase.o
+                                                  ../freeRTOS750/lib_time/equation_of_time.o
+socket                                            ../freeRTOS750/lib_iinchip/socket.o
+solar_declination                                 ../freeRTOS750/lib_time/solar_declination.o
+                                                  ../freeRTOS750/lib_time/daylight_seconds.o
+solar_noon                                        ../freeRTOS750/lib_time/solar_noon.o
+                                                  ../freeRTOS750/lib_time/sun_set.o
+                                                  ../freeRTOS750/lib_time/sun_rise.o
+spiAttachInterrupt                                ../freeRTOS750/lib_spi/spi.o
+spiBegin                                          ../freeRTOS750/lib_spi/spi.o
+                                                  ../freeRTOS750/lib_iinchip/w5100.o
+spiDeselect                                       ../freeRTOS750/lib_spi/spi.o
+                                                  ../freeRTOS750/lib_iinchip/w5100.o
+spiDetachInterrupt                                ../freeRTOS750/lib_spi/spi.o
+spiEnd                                            ../freeRTOS750/lib_spi/spi.o
+spiMultiByteRx                                    ../freeRTOS750/lib_spi/spi.o
+spiMultiByteTransfer                              ../freeRTOS750/lib_spi/spi.o
+spiMultiByteTx                                    ../freeRTOS750/lib_spi/spi.o
+spiSelect                                         ../freeRTOS750/lib_spi/spi.o
+                                                  ../freeRTOS750/lib_iinchip/w5100.o
+spiSetBitOrder                                    ../freeRTOS750/lib_spi/spi.o
+spiSetClockDivider                                ../freeRTOS750/lib_spi/spi.o
+                                                  ../freeRTOS750/lib_iinchip/w5100.o
+spiSetDataMode                                    ../freeRTOS750/lib_spi/spi.o
+                                                  ../freeRTOS750/lib_iinchip/w5100.o
+spiTransfer                                       ../freeRTOS750/lib_spi/spi.o
+sprintf                                           /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(sprintf.o)
+                                                  ../freeRTOS750/lib_time/strftime.o
+sprintf_P                                         /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(sprintf_p.o)
+                                                  ../freeRTOS750/lib_iinchip/socket_util.o
+sqrt                                              /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(sqrt.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(fp_arccos.o)
+startAnalogConversion                             ../freeRTOS750/lib_digitalAnalog/digitalAnalog.o
+start_PWM_hardware                                ../freeRTOS750/lib_servo/servoPWM.o
+stop_PWM_hardware                                 ../freeRTOS750/lib_servo/servoPWM.o
+strcpy                                            /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(strcpy.o)
+                                                  ../freeRTOS750/lib_time/strftime.o
+                                                  ../freeRTOS750/lib_iinchip/socket_util.o
+strfmonths                                        ../freeRTOS750/lib_time/strftime.o
+strftime                                          ../freeRTOS750/lib_time/strftime.o
+strfwkdays                                        ../freeRTOS750/lib_time/strftime.o
+strnlen                                           /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(strnlen.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(vfprintf_std.o)
+strnlen_P                                         /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(strnlen_P.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(vfprintf_std.o)
+strtok                                            /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(strtok.o)
+                                                  ../freeRTOS750/lib_iinchip/socket_util.o
+strtok_r                                          /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(strtok_r.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(strtok.o)
+sun_rise                                          ../freeRTOS750/lib_time/sun_rise.o
+sun_set                                           ../freeRTOS750/lib_time/sun_set.o
+swapl                                             ../freeRTOS750/lib_iinchip/socket_util.o
+swaps                                             ../freeRTOS750/lib_iinchip/socket_util.o
+system_tick                                       ../freeRTOS750/lib_time/system_tick.o
+                                                  ../freeRTOS750/portable/port.o
+tan                                               /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libm.a(tan.o)
+                                                  ../freeRTOS750/lib_time/daylight_seconds.o
+time                                              ../freeRTOS750/lib_time/time.o
+                                                  main.o
+uxListRemove                                      ../freeRTOS750/list.o
+                                                  ../freeRTOS750/croutine.o
+                                                  ../freeRTOS750/tasks.o
+uxQueueMessagesWaiting                            ../freeRTOS750/queue.o
+uxQueueMessagesWaitingFromISR                     ../freeRTOS750/queue.o
+uxTaskGetNumberOfTasks                            ../freeRTOS750/tasks.o
+vApplicationIdleHook                              main.o
+                                                  ../freeRTOS750/tasks.o
+vApplicationStackOverflowHook                     main.o
+vCoRoutineAddToDelayedList                        ../freeRTOS750/croutine.o
+                                                  ../freeRTOS750/queue.o
+vCoRoutineSchedule                                ../freeRTOS750/croutine.o
+                                                  main.o
+vListInitialise                                   ../freeRTOS750/list.o
+                                                  ../freeRTOS750/croutine.o
+                                                  ../freeRTOS750/queue.o
+                                                  ../freeRTOS750/tasks.o
+vListInitialiseItem                               ../freeRTOS750/list.o
+                                                  ../freeRTOS750/croutine.o
+                                                  ../freeRTOS750/tasks.o
+vListInsert                                       ../freeRTOS750/list.o
+                                                  ../freeRTOS750/croutine.o
+                                                  ../freeRTOS750/tasks.o
+vListInsertEnd                                    ../freeRTOS750/list.o
+                                                  ../freeRTOS750/croutine.o
+                                                  ../freeRTOS750/tasks.o
+vPortEndScheduler                                 ../freeRTOS750/portable/port.o
+                                                  ../freeRTOS750/tasks.o
+vPortFree                                         ../freeRTOS750/MemMang/heap_4.o
+                                                  ../freeRTOS750/MemMang/heap_3.o
+                                                  ../freeRTOS750/MemMang/heap_2.o
+                                                  ../freeRTOS750/MemMang/heap_1.o
+                                                  ../freeRTOS750/lib_serial/lib_serial.o
+                                                  ../freeRTOS750/queue.o
+                                                  ../freeRTOS750/tasks.o
+vPortInitialiseBlocks                             ../freeRTOS750/MemMang/heap_4.o
+                                                  ../freeRTOS750/MemMang/heap_2.o
+                                                  ../freeRTOS750/MemMang/heap_1.o
+vPortYield                                        ../freeRTOS750/portable/port.o
+                                                  ../freeRTOS750/lib_serial/lib_serial.o
+                                                  ../freeRTOS750/queue.o
+                                                  ../freeRTOS750/tasks.o
+vPortYieldFromTick                                ../freeRTOS750/portable/port.o
+vQueueDelete                                      ../freeRTOS750/queue.o
+                                                  ../freeRTOS750/lib_spi/spi.o
+vSerialClose                                      ../freeRTOS750/lib_serial/lib_serial.o
+vTaskDelay                                        ../freeRTOS750/tasks.o
+vTaskDelayUntil                                   ../freeRTOS750/tasks.o
+                                                  main.o
+vTaskDelete                                       ../freeRTOS750/tasks.o
+vTaskEndScheduler                                 ../freeRTOS750/tasks.o
+vTaskMissedYield                                  ../freeRTOS750/tasks.o
+                                                  ../freeRTOS750/queue.o
+vTaskPlaceOnEventList                             ../freeRTOS750/tasks.o
+                                                  ../freeRTOS750/queue.o
+vTaskSetTimeOutState                              ../freeRTOS750/tasks.o
+                                                  ../freeRTOS750/queue.o
+vTaskStartScheduler                               ../freeRTOS750/tasks.o
+                                                  main.o
+vTaskSuspendAll                                   ../freeRTOS750/tasks.o
+                                                  ../freeRTOS750/MemMang/heap_4.o
+                                                  ../freeRTOS750/MemMang/heap_3.o
+                                                  ../freeRTOS750/MemMang/heap_2.o
+                                                  ../freeRTOS750/MemMang/heap_1.o
+                                                  ../freeRTOS750/queue.o
+vTaskSwitchContext                                ../freeRTOS750/tasks.o
+                                                  ../freeRTOS750/portable/port.o
+vfprintf                                          /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(vfprintf_std.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(vsnprintf_p.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(vsnprintf.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(sprintf_p.o)
+                                                  /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(sprintf.o)
+vsnprintf                                         /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(vsnprintf.o)
+                                                  ../freeRTOS750/lib_serial/lib_serial.o
+vsnprintf_P                                       /usr/lib/gcc/avr/4.7.2/../../../avr/lib/avr5/libc.a(vsnprintf_p.o)
+                                                  ../freeRTOS750/lib_serial/lib_serial.o
+week_of_month                                     ../freeRTOS750/lib_time/week_of_month.o
+week_of_year                                      ../freeRTOS750/lib_time/week_of_year.o
+                                                  ../freeRTOS750/lib_time/strftime.o
+write_data                                        ../freeRTOS750/lib_iinchip/w5100.o
+                                                  ../freeRTOS750/lib_iinchip/socket.o
+xCoRoutineCreate                                  ../freeRTOS750/croutine.o
+xCoRoutineRemoveFromEventList                     ../freeRTOS750/croutine.o
+                                                  ../freeRTOS750/queue.o
+xI2CSemaphore                                     ../freeRTOS750/lib_i2c/i2cMultiMaster.o
+                                                  ../freeRTOS750/lib_i2c/i2cMultiMaster.o
+xPortGetFreeHeapSize                              ../freeRTOS750/MemMang/heap_4.o
+                                                  ../freeRTOS750/MemMang/heap_2.o
+                                                  ../freeRTOS750/MemMang/heap_1.o
+                                                  main.o
+xPortStartScheduler                               ../freeRTOS750/portable/port.o
+                                                  ../freeRTOS750/tasks.o
+xQueueCRReceive                                   ../freeRTOS750/queue.o
+xQueueCRReceiveFromISR                            ../freeRTOS750/queue.o
+xQueueCRSend                                      ../freeRTOS750/queue.o
+xQueueCRSendFromISR                               ../freeRTOS750/queue.o
+xQueueGenericCreate                               ../freeRTOS750/queue.o
+                                                  ../freeRTOS750/lib_spi/spi.o
+                                                  ../freeRTOS750/lib_i2c/i2cMultiMaster.o
+                                                  ../freeRTOS750/lib_i2c/i2cMultiMaster.o
+xQueueGenericReceive                              ../freeRTOS750/queue.o
+                                                  ../freeRTOS750/lib_spi/spi.o
+xQueueGenericReset                                ../freeRTOS750/queue.o
+xQueueGenericSend                                 ../freeRTOS750/queue.o
+                                                  ../freeRTOS750/lib_spi/spi.o
+                                                  ../freeRTOS750/lib_i2c/i2cMultiMaster.o
+                                                  ../freeRTOS750/lib_i2c/i2cMultiMaster.o
+xQueueGenericSendFromISR                          ../freeRTOS750/queue.o
+xQueueIsQueueEmptyFromISR                         ../freeRTOS750/queue.o
+xQueueIsQueueFullFromISR                          ../freeRTOS750/queue.o
+xQueuePeekFromISR                                 ../freeRTOS750/queue.o
+xQueueReceiveFromISR                              ../freeRTOS750/queue.o
+xSPISemaphore                                     ../freeRTOS750/lib_spi/spi.o
+xSerialAvailableChar                              ../freeRTOS750/lib_serial/lib_serial.o
+xSerialFlush                                      ../freeRTOS750/lib_serial/lib_serial.o
+xSerialGetChar                                    ../freeRTOS750/lib_serial/lib_serial.o
+xSerialPort                                       ../freeRTOS750/lib_serial/lib_serial.o
+                                                  main.o
+xSerialPortInitMinimal                            ../freeRTOS750/lib_serial/lib_serial.o
+                                                  main.o
+xSerialPrint                                      ../freeRTOS750/lib_serial/lib_serial.o
+xSerialPrint_P                                    ../freeRTOS750/lib_serial/lib_serial.o
+                                                  ../freeRTOS750/lib_iinchip/socket_util.o
+xSerialPrintf                                     ../freeRTOS750/lib_serial/lib_serial.o
+xSerialPrintf_P                                   ../freeRTOS750/lib_serial/lib_serial.o
+                                                  ../freeRTOS750/lib_iinchip/socket_util.o
+xSerialPutChar                                    ../freeRTOS750/lib_serial/lib_serial.o
+xSerialxPrint                                     ../freeRTOS750/lib_serial/lib_serial.o
+xSerialxPrint_P                                   ../freeRTOS750/lib_serial/lib_serial.o
+xSerialxPrintf                                    ../freeRTOS750/lib_serial/lib_serial.o
+xSerialxPrintf_P                                  ../freeRTOS750/lib_serial/lib_serial.o
+                                                  main.o
+xTaskCheckForTimeOut                              ../freeRTOS750/tasks.o
+                                                  ../freeRTOS750/queue.o
+xTaskGenericCreate                                ../freeRTOS750/tasks.o
+                                                  main.o
+xTaskGetTickCount                                 ../freeRTOS750/tasks.o
+                                                  ../freeRTOS750/croutine.o
+                                                  main.o
+xTaskGetTickCountFromISR                          ../freeRTOS750/tasks.o
+xTaskIncrementTick                                ../freeRTOS750/tasks.o
+                                                  ../freeRTOS750/portable/port.o
+xTaskRemoveFromEventList                          ../freeRTOS750/tasks.o
+                                                  ../freeRTOS750/queue.o
+xTaskResumeAll                                    ../freeRTOS750/tasks.o
+                                                  ../freeRTOS750/MemMang/heap_4.o
+                                                  ../freeRTOS750/MemMang/heap_3.o
+                                                  ../freeRTOS750/MemMang/heap_2.o
+                                                  ../freeRTOS750/MemMang/heap_1.o
+                                                  ../freeRTOS750/queue.o

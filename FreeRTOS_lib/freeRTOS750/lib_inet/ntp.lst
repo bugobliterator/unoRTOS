@@ -1,0 +1,599 @@
+   1               		.file	"ntp.c"
+   2               	__SP_H__ = 0x3e
+   3               	__SP_L__ = 0x3d
+   4               	__SREG__ = 0x3f
+   5               	__tmp_reg__ = 0
+   6               	__zero_reg__ = 1
+   9               		.text
+  10               	.Ltext0:
+ 174               	.global	init_NTP
+ 176               	init_NTP:
+ 177               		.stabd	46,0,0
+   1:../freeRTOS750/lib_inet/ntp.c **** /**
+   2:../freeRTOS750/lib_inet/ntp.c ****  * @file	ntp.c
+   3:../freeRTOS750/lib_inet/ntp.c ****  * @brief 	functions relevant to ntp
+   4:../freeRTOS750/lib_inet/ntp.c ****  */
+   5:../freeRTOS750/lib_inet/ntp.c **** 
+   6:../freeRTOS750/lib_inet/ntp.c **** #include <string.h>
+   7:../freeRTOS750/lib_inet/ntp.c **** #include <util/delay.h>
+   8:../freeRTOS750/lib_inet/ntp.c **** 
+   9:../freeRTOS750/lib_inet/ntp.c **** #include <avr/io.h>
+  10:../freeRTOS750/lib_inet/ntp.c **** #include <avr/eeprom.h>
+  11:../freeRTOS750/lib_inet/ntp.c **** #include <avr/pgmspace.h>
+  12:../freeRTOS750/lib_inet/ntp.c **** 
+  13:../freeRTOS750/lib_inet/ntp.c **** /* Scheduler include files. */
+  14:../freeRTOS750/lib_inet/ntp.c **** #include <FreeRTOS.h>
+  15:../freeRTOS750/lib_inet/ntp.c **** #include <task.h>
+  16:../freeRTOS750/lib_inet/ntp.c **** #include <queue.h>
+  17:../freeRTOS750/lib_inet/ntp.c **** #include <semphr.h>
+  18:../freeRTOS750/lib_inet/ntp.c **** 
+  19:../freeRTOS750/lib_inet/ntp.c **** #include <lib_serial.h>
+  20:../freeRTOS750/lib_inet/ntp.c **** 
+  21:../freeRTOS750/lib_inet/ntp.c **** #include <socket.h>
+  22:../freeRTOS750/lib_inet/ntp.c **** #include <inet.h>
+  23:../freeRTOS750/lib_inet/ntp.c **** 
+  24:../freeRTOS750/lib_inet/ntp.c **** #include <time.h>
+  25:../freeRTOS750/lib_inet/ntp.c **** 
+  26:../freeRTOS750/lib_inet/ntp.c **** //----------------------------------------------------------------------------
+  27:../freeRTOS750/lib_inet/ntp.c **** 
+  28:../freeRTOS750/lib_inet/ntp.c **** 
+  29:../freeRTOS750/lib_inet/ntp.c **** static SOCKET NTPC_SOCK;					// Socket for the NTP client
+  30:../freeRTOS750/lib_inet/ntp.c **** static NTP_MSG *pNTPMSG;					// Pointer for the NTP message
+  31:../freeRTOS750/lib_inet/ntp.c **** static uint32_t reference_timestamp_sec;	// Time stamp of last NTP update in Y2K epoch
+  32:../freeRTOS750/lib_inet/ntp.c **** 
+  33:../freeRTOS750/lib_inet/ntp.c **** //----------------------------------------------------------------------------
+  34:../freeRTOS750/lib_inet/ntp.c **** 
+  35:../freeRTOS750/lib_inet/ntp.c **** static void send_NTP_request (SOCKET s);				// Request the network time from a NTP server
+  36:../freeRTOS750/lib_inet/ntp.c **** static uint8_t process_NTP(SOCKET s, uint16_t length);	// Process a NTP response
+  37:../freeRTOS750/lib_inet/ntp.c **** 
+  38:../freeRTOS750/lib_inet/ntp.c **** //----------------------------------------------------------------------------
+  39:../freeRTOS750/lib_inet/ntp.c **** /**
+  40:../freeRTOS750/lib_inet/ntp.c ****  *	Initialise the NTP daemon.
+  41:../freeRTOS750/lib_inet/ntp.c ****  */
+  42:../freeRTOS750/lib_inet/ntp.c **** uint8_t init_NTP (SOCKET s)
+  43:../freeRTOS750/lib_inet/ntp.c **** {
+ 179               	.LM0:
+ 180               	.LFBB1:
+ 181 0000 CF93      		push r28
+ 182               	/* prologue: function */
+ 183               	/* frame size = 0 */
+ 184               	/* stack size = 1 */
+ 185               	.L__stack_usage = 1
+ 186 0002 C82F      		mov r28,r24
+  44:../freeRTOS750/lib_inet/ntp.c **** 
+  45:../freeRTOS750/lib_inet/ntp.c **** 	if( getSn_SR(s) != SOCK_CLOSED )	// Check the preferred socket is available,
+ 188               	.LM1:
+ 189 0004 0E94 0000 		call getSn_SR
+ 190 0008 8823      		tst r24
+ 191 000a 01F0      		breq .L2
+  46:../freeRTOS750/lib_inet/ntp.c **** 	{
+  47:../freeRTOS750/lib_inet/ntp.c **** 		s = getSocket(SOCK_CLOSED, 0);	// otherwise find free socket,
+ 193               	.LM2:
+ 194 000c 60E0      		ldi r22,0
+ 195 000e 80E0      		ldi r24,0
+ 196 0010 0E94 0000 		call getSocket
+ 197 0014 C82F      		mov r28,r24
+  48:../freeRTOS750/lib_inet/ntp.c **** 		if(s == MAX_SOCK_NUM )        	// If there is no free socket?
+ 199               	.LM3:
+ 200 0016 8430      		cpi r24,lo8(4)
+ 201 0018 01F4      		brne .L2
+ 202 001a 00C0      		rjmp .L14
+ 203               	.L2:
+  49:../freeRTOS750/lib_inet/ntp.c **** 			return 0;
+  50:../freeRTOS750/lib_inet/ntp.c **** 	}
+  51:../freeRTOS750/lib_inet/ntp.c **** 
+  52:../freeRTOS750/lib_inet/ntp.c **** 	xSerialPrintf_P(PSTR("\r\nNTP socket: %d,"),s);
+ 205               	.LM4:
+ 206 001c 1F92      		push __zero_reg__
+ 207 001e CF93      		push r28
+ 208 0020 20E0      		ldi r18,lo8(__c.2914)
+ 209 0022 30E0      		ldi r19,hi8(__c.2914)
+ 210 0024 3F93      		push r19
+ 211 0026 2F93      		push r18
+ 212 0028 0E94 0000 		call xSerialPrintf_P
+  53:../freeRTOS750/lib_inet/ntp.c **** 	if(!socket(s, Sn_MR_UDP, IP_PORT_NTP, 0x00)) // initialise the socket for NTP service
+ 214               	.LM5:
+ 215 002c 20E0      		ldi r18,0
+ 216 002e 4BE7      		ldi r20,lo8(123)
+ 217 0030 50E0      		ldi r21,0
+ 218 0032 62E0      		ldi r22,lo8(2)
+ 219 0034 8C2F      		mov r24,r28
+ 220 0036 0E94 0000 		call socket
+ 221 003a 0F90      		pop __tmp_reg__
+ 222 003c 0F90      		pop __tmp_reg__
+ 223 003e 0F90      		pop __tmp_reg__
+ 224 0040 0F90      		pop __tmp_reg__
+ 225 0042 8111      		cpse r24,__zero_reg__
+ 226 0044 00C0      		rjmp .L4
+  54:../freeRTOS750/lib_inet/ntp.c **** 	{
+  55:../freeRTOS750/lib_inet/ntp.c **** 		xSerialPrint_P(PSTR(" fail..!\r\n"));
+ 228               	.LM6:
+ 229 0046 80E0      		ldi r24,lo8(__c.2916)
+ 230 0048 90E0      		ldi r25,hi8(__c.2916)
+ 231 004a 0E94 0000 		call xSerialPrint_P
+ 232               	.L14:
+  56:../freeRTOS750/lib_inet/ntp.c **** 		return 0;
+ 234               	.LM7:
+ 235 004e 80E0      		ldi r24,0
+ 236 0050 00C0      		rjmp .L3
+ 237               	.L4:
+  57:../freeRTOS750/lib_inet/ntp.c **** 	}
+  58:../freeRTOS750/lib_inet/ntp.c **** 	else
+  59:../freeRTOS750/lib_inet/ntp.c **** 	{
+  60:../freeRTOS750/lib_inet/ntp.c **** 		xSerialPrint_P(PSTR(" ok..!\r\n"));
+ 239               	.LM8:
+ 240 0052 80E0      		ldi r24,lo8(__c.2918)
+ 241 0054 90E0      		ldi r25,hi8(__c.2918)
+ 242 0056 0E94 0000 		call xSerialPrint_P
+  61:../freeRTOS750/lib_inet/ntp.c **** 	}
+  62:../freeRTOS750/lib_inet/ntp.c **** 
+  63:../freeRTOS750/lib_inet/ntp.c **** 	if(pNTPMSG == NULL) // if there is no buffer allocated (pointer is NULL), then allocate buffer for
+ 244               	.LM9:
+ 245 005a 2091 0000 		lds r18,pNTPMSG
+ 246 005e 3091 0000 		lds r19,pNTPMSG+1
+ 247 0062 232B      		or r18,r19
+ 248 0064 01F0      		breq .L5
+ 249               	.L7:
+  64:../freeRTOS750/lib_inet/ntp.c **** 	{
+  65:../freeRTOS750/lib_inet/ntp.c **** 		if( !(pNTPMSG = (NTP_MSG *) pvPortMalloc( sizeof(NTP_MSG) ) ) )
+  66:../freeRTOS750/lib_inet/ntp.c **** 			return 0;
+  67:../freeRTOS750/lib_inet/ntp.c **** 	}
+  68:../freeRTOS750/lib_inet/ntp.c **** 
+  69:../freeRTOS750/lib_inet/ntp.c **** 	NTPC_SOCK = s;
+ 251               	.LM10:
+ 252 0066 C093 0000 		sts NTPC_SOCK,r28
+  70:../freeRTOS750/lib_inet/ntp.c **** 
+  71:../freeRTOS750/lib_inet/ntp.c **** 	return 1;
+ 254               	.LM11:
+ 255 006a 81E0      		ldi r24,lo8(1)
+ 256 006c 00C0      		rjmp .L3
+ 257               	.L5:
+  65:../freeRTOS750/lib_inet/ntp.c **** 		if( !(pNTPMSG = (NTP_MSG *) pvPortMalloc( sizeof(NTP_MSG) ) ) )
+ 259               	.LM12:
+ 260 006e 80E3      		ldi r24,lo8(48)
+ 261 0070 90E0      		ldi r25,0
+ 262 0072 0E94 0000 		call pvPortMalloc
+ 263 0076 9093 0000 		sts pNTPMSG+1,r25
+ 264 007a 8093 0000 		sts pNTPMSG,r24
+ 265 007e 892B      		or r24,r25
+ 266 0080 01F4      		brne .L7
+ 267 0082 00C0      		rjmp .L14
+ 268               	.L3:
+ 269               	/* epilogue start */
+  72:../freeRTOS750/lib_inet/ntp.c **** }
+ 271               	.LM13:
+ 272 0084 CF91      		pop r28
+ 273 0086 0895      		ret
+ 275               	.Lscope1:
+ 277               		.stabd	78,0,0
+ 279               	.global	get_NTP_socket
+ 281               	get_NTP_socket:
+ 282               		.stabd	46,0,0
+  73:../freeRTOS750/lib_inet/ntp.c **** 
+  74:../freeRTOS750/lib_inet/ntp.c **** //----------------------------------------------------------------------------
+  75:../freeRTOS750/lib_inet/ntp.c **** /**
+  76:../freeRTOS750/lib_inet/ntp.c ****  *	Request the socket assigned to the NTP client
+  77:../freeRTOS750/lib_inet/ntp.c ****  */
+  78:../freeRTOS750/lib_inet/ntp.c **** 
+  79:../freeRTOS750/lib_inet/ntp.c **** SOCKET	get_NTP_socket(void)				// Get the socket assigned for NTP
+  80:../freeRTOS750/lib_inet/ntp.c **** {
+ 284               	.LM14:
+ 285               	.LFBB2:
+ 286               	/* prologue: function */
+ 287               	/* frame size = 0 */
+ 288               	/* stack size = 0 */
+ 289               	.L__stack_usage = 0
+  81:../freeRTOS750/lib_inet/ntp.c **** 	return NTPC_SOCK;
+  82:../freeRTOS750/lib_inet/ntp.c **** }
+ 291               	.LM15:
+ 292 0088 8091 0000 		lds r24,NTPC_SOCK
+ 293 008c 0895      		ret
+ 295               	.Lscope2:
+ 297               		.stabd	78,0,0
+ 299               	.global	get_NTP_reference_time
+ 301               	get_NTP_reference_time:
+ 302               		.stabd	46,0,0
+  83:../freeRTOS750/lib_inet/ntp.c **** 
+  84:../freeRTOS750/lib_inet/ntp.c **** //----------------------------------------------------------------------------
+  85:../freeRTOS750/lib_inet/ntp.c **** /**
+  86:../freeRTOS750/lib_inet/ntp.c ****  *	Request the reference time, the last time that the NTP server responded
+  87:../freeRTOS750/lib_inet/ntp.c ****  */
+  88:../freeRTOS750/lib_inet/ntp.c **** 
+  89:../freeRTOS750/lib_inet/ntp.c **** uint32_t get_NTP_reference_time(void)			// Get the last reference time in Y2K epoch
+  90:../freeRTOS750/lib_inet/ntp.c **** {
+ 304               	.LM16:
+ 305               	.LFBB3:
+ 306               	/* prologue: function */
+ 307               	/* frame size = 0 */
+ 308               	/* stack size = 0 */
+ 309               	.L__stack_usage = 0
+  91:../freeRTOS750/lib_inet/ntp.c **** 	return reference_timestamp_sec;
+ 311               	.LM17:
+ 312 008e 6091 0000 		lds r22,reference_timestamp_sec
+ 313 0092 7091 0000 		lds r23,reference_timestamp_sec+1
+  92:../freeRTOS750/lib_inet/ntp.c **** }
+ 315               	.LM18:
+ 316 0096 8091 0000 		lds r24,reference_timestamp_sec+2
+ 317 009a 9091 0000 		lds r25,reference_timestamp_sec+3
+ 318 009e 0895      		ret
+ 320               	.Lscope3:
+ 322               		.stabd	78,0,0
+ 323               		.section	.rodata.str1.1,"aMS",@progbits,1
+ 324               	.LC0:
+ 325 0000 3139 322E 		.string	"192.168.1.1"
+ 325      3136 382E 
+ 325      312E 3100 
+ 326               		.text
+ 329               	.global	check_NTP
+ 331               	check_NTP:
+ 332               		.stabd	46,0,0
+  93:../freeRTOS750/lib_inet/ntp.c **** 
+  94:../freeRTOS750/lib_inet/ntp.c **** //----------------------------------------------------------------------------
+  95:../freeRTOS750/lib_inet/ntp.c **** /**
+  96:../freeRTOS750/lib_inet/ntp.c ****  *	Check the current system_time from a NTP Server
+  97:../freeRTOS750/lib_inet/ntp.c ****  */
+  98:../freeRTOS750/lib_inet/ntp.c **** 
+  99:../freeRTOS750/lib_inet/ntp.c **** void	check_NTP (SOCKET s)				// Check system_time against NTP time
+ 100:../freeRTOS750/lib_inet/ntp.c **** {
+ 334               	.LM19:
+ 335               	.LFBB4:
+ 336 00a0 DF92      		push r13
+ 337 00a2 EF92      		push r14
+ 338 00a4 FF92      		push r15
+ 339 00a6 0F93      		push r16
+ 340 00a8 1F93      		push r17
+ 341 00aa CF93      		push r28
+ 342 00ac DF93      		push r29
+ 343 00ae CDB7      		in r28,__SP_L__
+ 344 00b0 DEB7      		in r29,__SP_H__
+ 345 00b2 2A97      		sbiw r28,10
+ 346 00b4 0FB6      		in __tmp_reg__,__SREG__
+ 347 00b6 F894      		cli
+ 348 00b8 DEBF      		out __SP_H__,r29
+ 349 00ba 0FBE      		out __SREG__,__tmp_reg__
+ 350 00bc CDBF      		out __SP_L__,r28
+ 351               	/* prologue: function */
+ 352               	/* frame size = 10 */
+ 353               	/* stack size = 17 */
+ 354               	.L__stack_usage = 17
+ 355 00be D82E      		mov r13,r24
+ 101:../freeRTOS750/lib_inet/ntp.c **** 	uint16_t length;
+ 102:../freeRTOS750/lib_inet/ntp.c **** 	portTickType xInitialTick;
+ 103:../freeRTOS750/lib_inet/ntp.c **** 
+ 104:../freeRTOS750/lib_inet/ntp.c **** 	xInitialTick = xTaskGetTickCount();
+ 357               	.LM20:
+ 358 00c0 0E94 0000 		call xTaskGetTickCount
+ 359 00c4 7C01      		movw r14,r24
+ 360               	.LBB9:
+ 361               	.LBB10:
+ 105:../freeRTOS750/lib_inet/ntp.c **** 
+ 106:../freeRTOS750/lib_inet/ntp.c **** 	send_NTP_request(s);
+ 107:../freeRTOS750/lib_inet/ntp.c **** 
+ 108:../freeRTOS750/lib_inet/ntp.c **** 	while( xTaskGetTickCount() < (xInitialTick + ( NTP_TIMEOUT / portTICK_RATE_MS )) )	// as long as t
+ 109:../freeRTOS750/lib_inet/ntp.c **** 	{
+ 110:../freeRTOS750/lib_inet/ntp.c **** 
+ 111:../freeRTOS750/lib_inet/ntp.c **** 		if((length = getSn_RX_RSR(s)) > 0)		// Has NTP socket received a packet?
+ 112:../freeRTOS750/lib_inet/ntp.c **** 		{
+ 113:../freeRTOS750/lib_inet/ntp.c **** 			process_NTP (s, length);
+ 114:../freeRTOS750/lib_inet/ntp.c **** 			return;
+ 115:../freeRTOS750/lib_inet/ntp.c **** 		}
+ 116:../freeRTOS750/lib_inet/ntp.c **** 	}
+ 117:../freeRTOS750/lib_inet/ntp.c **** 
+ 118:../freeRTOS750/lib_inet/ntp.c **** }
+ 119:../freeRTOS750/lib_inet/ntp.c **** 
+ 120:../freeRTOS750/lib_inet/ntp.c **** //----------------------------------------------------------------------------
+ 121:../freeRTOS750/lib_inet/ntp.c **** /**
+ 122:../freeRTOS750/lib_inet/ntp.c ****  *	Request the current time from a NTP Server
+ 123:../freeRTOS750/lib_inet/ntp.c ****  */
+ 124:../freeRTOS750/lib_inet/ntp.c **** static void send_NTP_request (SOCKET s)
+ 125:../freeRTOS750/lib_inet/ntp.c **** {
+ 126:../freeRTOS750/lib_inet/ntp.c **** 	un_l2cval ip;
+ 127:../freeRTOS750/lib_inet/ntp.c **** 
+ 128:../freeRTOS750/lib_inet/ntp.c **** 	memset((void*)pNTPMSG,0,sizeof(NTP_MSG));
+ 363               	.LM21:
+ 364 00c6 0091 0000 		lds r16,pNTPMSG
+ 365 00ca 1091 0000 		lds r17,pNTPMSG+1
+ 366 00ce 80E3      		ldi r24,lo8(48)
+ 367 00d0 F801      		movw r30,r16
+ 368               		0:
+ 369 00d2 1192      		st Z+,__zero_reg__
+ 370 00d4 8A95      		dec r24
+ 371 00d6 01F4      		brne 0b
+ 129:../freeRTOS750/lib_inet/ntp.c **** 
+ 130:../freeRTOS750/lib_inet/ntp.c **** 	pNTPMSG->li_vn_mode = 0b11100011;	// Leap Indicator 0b11; Protocol Version Number 0b100; Mode 0b01
+ 373               	.LM22:
+ 374 00d8 83EE      		ldi r24,lo8(-29)
+ 375 00da F801      		movw r30,r16
+ 376 00dc 8083      		st Z,r24
+ 131:../freeRTOS750/lib_inet/ntp.c **** 	pNTPMSG->stratum = 15;				// Stratum 16 is the worst.
+ 378               	.LM23:
+ 379 00de 8FE0      		ldi r24,lo8(15)
+ 380 00e0 8183      		std Z+1,r24
+ 132:../freeRTOS750/lib_inet/ntp.c **** 	pNTPMSG->poll = 10;
+ 382               	.LM24:
+ 383 00e2 8AE0      		ldi r24,lo8(10)
+ 384 00e4 8283      		std Z+2,r24
+ 133:../freeRTOS750/lib_inet/ntp.c **** 	pNTPMSG->precision = 0;
+ 386               	.LM25:
+ 387 00e6 1382      		std Z+3,__zero_reg__
+ 134:../freeRTOS750/lib_inet/ntp.c **** 	// 8 bytes of zero for Root Delay & Root Dispersion
+ 135:../freeRTOS750/lib_inet/ntp.c **** 	pNTPMSG->reference_timestamp_sec = htonl(reference_timestamp_sec);	// time stamp of last system_ti
+ 389               	.LM26:
+ 390 00e8 6091 0000 		lds r22,reference_timestamp_sec
+ 391 00ec 7091 0000 		lds r23,reference_timestamp_sec+1
+ 392 00f0 8091 0000 		lds r24,reference_timestamp_sec+2
+ 393 00f4 9091 0000 		lds r25,reference_timestamp_sec+3
+ 394 00f8 0E94 0000 		call htonl
+ 395 00fc F801      		movw r30,r16
+ 396 00fe 608B      		std Z+16,r22
+ 397 0100 718B      		std Z+17,r23
+ 398 0102 828B      		std Z+18,r24
+ 399 0104 938B      		std Z+19,r25
+ 136:../freeRTOS750/lib_inet/ntp.c **** 	pNTPMSG->origin_timestamp_sec = htonl(time(NULL) + NTP_OFFSET);		// system_time including the offs
+ 401               	.LM27:
+ 402 0106 0091 0000 		lds r16,pNTPMSG
+ 403 010a 1091 0000 		lds r17,pNTPMSG+1
+ 404 010e 80E0      		ldi r24,0
+ 405 0110 90E0      		ldi r25,0
+ 406 0112 0E94 0000 		call time
+ 407 0116 7E53      		subi r23,62
+ 408 0118 884E      		sbci r24,-24
+ 409 011a 9344      		sbci r25,67
+ 410 011c 0E94 0000 		call htonl
+ 411 0120 F801      		movw r30,r16
+ 412 0122 608F      		std Z+24,r22
+ 413 0124 718F      		std Z+25,r23
+ 414 0126 828F      		std Z+26,r24
+ 415 0128 938F      		std Z+27,r25
+ 137:../freeRTOS750/lib_inet/ntp.c **** 
+ 138:../freeRTOS750/lib_inet/ntp.c **** 	ip.lVal = htonl( inet_addr( (uint8_t*) NTP_SERVER_1));				// the NTP server we're using.
+ 417               	.LM28:
+ 418 012a 80E0      		ldi r24,lo8(.LC0)
+ 419 012c 90E0      		ldi r25,hi8(.LC0)
+ 420 012e 0E94 0000 		call inet_addr
+ 421 0132 0E94 0000 		call htonl
+ 422 0136 6D83      		std Y+5,r22
+ 423 0138 7E83      		std Y+6,r23
+ 424 013a 8F83      		std Y+7,r24
+ 425 013c 9887      		std Y+8,r25
+ 139:../freeRTOS750/lib_inet/ntp.c **** 
+ 140:../freeRTOS750/lib_inet/ntp.c **** 	if(0 == sendto(s, (uint8_t*)pNTPMSG, sizeof(NTP_MSG), ip.cVal, IP_PORT_NTP))
+ 427               	.LM29:
+ 428 013e 6091 0000 		lds r22,pNTPMSG
+ 429 0142 7091 0000 		lds r23,pNTPMSG+1
+ 430 0146 0BE7      		ldi r16,lo8(123)
+ 431 0148 10E0      		ldi r17,0
+ 432 014a 9E01      		movw r18,r28
+ 433 014c 2B5F      		subi r18,-5
+ 434 014e 3F4F      		sbci r19,-1
+ 435 0150 40E3      		ldi r20,lo8(48)
+ 436 0152 50E0      		ldi r21,0
+ 437 0154 8D2D      		mov r24,r13
+ 438 0156 0E94 0000 		call sendto
+ 439 015a 892B      		or r24,r25
+ 440 015c 01F4      		brne .L18
+ 141:../freeRTOS750/lib_inet/ntp.c **** 	{
+ 142:../freeRTOS750/lib_inet/ntp.c **** 		xSerialPrint_P(PSTR("\r\nNTP: Fatal Error."));
+ 442               	.LM30:
+ 443 015e 80E0      		ldi r24,lo8(__c.2938)
+ 444 0160 90E0      		ldi r25,hi8(__c.2938)
+ 445 0162 00C0      		rjmp .L35
+ 446               	.L18:
+ 143:../freeRTOS750/lib_inet/ntp.c **** 		return;
+ 144:../freeRTOS750/lib_inet/ntp.c **** 	}
+ 145:../freeRTOS750/lib_inet/ntp.c **** 	xSerialPrint_P(PSTR("\r\nsent NTP_REQUEST"));
+ 448               	.LM31:
+ 449 0164 80E0      		ldi r24,lo8(__c.2940)
+ 450 0166 90E0      		ldi r25,hi8(__c.2940)
+ 451               	.L35:
+ 452 0168 0E94 0000 		call xSerialPrint_P
+ 453 016c 00C0      		rjmp .L20
+ 454               	.L23:
+ 455               	.LBE10:
+ 456               	.LBE9:
+ 111:../freeRTOS750/lib_inet/ntp.c **** 		if((length = getSn_RX_RSR(s)) > 0)		// Has NTP socket received a packet?
+ 458               	.LM32:
+ 459 016e 8D2D      		mov r24,r13
+ 460 0170 0E94 0000 		call getSn_RX_RSR
+ 461 0174 0097      		sbiw r24,0
+ 462 0176 01F4      		brne .+2
+ 463 0178 00C0      		rjmp .L30
+ 464               	.LBB11:
+ 465               	.LBB12:
+ 146:../freeRTOS750/lib_inet/ntp.c **** }
+ 147:../freeRTOS750/lib_inet/ntp.c **** 
+ 148:../freeRTOS750/lib_inet/ntp.c **** //----------------------------------------------------------------------------
+ 149:../freeRTOS750/lib_inet/ntp.c **** /**
+ 150:../freeRTOS750/lib_inet/ntp.c ****  * Process the received NTP packet, and update the system timer.
+ 151:../freeRTOS750/lib_inet/ntp.c ****  */
+ 152:../freeRTOS750/lib_inet/ntp.c **** static uint8_t process_NTP (
+ 153:../freeRTOS750/lib_inet/ntp.c **** 	SOCKET s, 	/**< socket number */
+ 154:../freeRTOS750/lib_inet/ntp.c **** 	uint16_t length	/**< a size data to receive. */
+ 155:../freeRTOS750/lib_inet/ntp.c **** 	)
+ 156:../freeRTOS750/lib_inet/ntp.c **** {
+ 157:../freeRTOS750/lib_inet/ntp.c **** 
+ 158:../freeRTOS750/lib_inet/ntp.c **** 	un_l2cval svr_addr;
+ 159:../freeRTOS750/lib_inet/ntp.c **** 	uint16_t  svr_port;
+ 160:../freeRTOS750/lib_inet/ntp.c **** 
+ 161:../freeRTOS750/lib_inet/ntp.c **** 
+ 162:../freeRTOS750/lib_inet/ntp.c **** 
+ 163:../freeRTOS750/lib_inet/ntp.c **** 	if ( recvfrom(s, (uint8_t *)pNTPMSG, length, svr_addr.cVal, &svr_port) )
+ 467               	.LM33:
+ 468 017a 6091 0000 		lds r22,pNTPMSG
+ 469 017e 7091 0000 		lds r23,pNTPMSG+1
+ 470 0182 8E01      		movw r16,r28
+ 471 0184 075F      		subi r16,-9
+ 472 0186 1F4F      		sbci r17,-1
+ 473 0188 9E01      		movw r18,r28
+ 474 018a 2F5F      		subi r18,-1
+ 475 018c 3F4F      		sbci r19,-1
+ 476 018e AC01      		movw r20,r24
+ 477 0190 8D2D      		mov r24,r13
+ 478 0192 0E94 0000 		call recvfrom
+ 479 0196 892B      		or r24,r25
+ 480 0198 01F0      		breq .L17
+ 164:../freeRTOS750/lib_inet/ntp.c **** 	{
+ 165:../freeRTOS750/lib_inet/ntp.c **** 		if(pNTPMSG->transmit_timestamp_sec != 0)
+ 482               	.LM34:
+ 483 019a E091 0000 		lds r30,pNTPMSG
+ 484 019e F091 0000 		lds r31,pNTPMSG+1
+ 485 01a2 60A5      		ldd r22,Z+40
+ 486 01a4 71A5      		ldd r23,Z+41
+ 487 01a6 82A5      		ldd r24,Z+42
+ 488 01a8 93A5      		ldd r25,Z+43
+ 489 01aa 6115      		cp r22,__zero_reg__
+ 490 01ac 7105      		cpc r23,__zero_reg__
+ 491 01ae 8105      		cpc r24,__zero_reg__
+ 492 01b0 9105      		cpc r25,__zero_reg__
+ 493 01b2 01F0      		breq .L17
+ 166:../freeRTOS750/lib_inet/ntp.c **** 		{
+ 167:../freeRTOS750/lib_inet/ntp.c **** 			set_system_time( reference_timestamp_sec = (ntohl(pNTPMSG->transmit_timestamp_sec) - NTP_OFFSET)
+ 495               	.LM35:
+ 496 01b4 0E94 0000 		call ntohl
+ 497 01b8 725C      		subi r23,-62
+ 498 01ba 8741      		sbci r24,23
+ 499 01bc 9C4B      		sbci r25,-68
+ 500 01be 6093 0000 		sts reference_timestamp_sec,r22
+ 501 01c2 7093 0000 		sts reference_timestamp_sec+1,r23
+ 502 01c6 8093 0000 		sts reference_timestamp_sec+2,r24
+ 503 01ca 9093 0000 		sts reference_timestamp_sec+3,r25
+ 504 01ce 0E94 0000 		call set_system_time
+ 168:../freeRTOS750/lib_inet/ntp.c **** 			xSerialPrintf_P(PSTR("\r\nNTP message received... 0x%.8x \r\n"), reference_timestamp_sec );
+ 506               	.LM36:
+ 507 01d2 8091 0000 		lds r24,reference_timestamp_sec+3
+ 508 01d6 8F93      		push r24
+ 509 01d8 8091 0000 		lds r24,reference_timestamp_sec+2
+ 510 01dc 8F93      		push r24
+ 511 01de 8091 0000 		lds r24,reference_timestamp_sec+1
+ 512 01e2 8F93      		push r24
+ 513 01e4 8091 0000 		lds r24,reference_timestamp_sec
+ 514 01e8 8F93      		push r24
+ 515 01ea 80E0      		ldi r24,lo8(__c.2948)
+ 516 01ec 90E0      		ldi r25,hi8(__c.2948)
+ 517 01ee 9F93      		push r25
+ 518 01f0 8F93      		push r24
+ 519 01f2 0E94 0000 		call xSerialPrintf_P
+ 520 01f6 0F90      		pop __tmp_reg__
+ 521 01f8 0F90      		pop __tmp_reg__
+ 522 01fa 0F90      		pop __tmp_reg__
+ 523 01fc 0F90      		pop __tmp_reg__
+ 524 01fe 0F90      		pop __tmp_reg__
+ 525 0200 0F90      		pop __tmp_reg__
+ 526 0202 00C0      		rjmp .L17
+ 527               	.L20:
+ 528               	.LBE12:
+ 529               	.LBE11:
+ 108:../freeRTOS750/lib_inet/ntp.c **** 	while( xTaskGetTickCount() < (xInitialTick + ( NTP_TIMEOUT / portTICK_RATE_MS )) )	// as long as t
+ 531               	.LM37:
+ 532 0204 FFEF      		ldi r31,-1
+ 533 0206 EF1A      		sub r14,r31
+ 534 0208 FF0A      		sbc r15,r31
+ 535               	.L30:
+ 536 020a 0E94 0000 		call xTaskGetTickCount
+ 537 020e 8E15      		cp r24,r14
+ 538 0210 9F05      		cpc r25,r15
+ 539 0212 00F4      		brsh .+2
+ 540 0214 00C0      		rjmp .L23
+ 541               	.L17:
+ 542               	/* epilogue start */
+ 118:../freeRTOS750/lib_inet/ntp.c **** }
+ 544               	.LM38:
+ 545 0216 2A96      		adiw r28,10
+ 546 0218 0FB6      		in __tmp_reg__,__SREG__
+ 547 021a F894      		cli
+ 548 021c DEBF      		out __SP_H__,r29
+ 549 021e 0FBE      		out __SREG__,__tmp_reg__
+ 550 0220 CDBF      		out __SP_L__,r28
+ 551 0222 DF91      		pop r29
+ 552 0224 CF91      		pop r28
+ 553 0226 1F91      		pop r17
+ 554 0228 0F91      		pop r16
+ 555 022a FF90      		pop r15
+ 556 022c EF90      		pop r14
+ 557 022e DF90      		pop r13
+ 558 0230 0895      		ret
+ 571               	.Lscope4:
+ 573               		.stabd	78,0,0
+ 574               		.section	.progmem.data,"a",@progbits
+ 577               	__c.2914:
+ 578 0000 0D0A 4E54 		.string	"\r\nNTP socket: %d,"
+ 578      5020 736F 
+ 578      636B 6574 
+ 578      3A20 2564 
+ 578      2C00 
+ 581               	__c.2916:
+ 582 0012 2066 6169 		.string	" fail..!\r\n"
+ 582      6C2E 2E21 
+ 582      0D0A 00
+ 585               	__c.2918:
+ 586 001d 206F 6B2E 		.string	" ok..!\r\n"
+ 586      2E21 0D0A 
+ 586      00
+ 587               		.local	pNTPMSG
+ 588               		.comm	pNTPMSG,2,1
+ 589               		.local	NTPC_SOCK
+ 590               		.comm	NTPC_SOCK,1,1
+ 591               		.local	reference_timestamp_sec
+ 592               		.comm	reference_timestamp_sec,4,1
+ 595               	__c.2938:
+ 596 0026 0D0A 4E54 		.string	"\r\nNTP: Fatal Error."
+ 596      503A 2046 
+ 596      6174 616C 
+ 596      2045 7272 
+ 596      6F72 2E00 
+ 599               	__c.2940:
+ 600 003a 0D0A 7365 		.string	"\r\nsent NTP_REQUEST"
+ 600      6E74 204E 
+ 600      5450 5F52 
+ 600      4551 5545 
+ 600      5354 00
+ 603               	__c.2948:
+ 604 004d 0D0A 4E54 		.string	"\r\nNTP message received... 0x%.8x \r\n"
+ 604      5020 6D65 
+ 604      7373 6167 
+ 604      6520 7265 
+ 604      6365 6976 
+ 608               		.text
+ 610               	.Letext0:
+ 611               		.ident	"GCC: (GNU) 4.7.2"
+ 612               	.global __do_copy_data
+ 613               	.global __do_clear_bss
+DEFINED SYMBOLS
+                            *ABS*:00000000 ntp.c
+     /tmp/cc3lBi8I.s:2      *ABS*:0000003e __SP_H__
+     /tmp/cc3lBi8I.s:3      *ABS*:0000003d __SP_L__
+     /tmp/cc3lBi8I.s:4      *ABS*:0000003f __SREG__
+     /tmp/cc3lBi8I.s:5      *ABS*:00000000 __tmp_reg__
+     /tmp/cc3lBi8I.s:6      *ABS*:00000001 __zero_reg__
+     /tmp/cc3lBi8I.s:176    .text:00000000 init_NTP
+     /tmp/cc3lBi8I.s:577    .progmem.data:00000000 __c.2914
+     /tmp/cc3lBi8I.s:581    .progmem.data:00000012 __c.2916
+     /tmp/cc3lBi8I.s:585    .progmem.data:0000001d __c.2918
+                             .bss:00000000 pNTPMSG
+     /tmp/cc3lBi8I.s:588    .bss:00000002 NTPC_SOCK
+     /tmp/cc3lBi8I.s:281    .text:00000088 get_NTP_socket
+     /tmp/cc3lBi8I.s:301    .text:0000008e get_NTP_reference_time
+     /tmp/cc3lBi8I.s:590    .bss:00000003 reference_timestamp_sec
+     /tmp/cc3lBi8I.s:331    .text:000000a0 check_NTP
+     /tmp/cc3lBi8I.s:595    .progmem.data:00000026 __c.2938
+     /tmp/cc3lBi8I.s:599    .progmem.data:0000003a __c.2940
+     /tmp/cc3lBi8I.s:603    .progmem.data:0000004d __c.2948
+
+UNDEFINED SYMBOLS
+getSn_SR
+getSocket
+xSerialPrintf_P
+socket
+xSerialPrint_P
+pvPortMalloc
+xTaskGetTickCount
+htonl
+time
+inet_addr
+sendto
+getSn_RX_RSR
+recvfrom
+ntohl
+set_system_time
+__do_copy_data
+__do_clear_bss

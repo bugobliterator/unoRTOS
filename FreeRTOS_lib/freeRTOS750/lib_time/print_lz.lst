@@ -1,0 +1,108 @@
+   1               		.file	"print_lz.c"
+   2               	__SP_H__ = 0x3e
+   3               	__SP_L__ = 0x3d
+   4               	__SREG__ = 0x3f
+   5               	__tmp_reg__ = 0
+   6               	__zero_reg__ = 1
+   9               		.text
+  10               	.Ltext0:
+  40               	.global	__print_lz
+  42               	__print_lz:
+  43               		.stabd	46,0,0
+   1:../freeRTOS750/lib_time/print_lz.c **** /*
+   2:../freeRTOS750/lib_time/print_lz.c ****  * (C)2012 Michael Duane Rice All rights reserved.
+   3:../freeRTOS750/lib_time/print_lz.c ****  *
+   4:../freeRTOS750/lib_time/print_lz.c ****  * Redistribution and use in source and binary forms, with or without
+   5:../freeRTOS750/lib_time/print_lz.c ****  * modification, are permitted provided that the following conditions are
+   6:../freeRTOS750/lib_time/print_lz.c ****  * met:
+   7:../freeRTOS750/lib_time/print_lz.c ****  *
+   8:../freeRTOS750/lib_time/print_lz.c ****  * Redistributions of source code must retain the above copyright notice, this
+   9:../freeRTOS750/lib_time/print_lz.c ****  * list of conditions and the following disclaimer. Redistributions in binary
+  10:../freeRTOS750/lib_time/print_lz.c ****  * form must reproduce the above copyright notice, this list of conditions
+  11:../freeRTOS750/lib_time/print_lz.c ****  * and the following disclaimer in the documentation and/or other materials
+  12:../freeRTOS750/lib_time/print_lz.c ****  * provided with the distribution. Neither the name of the copyright holders
+  13:../freeRTOS750/lib_time/print_lz.c ****  * nor the names of contributors may be used to endorse or promote products
+  14:../freeRTOS750/lib_time/print_lz.c ****  * derived from this software without specific prior written permission.
+  15:../freeRTOS750/lib_time/print_lz.c ****  *
+  16:../freeRTOS750/lib_time/print_lz.c ****  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  17:../freeRTOS750/lib_time/print_lz.c ****  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  18:../freeRTOS750/lib_time/print_lz.c ****  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  19:../freeRTOS750/lib_time/print_lz.c ****  * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+  20:../freeRTOS750/lib_time/print_lz.c ****  * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+  21:../freeRTOS750/lib_time/print_lz.c ****  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+  22:../freeRTOS750/lib_time/print_lz.c ****  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+  23:../freeRTOS750/lib_time/print_lz.c ****  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+  24:../freeRTOS750/lib_time/print_lz.c ****  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+  25:../freeRTOS750/lib_time/print_lz.c ****  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+  26:../freeRTOS750/lib_time/print_lz.c ****  * POSSIBILITY OF SUCH DAMAGE.
+  27:../freeRTOS750/lib_time/print_lz.c ****  */
+  28:../freeRTOS750/lib_time/print_lz.c **** 
+  29:../freeRTOS750/lib_time/print_lz.c **** /* $Id$ */
+  30:../freeRTOS750/lib_time/print_lz.c **** 
+  31:../freeRTOS750/lib_time/print_lz.c **** /* print 2 digit integer with leading zero: auxillary function for isotime and asctime */
+  32:../freeRTOS750/lib_time/print_lz.c **** 
+  33:../freeRTOS750/lib_time/print_lz.c **** #include <stdlib.h>
+  34:../freeRTOS750/lib_time/print_lz.c **** 
+  35:../freeRTOS750/lib_time/print_lz.c **** void
+  36:../freeRTOS750/lib_time/print_lz.c **** __print_lz(int i, char *buffer, char s)
+  37:../freeRTOS750/lib_time/print_lz.c **** {
+  45               	.LM0:
+  46               	.LFBB1:
+  47 0000 0F93      		push r16
+  48 0002 1F93      		push r17
+  49 0004 CF93      		push r28
+  50 0006 DF93      		push r29
+  51 0008 1F92      		push __zero_reg__
+  52 000a CDB7      		in r28,__SP_L__
+  53 000c DEB7      		in r29,__SP_H__
+  54               	/* prologue: function */
+  55               	/* frame size = 1 */
+  56               	/* stack size = 5 */
+  57               	.L__stack_usage = 5
+  58 000e 8B01      		movw r16,r22
+  38:../freeRTOS750/lib_time/print_lz.c ****     div_t result;
+  39:../freeRTOS750/lib_time/print_lz.c **** 
+  40:../freeRTOS750/lib_time/print_lz.c ****     result = div(i, 10);
+  60               	.LM1:
+  61 0010 6AE0      		ldi r22,lo8(10)
+  62 0012 70E0      		ldi r23,0
+  63 0014 4983      		std Y+1,r20
+  64 0016 0E94 0000 		call __divmodhi4
+  41:../freeRTOS750/lib_time/print_lz.c **** 
+  42:../freeRTOS750/lib_time/print_lz.c **** 	*buffer++ = result.quot + '0';
+  66               	.LM2:
+  67 001a 605D      		subi r22,lo8(-(48))
+  68 001c F801      		movw r30,r16
+  69 001e 6083      		st Z,r22
+  43:../freeRTOS750/lib_time/print_lz.c **** 	*buffer++ = result.rem + '0';
+  71               	.LM3:
+  72 0020 805D      		subi r24,lo8(-(48))
+  73 0022 8183      		std Z+1,r24
+  44:../freeRTOS750/lib_time/print_lz.c **** 	*buffer = s;
+  75               	.LM4:
+  76 0024 4981      		ldd r20,Y+1
+  77 0026 4283      		std Z+2,r20
+  78               	/* epilogue start */
+  45:../freeRTOS750/lib_time/print_lz.c **** }
+  80               	.LM5:
+  81 0028 0F90      		pop __tmp_reg__
+  82 002a DF91      		pop r29
+  83 002c CF91      		pop r28
+  84 002e 1F91      		pop r17
+  85 0030 0F91      		pop r16
+  86 0032 0895      		ret
+  88               	.Lscope1:
+  90               		.stabd	78,0,0
+  92               	.Letext0:
+  93               		.ident	"GCC: (GNU) 4.7.2"
+DEFINED SYMBOLS
+                            *ABS*:00000000 print_lz.c
+     /tmp/ccoMtcgR.s:2      *ABS*:0000003e __SP_H__
+     /tmp/ccoMtcgR.s:3      *ABS*:0000003d __SP_L__
+     /tmp/ccoMtcgR.s:4      *ABS*:0000003f __SREG__
+     /tmp/ccoMtcgR.s:5      *ABS*:00000000 __tmp_reg__
+     /tmp/ccoMtcgR.s:6      *ABS*:00000001 __zero_reg__
+     /tmp/ccoMtcgR.s:42     .text:00000000 __print_lz
+
+UNDEFINED SYMBOLS
+__divmodhi4

@@ -1,0 +1,265 @@
+   1               		.file	"equation_of_time.c"
+   2               	__SP_H__ = 0x3e
+   3               	__SP_L__ = 0x3d
+   4               	__SREG__ = 0x3f
+   5               	__tmp_reg__ = 0
+   6               	__zero_reg__ = 1
+   9               		.text
+  10               	.Ltext0:
+  80               	.global	__floatsisf
+  81               	.global	__divsf3
+  82               	.global	__mulsf3
+  83               	.global	__addsf3
+  84               	.global	__fixsfsi
+  87               	.global	equation_of_time
+  89               	equation_of_time:
+  90               		.stabd	46,0,0
+   1:../freeRTOS750/lib_time/equation_of_time.c **** /*
+   2:../freeRTOS750/lib_time/equation_of_time.c ****  * (C)2012 Michael Duane Rice All rights reserved.
+   3:../freeRTOS750/lib_time/equation_of_time.c ****  *
+   4:../freeRTOS750/lib_time/equation_of_time.c ****  * Redistribution and use in source and binary forms, with or without
+   5:../freeRTOS750/lib_time/equation_of_time.c ****  * modification, are permitted provided that the following conditions are
+   6:../freeRTOS750/lib_time/equation_of_time.c ****  * met:
+   7:../freeRTOS750/lib_time/equation_of_time.c ****  *
+   8:../freeRTOS750/lib_time/equation_of_time.c ****  * Redistributions of source code must retain the above copyright notice, this
+   9:../freeRTOS750/lib_time/equation_of_time.c ****  * list of conditions and the following disclaimer. Redistributions in binary
+  10:../freeRTOS750/lib_time/equation_of_time.c ****  * form must reproduce the above copyright notice, this list of conditions
+  11:../freeRTOS750/lib_time/equation_of_time.c ****  * and the following disclaimer in the documentation and/or other materials
+  12:../freeRTOS750/lib_time/equation_of_time.c ****  * provided with the distribution. Neither the name of the copyright holders
+  13:../freeRTOS750/lib_time/equation_of_time.c ****  * nor the names of contributors may be used to endorse or promote products
+  14:../freeRTOS750/lib_time/equation_of_time.c ****  * derived from this software without specific prior written permission.
+  15:../freeRTOS750/lib_time/equation_of_time.c ****  *
+  16:../freeRTOS750/lib_time/equation_of_time.c ****  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  17:../freeRTOS750/lib_time/equation_of_time.c ****  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  18:../freeRTOS750/lib_time/equation_of_time.c ****  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  19:../freeRTOS750/lib_time/equation_of_time.c ****  * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+  20:../freeRTOS750/lib_time/equation_of_time.c ****  * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+  21:../freeRTOS750/lib_time/equation_of_time.c ****  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+  22:../freeRTOS750/lib_time/equation_of_time.c ****  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+  23:../freeRTOS750/lib_time/equation_of_time.c ****  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+  24:../freeRTOS750/lib_time/equation_of_time.c ****  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+  25:../freeRTOS750/lib_time/equation_of_time.c ****  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+  26:../freeRTOS750/lib_time/equation_of_time.c ****  * POSSIBILITY OF SUCH DAMAGE.
+  27:../freeRTOS750/lib_time/equation_of_time.c ****  */
+  28:../freeRTOS750/lib_time/equation_of_time.c **** 
+  29:../freeRTOS750/lib_time/equation_of_time.c **** /* $Id$ */
+  30:../freeRTOS750/lib_time/equation_of_time.c **** 
+  31:../freeRTOS750/lib_time/equation_of_time.c **** /*
+  32:../freeRTOS750/lib_time/equation_of_time.c ****     The so called Equation of Time.
+  33:../freeRTOS750/lib_time/equation_of_time.c **** 
+  34:../freeRTOS750/lib_time/equation_of_time.c ****     The eccentricity of Earths orbit contributes about 7.7 minutes of variation to the result. It
+  35:../freeRTOS750/lib_time/equation_of_time.c ****     has a period of 1 anomalous year, with zeroes at perihelion and aphelion.
+  36:../freeRTOS750/lib_time/equation_of_time.c **** 
+  37:../freeRTOS750/lib_time/equation_of_time.c ****     The tilt of Earths rotational axis (obliquity) contributes about 9.9 minutes of variation. It
+  38:../freeRTOS750/lib_time/equation_of_time.c ****     has a period of 1/2 tropical year, with zeroes at solstices and equinoxes. The time of Earths
+  39:../freeRTOS750/lib_time/equation_of_time.c ****     arrival at these events is influenced by the eccentricity, which causes it to progress along it
+  40:../freeRTOS750/lib_time/equation_of_time.c ****     orbital path faster as it approaches perihelion, imposing a 'modulation' on the tropical phase.
+  41:../freeRTOS750/lib_time/equation_of_time.c **** 
+  42:../freeRTOS750/lib_time/equation_of_time.c ****     The algorithm employed computes the orbital position with respect to perihelion, deriving
+  43:../freeRTOS750/lib_time/equation_of_time.c ****     from that a 'velocity correction factor'. The orbital position with respect to the winter solst
+  44:../freeRTOS750/lib_time/equation_of_time.c ****     is then computed, as modulated by that factor. The individual contributions of the obliquity an
+  45:../freeRTOS750/lib_time/equation_of_time.c ****     eccentricity components are then summed, and returned as an integer value in seconds.
+  46:../freeRTOS750/lib_time/equation_of_time.c **** 
+  47:../freeRTOS750/lib_time/equation_of_time.c **** */
+  48:../freeRTOS750/lib_time/equation_of_time.c **** 
+  49:../freeRTOS750/lib_time/equation_of_time.c **** #include <time.h>
+  50:../freeRTOS750/lib_time/equation_of_time.c **** #include <math.h>
+  51:../freeRTOS750/lib_time/equation_of_time.c **** #include "ephemera_common.h"
+  52:../freeRTOS750/lib_time/equation_of_time.c **** 
+  53:../freeRTOS750/lib_time/equation_of_time.c **** int
+  54:../freeRTOS750/lib_time/equation_of_time.c **** equation_of_time(const time_t * timer)
+  55:../freeRTOS750/lib_time/equation_of_time.c **** {
+  92               	.LM0:
+  93               	.LFBB1:
+  94 0000 4F92      		push r4
+  95 0002 5F92      		push r5
+  96 0004 6F92      		push r6
+  97 0006 7F92      		push r7
+  98 0008 8F92      		push r8
+  99 000a 9F92      		push r9
+ 100 000c AF92      		push r10
+ 101 000e BF92      		push r11
+ 102 0010 CF92      		push r12
+ 103 0012 DF92      		push r13
+ 104 0014 EF92      		push r14
+ 105 0016 FF92      		push r15
+ 106               	/* prologue: function */
+ 107               	/* frame size = 0 */
+ 108               	/* stack size = 12 */
+ 109               	.L__stack_usage = 12
+  56:../freeRTOS750/lib_time/equation_of_time.c ****     int32_t         s, p;
+  57:../freeRTOS750/lib_time/equation_of_time.c ****     double          pf, sf, dV;
+  58:../freeRTOS750/lib_time/equation_of_time.c **** 
+  59:../freeRTOS750/lib_time/equation_of_time.c ****     /* compute orbital position relative to perihelion */
+  60:../freeRTOS750/lib_time/equation_of_time.c ****     p = *timer % ANOM_YEAR;
+ 111               	.LM1:
+ 112 0018 FC01      		movw r30,r24
+ 113 001a 4080      		ld r4,Z
+ 114 001c 5180      		ldd r5,Z+1
+ 115 001e 6280      		ldd r6,Z+2
+ 116 0020 7380      		ldd r7,Z+3
+ 117 0022 C301      		movw r24,r6
+ 118 0024 B201      		movw r22,r4
+ 119 0026 21E2      		ldi r18,lo8(33)
+ 120 0028 3BE8      		ldi r19,lo8(-117)
+ 121 002a 41EE      		ldi r20,lo8(-31)
+ 122 002c 51E0      		ldi r21,lo8(1)
+ 123 002e 0E94 0000 		call __udivmodsi4
+  61:../freeRTOS750/lib_time/equation_of_time.c ****     p += PERIHELION;
+ 125               	.LM2:
+ 126 0032 6055      		subi r22,80
+ 127 0034 7642      		sbci r23,38
+ 128 0036 8242      		sbci r24,34
+ 129 0038 9E4F      		sbci r25,-2
+  62:../freeRTOS750/lib_time/equation_of_time.c ****     pf = p;
+ 131               	.LM3:
+ 132 003a 0E94 0000 		call __floatsisf
+  63:../freeRTOS750/lib_time/equation_of_time.c ****     pf /= ANOM_CYCLE;
+ 134               	.LM4:
+ 135 003e 21EB      		ldi r18,lo8(-79)
+ 136 0040 37E4      		ldi r19,lo8(71)
+ 137 0042 49E9      		ldi r20,lo8(-103)
+ 138 0044 5AE4      		ldi r21,lo8(74)
+ 139 0046 0E94 0000 		call __divsf3
+  64:../freeRTOS750/lib_time/equation_of_time.c ****     pf = sin(pf);
+ 141               	.LM5:
+ 142 004a 0E94 0000 		call sin
+ 143 004e 4B01      		movw r8,r22
+ 144 0050 5C01      		movw r10,r24
+  65:../freeRTOS750/lib_time/equation_of_time.c **** 
+  66:../freeRTOS750/lib_time/equation_of_time.c ****     /* Derive a velocity correction factor from the perihelion angle */
+  67:../freeRTOS750/lib_time/equation_of_time.c ****     dV = pf * DELTA_V;
+  68:../freeRTOS750/lib_time/equation_of_time.c **** 
+  69:../freeRTOS750/lib_time/equation_of_time.c ****     /* compute approximate position relative to solstice */
+  70:../freeRTOS750/lib_time/equation_of_time.c ****     s = *timer % TROP_YEAR;
+ 146               	.LM6:
+ 147 0052 C301      		movw r24,r6
+ 148 0054 B201      		movw r22,r4
+ 149 0056 2DE3      		ldi r18,lo8(61)
+ 150 0058 35E8      		ldi r19,lo8(-123)
+ 151 005a 41EE      		ldi r20,lo8(-31)
+ 152 005c 51E0      		ldi r21,lo8(1)
+ 153 005e 0E94 0000 		call __udivmodsi4
+  71:../freeRTOS750/lib_time/equation_of_time.c ****     s += SOLSTICE;
+ 155               	.LM7:
+ 156 0062 605C      		subi r22,-64
+ 157 0064 7D43      		sbci r23,61
+ 158 0066 834F      		sbci r24,-13
+ 159 0068 9F4F      		sbci r25,-1
+  72:../freeRTOS750/lib_time/equation_of_time.c ****     s *= 2;
+ 161               	.LM8:
+ 162 006a 660F      		lsl r22
+ 163 006c 771F      		rol r23
+ 164 006e 881F      		rol r24
+ 165 0070 991F      		rol r25
+  73:../freeRTOS750/lib_time/equation_of_time.c ****     sf = s;
+ 167               	.LM9:
+ 168 0072 0E94 0000 		call __floatsisf
+  74:../freeRTOS750/lib_time/equation_of_time.c ****     sf /= TROP_CYCLE;
+ 170               	.LM10:
+ 171 0076 21ED      		ldi r18,lo8(-47)
+ 172 0078 35E4      		ldi r19,lo8(69)
+ 173 007a 49E9      		ldi r20,lo8(-103)
+ 174 007c 5AE4      		ldi r21,lo8(74)
+ 175 007e 0E94 0000 		call __divsf3
+ 176 0082 3B01      		movw r6,r22
+ 177 0084 6C01      		movw r12,r24
+  67:../freeRTOS750/lib_time/equation_of_time.c ****     dV = pf * DELTA_V;
+ 179               	.LM11:
+ 180 0086 2FED      		ldi r18,lo8(-33)
+ 181 0088 33EE      		ldi r19,lo8(-29)
+ 182 008a 48E0      		ldi r20,lo8(8)
+ 183 008c 5DE3      		ldi r21,lo8(61)
+ 184 008e C501      		movw r24,r10
+ 185 0090 B401      		movw r22,r8
+ 186 0092 0E94 0000 		call __mulsf3
+ 187 0096 9B01      		movw r18,r22
+ 188 0098 AC01      		movw r20,r24
+  75:../freeRTOS750/lib_time/equation_of_time.c **** 
+  76:../freeRTOS750/lib_time/equation_of_time.c ****     /* modulate to derive actual position */
+  77:../freeRTOS750/lib_time/equation_of_time.c ****     sf += dV;
+ 190               	.LM12:
+ 191 009a B301      		movw r22,r6
+ 192 009c 8C2D      		mov r24,r12
+ 193 009e 9D2D      		mov r25,r13
+ 194 00a0 0E94 0000 		call __addsf3
+  78:../freeRTOS750/lib_time/equation_of_time.c ****     sf = sin(sf);
+ 196               	.LM13:
+ 197 00a4 0E94 0000 		call sin
+ 198 00a8 2B01      		movw r4,r22
+ 199 00aa 3C01      		movw r6,r24
+  79:../freeRTOS750/lib_time/equation_of_time.c **** 
+  80:../freeRTOS750/lib_time/equation_of_time.c ****     /* compute contributions */
+  81:../freeRTOS750/lib_time/equation_of_time.c ****     sf *= 592.2;
+  82:../freeRTOS750/lib_time/equation_of_time.c ****     pf *= 459.6;
+ 201               	.LM14:
+ 202 00ac 2DEC      		ldi r18,lo8(-51)
+ 203 00ae 3CEC      		ldi r19,lo8(-52)
+ 204 00b0 45EE      		ldi r20,lo8(-27)
+ 205 00b2 53E4      		ldi r21,lo8(67)
+ 206 00b4 C501      		movw r24,r10
+ 207 00b6 B401      		movw r22,r8
+ 208 00b8 0E94 0000 		call __mulsf3
+ 209 00bc 6B01      		movw r12,r22
+ 210 00be 7C01      		movw r14,r24
+  81:../freeRTOS750/lib_time/equation_of_time.c ****     sf *= 592.2;
+ 212               	.LM15:
+ 213 00c0 2DEC      		ldi r18,lo8(-51)
+ 214 00c2 3CE0      		ldi r19,lo8(12)
+ 215 00c4 44E1      		ldi r20,lo8(20)
+ 216 00c6 54E4      		ldi r21,lo8(68)
+ 217 00c8 C301      		movw r24,r6
+ 218 00ca B201      		movw r22,r4
+ 219 00cc 0E94 0000 		call __mulsf3
+ 220 00d0 9B01      		movw r18,r22
+ 221 00d2 AC01      		movw r20,r24
+  83:../freeRTOS750/lib_time/equation_of_time.c ****     s = pf + sf;
+ 223               	.LM16:
+ 224 00d4 C701      		movw r24,r14
+ 225 00d6 B601      		movw r22,r12
+ 226 00d8 0E94 0000 		call __addsf3
+ 227 00dc 0E94 0000 		call __fixsfsi
+  84:../freeRTOS750/lib_time/equation_of_time.c ****     return -s;
+ 229               	.LM17:
+ 230 00e0 7195      		neg r23
+ 231 00e2 6195      		neg r22
+ 232 00e4 7109      		sbc r23,__zero_reg__
+  85:../freeRTOS750/lib_time/equation_of_time.c **** 
+  86:../freeRTOS750/lib_time/equation_of_time.c **** }
+ 234               	.LM18:
+ 235 00e6 CB01      		movw r24,r22
+ 236               	/* epilogue start */
+ 237 00e8 FF90      		pop r15
+ 238 00ea EF90      		pop r14
+ 239 00ec DF90      		pop r13
+ 240 00ee CF90      		pop r12
+ 241 00f0 BF90      		pop r11
+ 242 00f2 AF90      		pop r10
+ 243 00f4 9F90      		pop r9
+ 244 00f6 8F90      		pop r8
+ 245 00f8 7F90      		pop r7
+ 246 00fa 6F90      		pop r6
+ 247 00fc 5F90      		pop r5
+ 248 00fe 4F90      		pop r4
+ 249 0100 0895      		ret
+ 251               	.Lscope1:
+ 253               		.stabd	78,0,0
+ 255               	.Letext0:
+ 256               		.ident	"GCC: (GNU) 4.7.2"
+DEFINED SYMBOLS
+                            *ABS*:00000000 equation_of_time.c
+     /tmp/ccZ0EFxe.s:2      *ABS*:0000003e __SP_H__
+     /tmp/ccZ0EFxe.s:3      *ABS*:0000003d __SP_L__
+     /tmp/ccZ0EFxe.s:4      *ABS*:0000003f __SREG__
+     /tmp/ccZ0EFxe.s:5      *ABS*:00000000 __tmp_reg__
+     /tmp/ccZ0EFxe.s:6      *ABS*:00000001 __zero_reg__
+     /tmp/ccZ0EFxe.s:89     .text:00000000 equation_of_time
+
+UNDEFINED SYMBOLS
+__floatsisf
+__divsf3
+__mulsf3
+__addsf3
+__fixsfsi
+__udivmodsi4
+sin

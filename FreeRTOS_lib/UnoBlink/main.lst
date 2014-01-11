@@ -1,0 +1,499 @@
+   1               		.file	"main.c"
+   2               	__SP_H__ = 0x3e
+   3               	__SP_L__ = 0x3d
+   4               	__SREG__ = 0x3f
+   5               	__tmp_reg__ = 0
+   6               	__zero_reg__ = 1
+   9               		.text
+  10               	.Ltext0:
+ 139               	TaskBlinkRedLED:
+ 140               		.stabd	46,0,0
+   1:main.c        **** ////////////////////////////////////////////////////////
+   2:main.c        **** ////////////////////////////////////////////////////////
+   3:main.c        **** ////    main.c
+   4:main.c        **** ////////////////////////////////////////////////////////
+   5:main.c        **** ////////////////////////////////////////////////////////
+   6:main.c        **** 
+   7:main.c        **** #include <stdlib.h>
+   8:main.c        **** #include <stdbool.h>
+   9:main.c        **** #include <string.h>
+  10:main.c        **** 
+  11:main.c        **** #include <avr/io.h>
+  12:main.c        **** #include <avr/interrupt.h>
+  13:main.c        **** 
+  14:main.c        **** /* Scheduler include files. */
+  15:main.c        **** #include <FreeRTOS.h>
+  16:main.c        **** #include <task.h>
+  17:main.c        **** #include <queue.h>
+  18:main.c        **** #include <semphr.h>
+  19:main.c        **** 
+  20:main.c        **** /* serial interface include file. */
+  21:main.c        **** #include <lib_serial.h>
+  22:main.c        **** 
+  23:main.c        **** /* LCD (Freetronics 16x2) interface include file. */
+  24:main.c        **** //#include <hd44780.h>
+  25:main.c        **** 
+  26:main.c        **** /*-----------------------------------------------------------*/
+  27:main.c        **** /* Optionally, create reference to the handle for the serial port. */
+  28:main.c        **** extern xComPortHandle xSerialPort;
+  29:main.c        **** 
+  30:main.c        **** static void TaskBlinkRedLED(void *pvParameters); // Main Arduino Mega 2560, Freetronics EtherMega (
+  31:main.c        **** 
+  32:main.c        **** static void TaskBlinkGreenLED(void *pvParameters); // Main Arduino Uno 328p (Green) LED Blink
+  33:main.c        **** /*-----------------------------------------------------------*/
+  34:main.c        **** 
+  35:main.c        **** /* Main program loop */
+  36:main.c        **** int main(void) __attribute__ ((OS_main));
+  37:main.c        **** 
+  38:main.c        **** int main(void)
+  39:main.c        **** {
+  40:main.c        ****     // turn on the serial port for debugging or for other USART reasons.
+  41:main.c        **** 	xSerialPort = xSerialPortInitMinimal( USART0, 115200, 1, 1); //  serial port: WantedBaud, TxQueueL
+  42:main.c        **** 
+  43:main.c        **** 	avrSerialxPrint_P(&xSerialPort, PSTR("\r\n\n\nHello World!\r\n")); // Ok, so we're alive...
+  44:main.c        **** 
+  45:main.c        ****     xTaskCreate(
+  46:main.c        **** 		TaskBlinkRedLED
+  47:main.c        **** 		,  (const signed portCHAR *)"RedLED" // Main Arduino Mega 2560, Freetronics EtherMega (Red) LED B
+  48:main.c        **** 		,  256				// Tested 9 free @ 208
+  49:main.c        **** 		,  NULL
+  50:main.c        **** 		,  3
+  51:main.c        **** 		,  NULL ); // */
+  52:main.c        **** 
+  53:main.c        ****     xTaskCreate(
+  54:main.c        **** 		TaskBlinkGreenLED
+  55:main.c        **** 		,  (const signed portCHAR *)"GreenLED" // Main Arduino Uno 328p (Green) LED Blink
+  56:main.c        **** 		,  256				// Tested 9 free @ 208
+  57:main.c        **** 		,  NULL
+  58:main.c        **** 		,  3
+  59:main.c        **** 		,  NULL ); // */
+  60:main.c        **** 
+  61:main.c        **** 
+  62:main.c        **** 	avrSerialxPrintf_P(&xSerialPort, PSTR("Free Heap Size: %u\r\n"), xPortGetFreeHeapSize() ); // need
+  63:main.c        **** 
+  64:main.c        **** 	vTaskStartScheduler();
+  65:main.c        **** 
+  66:main.c        **** 	avrSerialxPrint_P(&xSerialPort, PSTR("\r\n\n\nGoodbye... no space for idle task!\r\n")); // Doh, s
+  67:main.c        **** 
+  68:main.c        **** }
+  69:main.c        **** 
+  70:main.c        **** /*-----------------------------------------------------------*/
+  71:main.c        **** 
+  72:main.c        **** void vApplicationIdleHook( void )
+  73:main.c        **** {
+  74:main.c        **** 	vCoRoutineSchedule();
+  75:main.c        **** }
+  76:main.c        **** 
+  77:main.c        **** static void TaskBlinkRedLED(void *pvParameters) // Main Red LED Flash
+  78:main.c        **** {
+ 142               	.LM0:
+ 143               	.LFBB1:
+ 144 0000 CF93      		push r28
+ 145 0002 DF93      		push r29
+ 146 0004 00D0      		rcall .
+ 147 0006 CDB7      		in r28,__SP_L__
+ 148 0008 DEB7      		in r29,__SP_H__
+ 149               	/* prologue: function */
+ 150               	/* frame size = 2 */
+ 151               	/* stack size = 4 */
+ 152               	.L__stack_usage = 4
+  79:main.c        ****     (void) pvParameters;;
+  80:main.c        ****     portTickType xLastWakeTime;
+  81:main.c        **** 	/* The xLastWakeTime variable needs to be initialised with the current tick
+  82:main.c        **** 	count.  Note that this is the only time we access this variable.  From this
+  83:main.c        **** 	point on xLastWakeTime is managed automatically by the vTaskDelayUntil()
+  84:main.c        **** 	API function. */
+  85:main.c        **** 	xLastWakeTime = xTaskGetTickCount();
+ 154               	.LM1:
+ 155 000a 0E94 0000 		call xTaskGetTickCount
+ 156 000e 9A83      		std Y+2,r25
+ 157 0010 8983      		std Y+1,r24
+  86:main.c        **** 
+  87:main.c        **** //	int8_t i;
+  88:main.c        **** //	uint8_t j;
+  89:main.c        **** 
+  90:main.c        **** //	lcd_Init();
+  91:main.c        **** 
+  92:main.c        **** 	DDRB |= _BV(DDB7);
+ 159               	.LM2:
+ 160 0012 279A      		sbi 0x4,7
+ 161               	.L2:
+  93:main.c        **** 
+  94:main.c        ****     for(;;)
+  95:main.c        ****     {
+  96:main.c        **** 
+  97:main.c        ****     	PORTB |=  _BV(PORTB7);       // main (red IO_B7) LED on. EtherMega LED on
+ 163               	.LM3:
+ 164 0014 2F9A      		sbi 0x5,7
+  98:main.c        **** 		vTaskDelayUntil( &xLastWakeTime, ( 500 / portTICK_RATE_MS ) );
+ 166               	.LM4:
+ 167 0016 60E0      		ldi r22,0
+ 168 0018 70E0      		ldi r23,0
+ 169 001a CE01      		movw r24,r28
+ 170 001c 0196      		adiw r24,1
+ 171 001e 0E94 0000 		call vTaskDelayUntil
+  99:main.c        **** 
+ 100:main.c        **** //		lcd_Locate (0, 0);
+ 101:main.c        **** //		lcd_Printf_P(PSTR("HighWater @ %u"), uxTaskGetStackHighWaterMark(NULL));
+ 102:main.c        **** //		lcd_Cursor (1);
+ 103:main.c        **** 
+ 104:main.c        **** #if _USE_FUEL
+ 105:main.c        **** 		lcd_Locate (1, 0);
+ 106:main.c        **** 		lcd_PutFuel (--i, 0);
+ 107:main.c        **** 		if (i < 0) i = 6;
+ 108:main.c        **** #endif
+ 109:main.c        **** 
+ 110:main.c        **** #if _USE_BAR
+ 111:main.c        **** 		lcd_Locate (1, 2);
+ 112:main.c        **** 		lcd_PutBar (j++, 14, 2);
+ 113:main.c        **** #endif
+ 114:main.c        **** 
+ 115:main.c        **** 		PORTB &= ~_BV(PORTB7);       // main (red IO_B7) LED off. EtherMega LED off
+ 173               	.LM5:
+ 174 0022 2F98      		cbi 0x5,7
+ 116:main.c        **** 		vTaskDelayUntil( &xLastWakeTime, ( 500 / portTICK_RATE_MS ) );
+ 176               	.LM6:
+ 177 0024 60E0      		ldi r22,0
+ 178 0026 70E0      		ldi r23,0
+ 179 0028 CE01      		movw r24,r28
+ 180 002a 0196      		adiw r24,1
+ 181 002c 0E94 0000 		call vTaskDelayUntil
+ 182 0030 00C0      		rjmp .L2
+ 187               	.Lscope1:
+ 189               		.stabd	78,0,0
+ 193               	TaskBlinkGreenLED:
+ 194               		.stabd	46,0,0
+ 117:main.c        **** 
+ 118:main.c        **** //		xSerialxPrintf_P(&xSerialPort, PSTR("RedLED HighWater @ %u\r\n"), uxTaskGetStackHighWaterMark(N
+ 119:main.c        ****     }
+ 120:main.c        **** 
+ 121:main.c        **** }
+ 122:main.c        **** 
+ 123:main.c        **** /*-----------------------------------------------------------*/
+ 124:main.c        **** static void TaskBlinkGreenLED(void *pvParameters) // Main Green LED Flash
+ 125:main.c        **** {
+ 196               	.LM7:
+ 197               	.LFBB2:
+ 198 0032 CF93      		push r28
+ 199 0034 DF93      		push r29
+ 200 0036 00D0      		rcall .
+ 201 0038 CDB7      		in r28,__SP_L__
+ 202 003a DEB7      		in r29,__SP_H__
+ 203               	/* prologue: function */
+ 204               	/* frame size = 2 */
+ 205               	/* stack size = 4 */
+ 206               	.L__stack_usage = 4
+ 126:main.c        ****     (void) pvParameters;;
+ 127:main.c        ****     portTickType xLastWakeTime;
+ 128:main.c        **** 	/* The xLastWakeTime variable needs to be initialised with the current tick
+ 129:main.c        **** 	count.  Note that this is the only time we access this variable.  From this
+ 130:main.c        **** 	point on xLastWakeTime is managed automatically by the vTaskDelayUntil()
+ 131:main.c        **** 	API function. */
+ 132:main.c        **** 	xLastWakeTime = xTaskGetTickCount();
+ 208               	.LM8:
+ 209 003c 0E94 0000 		call xTaskGetTickCount
+ 210 0040 9A83      		std Y+2,r25
+ 211 0042 8983      		std Y+1,r24
+ 133:main.c        **** 
+ 134:main.c        **** 	DDRB |= _BV(DDB5);
+ 213               	.LM9:
+ 214 0044 259A      		sbi 0x4,5
+ 215               	.LBB2:
+ 135:main.c        **** 
+ 136:main.c        ****     while(1)
+ 137:main.c        ****     {
+ 138:main.c        ****     	PORTB |=  _BV(PORTB5);       // main (red PB5) LED on. Arduino LED on
+ 139:main.c        **** 		vTaskDelayUntil( &xLastWakeTime, ( 500 / portTICK_RATE_MS ) );
+ 140:main.c        **** 
+ 141:main.c        **** 		PORTB &= ~_BV(PORTB5);       // main (red PB5) LED off. Arduino LED off
+ 142:main.c        **** 		vTaskDelayUntil( &xLastWakeTime, ( 500 / portTICK_RATE_MS )  );
+ 143:main.c        **** 
+ 144:main.c        **** 		xSerialxPrintf_P(&xSerialPort, PSTR("Current Timestamp: %lu xTaskGetTickCount(): %u\r\n"), time(N
+ 217               	.LM10:
+ 218 0046 80E0      		ldi r24,lo8(__c.2227)
+ 219 0048 E82E      		mov r14,r24
+ 220 004a 80E0      		ldi r24,hi8(__c.2227)
+ 221 004c F82E      		mov r15,r24
+ 222 004e 00E0      		ldi r16,lo8(xSerialPort)
+ 223 0050 10E0      		ldi r17,hi8(xSerialPort)
+ 224               	.L4:
+ 138:main.c        ****     	PORTB |=  _BV(PORTB5);       // main (red PB5) LED on. Arduino LED on
+ 226               	.LM11:
+ 227 0052 2D9A      		sbi 0x5,5
+ 139:main.c        **** 		vTaskDelayUntil( &xLastWakeTime, ( 500 / portTICK_RATE_MS ) );
+ 229               	.LM12:
+ 230 0054 60E0      		ldi r22,0
+ 231 0056 70E0      		ldi r23,0
+ 232 0058 CE01      		movw r24,r28
+ 233 005a 0196      		adiw r24,1
+ 234 005c 0E94 0000 		call vTaskDelayUntil
+ 141:main.c        **** 		PORTB &= ~_BV(PORTB5);       // main (red PB5) LED off. Arduino LED off
+ 236               	.LM13:
+ 237 0060 2D98      		cbi 0x5,5
+ 142:main.c        **** 		vTaskDelayUntil( &xLastWakeTime, ( 500 / portTICK_RATE_MS )  );
+ 239               	.LM14:
+ 240 0062 60E0      		ldi r22,0
+ 241 0064 70E0      		ldi r23,0
+ 242 0066 CE01      		movw r24,r28
+ 243 0068 0196      		adiw r24,1
+ 244 006a 0E94 0000 		call vTaskDelayUntil
+ 246               	.LM15:
+ 247 006e 0E94 0000 		call xTaskGetTickCount
+ 248 0072 D82E      		mov r13,r24
+ 249 0074 C92E      		mov r12,r25
+ 250 0076 80E0      		ldi r24,0
+ 251 0078 90E0      		ldi r25,0
+ 252 007a 0E94 0000 		call time
+ 253 007e CF92      		push r12
+ 254 0080 DF92      		push r13
+ 255 0082 9F93      		push r25
+ 256 0084 8F93      		push r24
+ 257 0086 FF92      		push r15
+ 258 0088 EF92      		push r14
+ 259 008a 1F93      		push r17
+ 260 008c 0F93      		push r16
+ 261 008e 0E94 0000 		call xSerialxPrintf_P
+ 262 0092 0FB6      		in __tmp_reg__,__SREG__
+ 263 0094 F894      		cli
+ 264 0096 DEBF      		out __SP_H__,r29
+ 265 0098 0FBE      		out __SREG__,__tmp_reg__
+ 266 009a CDBF      		out __SP_L__,r28
+ 267 009c 00C0      		rjmp .L4
+ 268               	.LBE2:
+ 273               	.Lscope2:
+ 275               		.stabd	78,0,0
+ 276               		.section	.rodata.str1.1,"aMS",@progbits,1
+ 277               	.LC0:
+ 278 0000 5265 644C 		.string	"RedLED"
+ 278      4544 00
+ 279               	.LC1:
+ 280 0007 4772 6565 		.string	"GreenLED"
+ 280      6E4C 4544 
+ 280      00
+ 281               		.section	.text.startup,"ax",@progbits
+ 283               	.global	main
+ 285               	main:
+ 286               		.stabd	46,0,0
+  39:main.c        **** {
+ 288               	.LM16:
+ 289               	.LFBB3:
+ 290 0000 CDB7      		in r28,__SP_L__
+ 291 0002 DEB7      		in r29,__SP_H__
+ 292 0004 6E97      		sbiw r28,30
+ 293 0006 DEBF      		out __SP_H__,r29
+ 294 0008 CDBF      		out __SP_L__,r28
+ 295               	/* prologue: function */
+ 296               	/* frame size = 30 */
+ 297               	/* stack size = 30 */
+ 298               	.L__stack_usage = 30
+  41:main.c        **** 	xSerialPort = xSerialPortInitMinimal( USART0, 115200, 1, 1); //  serial port: WantedBaud, TxQueueL
+ 300               	.LM17:
+ 301 000a EE24      		clr r14
+ 302 000c E394      		inc r14
+ 303 000e F12C      		mov r15,__zero_reg__
+ 304 0010 01E0      		ldi r16,lo8(1)
+ 305 0012 10E0      		ldi r17,0
+ 306 0014 20E0      		ldi r18,0
+ 307 0016 32EC      		ldi r19,lo8(-62)
+ 308 0018 41E0      		ldi r20,lo8(1)
+ 309 001a 50E0      		ldi r21,0
+ 310 001c 60E0      		ldi r22,0
+ 311 001e CE01      		movw r24,r28
+ 312 0020 0196      		adiw r24,1
+ 313 0022 0E94 0000 		call xSerialPortInitMinimal
+ 314 0026 8EE1      		ldi r24,lo8(30)
+ 315 0028 FE01      		movw r30,r28
+ 316 002a 3196      		adiw r30,1
+ 317 002c A0E0      		ldi r26,lo8(xSerialPort)
+ 318 002e B0E0      		ldi r27,hi8(xSerialPort)
+ 319               		0:
+ 320 0030 0190      		ld r0,Z+
+ 321 0032 0D92      		st X+,r0
+ 322 0034 8A95      		dec r24
+ 323 0036 01F4      		brne 0b
+  43:main.c        **** 	avrSerialxPrint_P(&xSerialPort, PSTR("\r\n\n\nHello World!\r\n")); // Ok, so we're alive...
+ 325               	.LM18:
+ 326 0038 60E0      		ldi r22,lo8(__c.2207)
+ 327 003a 70E0      		ldi r23,hi8(__c.2207)
+ 328 003c 80E0      		ldi r24,lo8(xSerialPort)
+ 329 003e 90E0      		ldi r25,hi8(xSerialPort)
+ 330 0040 0E94 0000 		call avrSerialxPrint_P
+  45:main.c        ****     xTaskCreate(
+ 332               	.LM19:
+ 333 0044 A12C      		mov r10,__zero_reg__
+ 334 0046 B12C      		mov r11,__zero_reg__
+ 335 0048 C12C      		mov r12,__zero_reg__
+ 336 004a D12C      		mov r13,__zero_reg__
+ 337 004c E12C      		mov r14,__zero_reg__
+ 338 004e F12C      		mov r15,__zero_reg__
+ 339 0050 03E0      		ldi r16,lo8(3)
+ 340 0052 20E0      		ldi r18,0
+ 341 0054 30E0      		ldi r19,0
+ 342 0056 40E0      		ldi r20,0
+ 343 0058 51E0      		ldi r21,lo8(1)
+ 344 005a 60E0      		ldi r22,lo8(.LC0)
+ 345 005c 70E0      		ldi r23,hi8(.LC0)
+ 346 005e 80E0      		ldi r24,lo8(gs(TaskBlinkRedLED))
+ 347 0060 90E0      		ldi r25,hi8(gs(TaskBlinkRedLED))
+ 348 0062 0E94 0000 		call xTaskGenericCreate
+  53:main.c        ****     xTaskCreate(
+ 350               	.LM20:
+ 351 0066 20E0      		ldi r18,0
+ 352 0068 30E0      		ldi r19,0
+ 353 006a 40E0      		ldi r20,0
+ 354 006c 51E0      		ldi r21,lo8(1)
+ 355 006e 60E0      		ldi r22,lo8(.LC1)
+ 356 0070 70E0      		ldi r23,hi8(.LC1)
+ 357 0072 80E0      		ldi r24,lo8(gs(TaskBlinkGreenLED))
+ 358 0074 90E0      		ldi r25,hi8(gs(TaskBlinkGreenLED))
+ 359 0076 0E94 0000 		call xTaskGenericCreate
+  62:main.c        **** 	avrSerialxPrintf_P(&xSerialPort, PSTR("Free Heap Size: %u\r\n"), xPortGetFreeHeapSize() ); // need
+ 361               	.LM21:
+ 362 007a 0E94 0000 		call xPortGetFreeHeapSize
+ 363 007e 9F93      		push r25
+ 364 0080 8F93      		push r24
+ 365 0082 80E0      		ldi r24,lo8(__c.2209)
+ 366 0084 90E0      		ldi r25,hi8(__c.2209)
+ 367 0086 9F93      		push r25
+ 368 0088 8F93      		push r24
+ 369 008a 80E0      		ldi r24,lo8(xSerialPort)
+ 370 008c 90E0      		ldi r25,hi8(xSerialPort)
+ 371 008e 9F93      		push r25
+ 372 0090 8F93      		push r24
+ 373 0092 0E94 0000 		call avrSerialxPrintf_P
+  64:main.c        **** 	vTaskStartScheduler();
+ 375               	.LM22:
+ 376 0096 0E94 0000 		call vTaskStartScheduler
+  66:main.c        **** 	avrSerialxPrint_P(&xSerialPort, PSTR("\r\n\n\nGoodbye... no space for idle task!\r\n")); // Doh, s
+ 378               	.LM23:
+ 379 009a 60E0      		ldi r22,lo8(__c.2211)
+ 380 009c 70E0      		ldi r23,hi8(__c.2211)
+ 381 009e 80E0      		ldi r24,lo8(xSerialPort)
+ 382 00a0 90E0      		ldi r25,hi8(xSerialPort)
+ 383 00a2 0E94 0000 		call avrSerialxPrint_P
+ 385               	.Ltext1:
+ 387               	.LM24:
+ 388 00a6 0F90      		pop __tmp_reg__
+ 389 00a8 0F90      		pop __tmp_reg__
+ 390 00aa 0F90      		pop __tmp_reg__
+ 391 00ac 0F90      		pop __tmp_reg__
+ 392 00ae 0F90      		pop __tmp_reg__
+ 393 00b0 0F90      		pop __tmp_reg__
+ 395               	.Ltext2:
+  68:main.c        **** }
+ 397               	.LM25:
+ 398 00b2 80E0      		ldi r24,0
+ 399 00b4 90E0      		ldi r25,0
+ 400               	/* epilogue start */
+ 401 00b6 6E96      		adiw r28,30
+ 402 00b8 0FB6      		in __tmp_reg__,__SREG__
+ 403 00ba F894      		cli
+ 404 00bc DEBF      		out __SP_H__,r29
+ 405 00be 0FBE      		out __SREG__,__tmp_reg__
+ 406 00c0 CDBF      		out __SP_L__,r28
+ 407 00c2 0895      		ret
+ 409               	.Lscope3:
+ 411               		.stabd	78,0,0
+ 412               		.text
+ 414               	.global	vApplicationIdleHook
+ 416               	vApplicationIdleHook:
+ 417               		.stabd	46,0,0
+  73:main.c        **** {
+ 419               	.LM26:
+ 420               	.LFBB4:
+ 421               	/* prologue: function */
+ 422               	/* frame size = 0 */
+ 423               	/* stack size = 0 */
+ 424               	.L__stack_usage = 0
+  74:main.c        **** 	vCoRoutineSchedule();
+ 426               	.LM27:
+ 427 009e 0C94 0000 		jmp vCoRoutineSchedule
+ 429               	.Lscope4:
+ 431               		.stabd	78,0,0
+ 435               	.global	vApplicationStackOverflowHook
+ 437               	vApplicationStackOverflowHook:
+ 438               		.stabd	46,0,0
+ 145:main.c        ****     }
+ 146:main.c        **** }
+ 147:main.c        **** 
+ 148:main.c        **** /*-----------------------------------------------------------*/
+ 149:main.c        **** 
+ 150:main.c        **** void vApplicationStackOverflowHook( xTaskHandle xTask,
+ 151:main.c        ****                                     signed portCHAR *pcTaskName )
+ 152:main.c        **** {
+ 440               	.LM28:
+ 441               	.LFBB5:
+ 442               	/* prologue: function */
+ 443               	/* frame size = 0 */
+ 444               	/* stack size = 0 */
+ 445               	.L__stack_usage = 0
+ 153:main.c        **** 	DDRB  |= _BV(DDB5);
+ 447               	.LM29:
+ 448 00a2 259A      		sbi 0x4,5
+ 154:main.c        **** 	PORTB |= _BV(PORTB5);       // main (red PB5) LED on. Arduino LED on and die.
+ 450               	.LM30:
+ 451 00a4 2D9A      		sbi 0x5,5
+ 452               	.L8:
+ 453 00a6 00C0      		rjmp .L8
+ 455               	.Lscope5:
+ 457               		.stabd	78,0,0
+ 458               		.section	.progmem.data,"a",@progbits
+ 461               	__c.2207:
+ 462 0000 0D0A 0A0A 		.string	"\r\n\n\nHello World!\r\n"
+ 462      4865 6C6C 
+ 462      6F20 576F 
+ 462      726C 6421 
+ 462      0D0A 00
+ 465               	__c.2209:
+ 466 0013 4672 6565 		.string	"Free Heap Size: %u\r\n"
+ 466      2048 6561 
+ 466      7020 5369 
+ 466      7A65 3A20 
+ 466      2575 0D0A 
+ 469               	__c.2211:
+ 470 0028 0D0A 0A0A 		.string	"\r\n\n\nGoodbye... no space for idle task!\r\n"
+ 470      476F 6F64 
+ 470      6279 652E 
+ 470      2E2E 206E 
+ 470      6F20 7370 
+ 473               	__c.2227:
+ 474 0051 4375 7272 		.string	"Current Timestamp: %lu xTaskGetTickCount(): %u\r\n"
+ 474      656E 7420 
+ 474      5469 6D65 
+ 474      7374 616D 
+ 474      703A 2025 
+ 475               		.text
+ 477               	.Letext0:
+ 478               		.ident	"GCC: (GNU) 4.7.2"
+ 479               	.global __do_copy_data
+DEFINED SYMBOLS
+                            *ABS*:00000000 main.c
+     /tmp/ccUxSTmQ.s:2      *ABS*:0000003e __SP_H__
+     /tmp/ccUxSTmQ.s:3      *ABS*:0000003d __SP_L__
+     /tmp/ccUxSTmQ.s:4      *ABS*:0000003f __SREG__
+     /tmp/ccUxSTmQ.s:5      *ABS*:00000000 __tmp_reg__
+     /tmp/ccUxSTmQ.s:6      *ABS*:00000001 __zero_reg__
+     /tmp/ccUxSTmQ.s:139    .text:00000000 TaskBlinkRedLED
+     /tmp/ccUxSTmQ.s:193    .text:00000032 TaskBlinkGreenLED
+     /tmp/ccUxSTmQ.s:473    .progmem.data:00000051 __c.2227
+     /tmp/ccUxSTmQ.s:285    .text.startup:00000000 main
+     /tmp/ccUxSTmQ.s:461    .progmem.data:00000000 __c.2207
+     /tmp/ccUxSTmQ.s:465    .progmem.data:00000013 __c.2209
+     /tmp/ccUxSTmQ.s:469    .progmem.data:00000028 __c.2211
+     /tmp/ccUxSTmQ.s:416    .text:0000009e vApplicationIdleHook
+     /tmp/ccUxSTmQ.s:437    .text:000000a2 vApplicationStackOverflowHook
+
+UNDEFINED SYMBOLS
+xTaskGetTickCount
+vTaskDelayUntil
+xSerialPort
+time
+xSerialxPrintf_P
+xSerialPortInitMinimal
+avrSerialxPrint_P
+xTaskGenericCreate
+xPortGetFreeHeapSize
+avrSerialxPrintf_P
+vTaskStartScheduler
+vCoRoutineSchedule
+__do_copy_data

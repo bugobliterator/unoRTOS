@@ -1,0 +1,171 @@
+   1               		.file	"gm_sidereal.c"
+   2               	__SP_H__ = 0x3e
+   3               	__SP_L__ = 0x3d
+   4               	__SREG__ = 0x3f
+   5               	__tmp_reg__ = 0
+   6               	__zero_reg__ = 1
+   9               		.text
+  10               	.Ltext0:
+  80               	.global	__muldi3
+  81               	.global	__umoddi3
+  84               	.global	gm_sidereal
+  86               	gm_sidereal:
+  87               		.stabd	46,0,0
+   1:../freeRTOS750/lib_time/gm_sidereal.c **** /*
+   2:../freeRTOS750/lib_time/gm_sidereal.c ****  * (C)2012 Michael Duane Rice All rights reserved.
+   3:../freeRTOS750/lib_time/gm_sidereal.c ****  *
+   4:../freeRTOS750/lib_time/gm_sidereal.c ****  * Redistribution and use in source and binary forms, with or without
+   5:../freeRTOS750/lib_time/gm_sidereal.c ****  * modification, are permitted provided that the following conditions are
+   6:../freeRTOS750/lib_time/gm_sidereal.c ****  * met:
+   7:../freeRTOS750/lib_time/gm_sidereal.c ****  *
+   8:../freeRTOS750/lib_time/gm_sidereal.c ****  * Redistributions of source code must retain the above copyright notice, this
+   9:../freeRTOS750/lib_time/gm_sidereal.c ****  * list of conditions and the following disclaimer. Redistributions in binary
+  10:../freeRTOS750/lib_time/gm_sidereal.c ****  * form must reproduce the above copyright notice, this list of conditions
+  11:../freeRTOS750/lib_time/gm_sidereal.c ****  * and the following disclaimer in the documentation and/or other materials
+  12:../freeRTOS750/lib_time/gm_sidereal.c ****  * provided with the distribution. Neither the name of the copyright holders
+  13:../freeRTOS750/lib_time/gm_sidereal.c ****  * nor the names of contributors may be used to endorse or promote products
+  14:../freeRTOS750/lib_time/gm_sidereal.c ****  * derived from this software without specific prior written permission.
+  15:../freeRTOS750/lib_time/gm_sidereal.c ****  *
+  16:../freeRTOS750/lib_time/gm_sidereal.c ****  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  17:../freeRTOS750/lib_time/gm_sidereal.c ****  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  18:../freeRTOS750/lib_time/gm_sidereal.c ****  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  19:../freeRTOS750/lib_time/gm_sidereal.c ****  * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+  20:../freeRTOS750/lib_time/gm_sidereal.c ****  * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+  21:../freeRTOS750/lib_time/gm_sidereal.c ****  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+  22:../freeRTOS750/lib_time/gm_sidereal.c ****  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+  23:../freeRTOS750/lib_time/gm_sidereal.c ****  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+  24:../freeRTOS750/lib_time/gm_sidereal.c ****  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+  25:../freeRTOS750/lib_time/gm_sidereal.c ****  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+  26:../freeRTOS750/lib_time/gm_sidereal.c ****  * POSSIBILITY OF SUCH DAMAGE.
+  27:../freeRTOS750/lib_time/gm_sidereal.c ****  */
+  28:../freeRTOS750/lib_time/gm_sidereal.c **** 
+  29:../freeRTOS750/lib_time/gm_sidereal.c **** /* $Id$ */
+  30:../freeRTOS750/lib_time/gm_sidereal.c **** 
+  31:../freeRTOS750/lib_time/gm_sidereal.c **** /*
+  32:../freeRTOS750/lib_time/gm_sidereal.c ****     Greenwich Mean Sidereal Time. A sidereal second is somewhat shorter than a standard second,
+  33:../freeRTOS750/lib_time/gm_sidereal.c ****     about 1.002737909350795 sidereal seconds per standard second.
+  34:../freeRTOS750/lib_time/gm_sidereal.c **** 
+  35:../freeRTOS750/lib_time/gm_sidereal.c ****     We resort to fixed point math due to the insufficient resolution of a 'double', using...
+  36:../freeRTOS750/lib_time/gm_sidereal.c **** 
+  37:../freeRTOS750/lib_time/gm_sidereal.c ****         timestamp * ( 1.002737909350795 << 31 )
+  38:../freeRTOS750/lib_time/gm_sidereal.c ****         --------------------------------------- + Te
+  39:../freeRTOS750/lib_time/gm_sidereal.c ****                         1 << 31
+  40:../freeRTOS750/lib_time/gm_sidereal.c **** 
+  41:../freeRTOS750/lib_time/gm_sidereal.c ****     Where Te is the sidereal time at the epoch.
+  42:../freeRTOS750/lib_time/gm_sidereal.c **** 
+  43:../freeRTOS750/lib_time/gm_sidereal.c **** */
+  44:../freeRTOS750/lib_time/gm_sidereal.c **** 
+  45:../freeRTOS750/lib_time/gm_sidereal.c **** #include <time.h>
+  46:../freeRTOS750/lib_time/gm_sidereal.c **** #include <stdint.h>
+  47:../freeRTOS750/lib_time/gm_sidereal.c **** 
+  48:../freeRTOS750/lib_time/gm_sidereal.c **** unsigned long
+  49:../freeRTOS750/lib_time/gm_sidereal.c **** gm_sidereal(const time_t * timer)
+  50:../freeRTOS750/lib_time/gm_sidereal.c **** {
+  89               	.LM0:
+  90               	.LFBB1:
+  91 0000 AF92      		push r10
+  92 0002 BF92      		push r11
+  93 0004 CF92      		push r12
+  94 0006 DF92      		push r13
+  95 0008 EF92      		push r14
+  96 000a FF92      		push r15
+  97 000c 0F93      		push r16
+  98 000e 1F93      		push r17
+  99 0010 CF93      		push r28
+ 100 0012 DF93      		push r29
+ 101               	/* prologue: function */
+ 102               	/* frame size = 0 */
+ 103               	/* stack size = 10 */
+ 104               	.L__stack_usage = 10
+  51:../freeRTOS750/lib_time/gm_sidereal.c ****     uint64_t        tmp;
+  52:../freeRTOS750/lib_time/gm_sidereal.c **** 
+  53:../freeRTOS750/lib_time/gm_sidereal.c ****     tmp = *timer;
+ 106               	.LM1:
+ 107 0014 FC01      		movw r30,r24
+ 108 0016 8081      		ld r24,Z
+ 109 0018 9181      		ldd r25,Z+1
+ 110 001a A281      		ldd r26,Z+2
+ 111 001c B381      		ldd r27,Z+3
+  54:../freeRTOS750/lib_time/gm_sidereal.c ****     tmp *= 0x8059B740;
+ 113               	.LM2:
+ 114 001e 20E4      		ldi r18,lo8(64)
+ 115 0020 A22E      		mov r10,r18
+ 116 0022 37EB      		ldi r19,lo8(-73)
+ 117 0024 B32E      		mov r11,r19
+ 118 0026 49E5      		ldi r20,lo8(89)
+ 119 0028 C42E      		mov r12,r20
+ 120 002a 50E8      		ldi r21,lo8(-128)
+ 121 002c D52E      		mov r13,r21
+ 122 002e E12C      		mov r14,__zero_reg__
+ 123 0030 F12C      		mov r15,__zero_reg__
+ 124 0032 00E0      		ldi r16,0
+ 125 0034 10E0      		ldi r17,0
+ 126 0036 9C01      		movw r18,r24
+ 127 0038 AD01      		movw r20,r26
+ 128 003a 60E0      		ldi r22,0
+ 129 003c 70E0      		ldi r23,0
+ 130 003e 80E0      		ldi r24,0
+ 131 0040 90E0      		ldi r25,0
+ 132 0042 0E94 0000 		call __muldi3
+  55:../freeRTOS750/lib_time/gm_sidereal.c ****     tmp /= 0x80000000;
+ 134               	.LM3:
+ 135 0046 0FE1      		ldi r16,lo8(31)
+ 136 0048 0E94 0000 		call __lshrdi3
+  56:../freeRTOS750/lib_time/gm_sidereal.c ****     tmp += (uint64_t) 23991;
+ 138               	.LM4:
+ 139 004c 2954      		subi r18,73
+ 140 004e 324A      		sbci r19,-94
+ 141 0050 4F4F      		sbci r20,-1
+ 142 0052 5F4F      		sbci r21,-1
+ 143 0054 6F4F      		sbci r22,-1
+ 144 0056 7F4F      		sbci r23,-1
+ 145 0058 8F4F      		sbci r24,-1
+ 146 005a 9F4F      		sbci r25,-1
+  57:../freeRTOS750/lib_time/gm_sidereal.c **** 
+  58:../freeRTOS750/lib_time/gm_sidereal.c ****     tmp %= ONE_DAY;
+ 148               	.LM5:
+ 149 005c E0E8      		ldi r30,lo8(-128)
+ 150 005e AE2E      		mov r10,r30
+ 151 0060 F1E5      		ldi r31,lo8(81)
+ 152 0062 BF2E      		mov r11,r31
+ 153 0064 CC24      		clr r12
+ 154 0066 C394      		inc r12
+ 155 0068 D12C      		mov r13,__zero_reg__
+ 156 006a 00E0      		ldi r16,0
+ 157 006c 0E94 0000 		call __umoddi3
+ 158 0070 952F      		mov r25,r21
+  59:../freeRTOS750/lib_time/gm_sidereal.c ****     return tmp;
+ 160               	.LM6:
+ 161 0072 B901      		movw r22,r18
+ 162 0074 842F      		mov r24,r20
+ 163               	/* epilogue start */
+  60:../freeRTOS750/lib_time/gm_sidereal.c **** }
+ 165               	.LM7:
+ 166 0076 DF91      		pop r29
+ 167 0078 CF91      		pop r28
+ 168 007a 1F91      		pop r17
+ 169 007c 0F91      		pop r16
+ 170 007e FF90      		pop r15
+ 171 0080 EF90      		pop r14
+ 172 0082 DF90      		pop r13
+ 173 0084 CF90      		pop r12
+ 174 0086 BF90      		pop r11
+ 175 0088 AF90      		pop r10
+ 176 008a 0895      		ret
+ 178               	.Lscope1:
+ 180               		.stabd	78,0,0
+ 182               	.Letext0:
+ 183               		.ident	"GCC: (GNU) 4.7.2"
+DEFINED SYMBOLS
+                            *ABS*:00000000 gm_sidereal.c
+     /tmp/ccbFKDim.s:2      *ABS*:0000003e __SP_H__
+     /tmp/ccbFKDim.s:3      *ABS*:0000003d __SP_L__
+     /tmp/ccbFKDim.s:4      *ABS*:0000003f __SREG__
+     /tmp/ccbFKDim.s:5      *ABS*:00000000 __tmp_reg__
+     /tmp/ccbFKDim.s:6      *ABS*:00000001 __zero_reg__
+     /tmp/ccbFKDim.s:86     .text:00000000 gm_sidereal
+
+UNDEFINED SYMBOLS
+__muldi3
+__umoddi3
+__lshrdi3

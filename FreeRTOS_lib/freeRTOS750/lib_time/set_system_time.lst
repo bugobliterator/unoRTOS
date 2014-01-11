@@ -1,0 +1,104 @@
+   1               		.file	"set_system_time.c"
+   2               	__SP_H__ = 0x3e
+   3               	__SP_L__ = 0x3d
+   4               	__SREG__ = 0x3f
+   5               	__tmp_reg__ = 0
+   6               	__zero_reg__ = 1
+   9               		.text
+  10               	.Ltext0:
+  82               	.global	set_system_time
+  84               	set_system_time:
+  85               		.stabd	46,0,0
+   1:../freeRTOS750/lib_time/set_system_time.c **** /*
+   2:../freeRTOS750/lib_time/set_system_time.c ****  * (C)2012 Michael Duane Rice All rights reserved.
+   3:../freeRTOS750/lib_time/set_system_time.c ****  *
+   4:../freeRTOS750/lib_time/set_system_time.c ****  * Redistribution and use in source and binary forms, with or without
+   5:../freeRTOS750/lib_time/set_system_time.c ****  * modification, are permitted provided that the following conditions are
+   6:../freeRTOS750/lib_time/set_system_time.c ****  * met:
+   7:../freeRTOS750/lib_time/set_system_time.c ****  *
+   8:../freeRTOS750/lib_time/set_system_time.c ****  * Redistributions of source code must retain the above copyright notice, this
+   9:../freeRTOS750/lib_time/set_system_time.c ****  * list of conditions and the following disclaimer. Redistributions in binary
+  10:../freeRTOS750/lib_time/set_system_time.c ****  * form must reproduce the above copyright notice, this list of conditions
+  11:../freeRTOS750/lib_time/set_system_time.c ****  * and the following disclaimer in the documentation and/or other materials
+  12:../freeRTOS750/lib_time/set_system_time.c ****  * provided with the distribution. Neither the name of the copyright holders
+  13:../freeRTOS750/lib_time/set_system_time.c ****  * nor the names of contributors may be used to endorse or promote products
+  14:../freeRTOS750/lib_time/set_system_time.c ****  * derived from this software without specific prior written permission.
+  15:../freeRTOS750/lib_time/set_system_time.c ****  *
+  16:../freeRTOS750/lib_time/set_system_time.c ****  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  17:../freeRTOS750/lib_time/set_system_time.c ****  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  18:../freeRTOS750/lib_time/set_system_time.c ****  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  19:../freeRTOS750/lib_time/set_system_time.c ****  * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+  20:../freeRTOS750/lib_time/set_system_time.c ****  * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+  21:../freeRTOS750/lib_time/set_system_time.c ****  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+  22:../freeRTOS750/lib_time/set_system_time.c ****  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+  23:../freeRTOS750/lib_time/set_system_time.c ****  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+  24:../freeRTOS750/lib_time/set_system_time.c ****  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+  25:../freeRTOS750/lib_time/set_system_time.c ****  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+  26:../freeRTOS750/lib_time/set_system_time.c ****  * POSSIBILITY OF SUCH DAMAGE.
+  27:../freeRTOS750/lib_time/set_system_time.c ****  */
+  28:../freeRTOS750/lib_time/set_system_time.c **** 
+  29:../freeRTOS750/lib_time/set_system_time.c **** /* $Id$ */
+  30:../freeRTOS750/lib_time/set_system_time.c **** 
+  31:../freeRTOS750/lib_time/set_system_time.c **** /*
+  32:../freeRTOS750/lib_time/set_system_time.c ****  * Set the system time. The values passed are assumed to represent local
+  33:../freeRTOS750/lib_time/set_system_time.c ****  * standard time, such as would be obtained from the typical Real Time Clock
+  34:../freeRTOS750/lib_time/set_system_time.c ****  * integrated circuit. It is necessary for this to be atomic, as the value may be
+  35:../freeRTOS750/lib_time/set_system_time.c ****  * incremented at interrupt time.
+  36:../freeRTOS750/lib_time/set_system_time.c ****  */
+  37:../freeRTOS750/lib_time/set_system_time.c **** 
+  38:../freeRTOS750/lib_time/set_system_time.c **** #include <time.h>
+  39:../freeRTOS750/lib_time/set_system_time.c **** extern volatile time_t __system_time;
+  40:../freeRTOS750/lib_time/set_system_time.c **** 
+  41:../freeRTOS750/lib_time/set_system_time.c **** void
+  42:../freeRTOS750/lib_time/set_system_time.c **** set_system_time(time_t timestamp)
+  43:../freeRTOS750/lib_time/set_system_time.c **** {
+  87               	.LM0:
+  88               	.LFBB1:
+  89               	/* prologue: function */
+  90               	/* frame size = 0 */
+  91               	/* stack size = 0 */
+  92               	.L__stack_usage = 0
+  44:../freeRTOS750/lib_time/set_system_time.c **** 
+  45:../freeRTOS750/lib_time/set_system_time.c **** 	asm volatile(
+  94               	.LM1:
+  95               	/* #APP */
+  96               	 ;  45 "../freeRTOS750/lib_time/set_system_time.c" 1
+  97 0000 0FB6      		in __tmp_reg__, __SREG__
+  98 0002 F894      		cli
+  99               		
+ 100               	 ;  0 "" 2
+  46:../freeRTOS750/lib_time/set_system_time.c **** 				"in __tmp_reg__, __SREG__" "\n\t"
+  47:../freeRTOS750/lib_time/set_system_time.c **** 				"cli" "\n\t"
+  48:../freeRTOS750/lib_time/set_system_time.c **** 				::
+  49:../freeRTOS750/lib_time/set_system_time.c **** 	);
+  50:../freeRTOS750/lib_time/set_system_time.c **** 	__system_time = timestamp;
+ 102               	.LM2:
+ 103               	/* #NOAPP */
+ 104 0004 6093 0000 		sts __system_time,r22
+ 105 0008 7093 0000 		sts __system_time+1,r23
+ 106 000c 8093 0000 		sts __system_time+2,r24
+ 107 0010 9093 0000 		sts __system_time+3,r25
+  51:../freeRTOS750/lib_time/set_system_time.c **** 	asm volatile(
+ 109               	.LM3:
+ 110               	/* #APP */
+ 111               	 ;  51 "../freeRTOS750/lib_time/set_system_time.c" 1
+ 112 0014 0FBE      		out __SREG__, __tmp_reg__
+ 113               		
+ 114               	 ;  0 "" 2
+ 115               	/* #NOAPP */
+ 116 0016 0895      		ret
+ 118               	.Lscope1:
+ 120               		.stabd	78,0,0
+ 122               	.Letext0:
+ 123               		.ident	"GCC: (GNU) 4.7.2"
+DEFINED SYMBOLS
+                            *ABS*:00000000 set_system_time.c
+     /tmp/ccIExbtY.s:2      *ABS*:0000003e __SP_H__
+     /tmp/ccIExbtY.s:3      *ABS*:0000003d __SP_L__
+     /tmp/ccIExbtY.s:4      *ABS*:0000003f __SREG__
+     /tmp/ccIExbtY.s:5      *ABS*:00000000 __tmp_reg__
+     /tmp/ccIExbtY.s:6      *ABS*:00000001 __zero_reg__
+     /tmp/ccIExbtY.s:84     .text:00000000 set_system_time
+
+UNDEFINED SYMBOLS
+__system_time

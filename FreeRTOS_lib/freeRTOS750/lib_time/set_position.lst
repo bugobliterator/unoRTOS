@@ -1,0 +1,87 @@
+   1               		.file	"set_position.c"
+   2               	__SP_H__ = 0x3e
+   3               	__SP_L__ = 0x3d
+   4               	__SREG__ = 0x3f
+   5               	__tmp_reg__ = 0
+   6               	__zero_reg__ = 1
+   9               		.text
+  10               	.Ltext0:
+  30               	.global	set_position
+  32               	set_position:
+  33               		.stabd	46,0,0
+   1:../freeRTOS750/lib_time/set_position.c **** /*
+   2:../freeRTOS750/lib_time/set_position.c ****  * (C)2012 Michael Duane Rice All rights reserved.
+   3:../freeRTOS750/lib_time/set_position.c ****  *
+   4:../freeRTOS750/lib_time/set_position.c ****  * Redistribution and use in source and binary forms, with or without
+   5:../freeRTOS750/lib_time/set_position.c ****  * modification, are permitted provided that the following conditions are
+   6:../freeRTOS750/lib_time/set_position.c ****  * met:
+   7:../freeRTOS750/lib_time/set_position.c ****  *
+   8:../freeRTOS750/lib_time/set_position.c ****  * Redistributions of source code must retain the above copyright notice, this
+   9:../freeRTOS750/lib_time/set_position.c ****  * list of conditions and the following disclaimer. Redistributions in binary
+  10:../freeRTOS750/lib_time/set_position.c ****  * form must reproduce the above copyright notice, this list of conditions
+  11:../freeRTOS750/lib_time/set_position.c ****  * and the following disclaimer in the documentation and/or other materials
+  12:../freeRTOS750/lib_time/set_position.c ****  * provided with the distribution. Neither the name of the copyright holders
+  13:../freeRTOS750/lib_time/set_position.c ****  * nor the names of contributors may be used to endorse or promote products
+  14:../freeRTOS750/lib_time/set_position.c ****  * derived from this software without specific prior written permission.
+  15:../freeRTOS750/lib_time/set_position.c ****  *
+  16:../freeRTOS750/lib_time/set_position.c ****  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  17:../freeRTOS750/lib_time/set_position.c ****  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  18:../freeRTOS750/lib_time/set_position.c ****  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  19:../freeRTOS750/lib_time/set_position.c ****  * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+  20:../freeRTOS750/lib_time/set_position.c ****  * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+  21:../freeRTOS750/lib_time/set_position.c ****  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+  22:../freeRTOS750/lib_time/set_position.c ****  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+  23:../freeRTOS750/lib_time/set_position.c ****  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+  24:../freeRTOS750/lib_time/set_position.c ****  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+  25:../freeRTOS750/lib_time/set_position.c ****  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+  26:../freeRTOS750/lib_time/set_position.c ****  * POSSIBILITY OF SUCH DAMAGE.
+  27:../freeRTOS750/lib_time/set_position.c ****  */
+  28:../freeRTOS750/lib_time/set_position.c **** 
+  29:../freeRTOS750/lib_time/set_position.c **** /* $Id$ */
+  30:../freeRTOS750/lib_time/set_position.c **** 
+  31:../freeRTOS750/lib_time/set_position.c **** /*
+  32:../freeRTOS750/lib_time/set_position.c **** 	Set the geographic position of the observer. Both parameters are in seconds, with
+  33:../freeRTOS750/lib_time/set_position.c **** 	North latitude and East longitude being positive values.
+  34:../freeRTOS750/lib_time/set_position.c **** */
+  35:../freeRTOS750/lib_time/set_position.c **** 
+  36:../freeRTOS750/lib_time/set_position.c **** extern long     __latitude;
+  37:../freeRTOS750/lib_time/set_position.c **** extern long     __longitude;
+  38:../freeRTOS750/lib_time/set_position.c **** 
+  39:../freeRTOS750/lib_time/set_position.c **** void
+  40:../freeRTOS750/lib_time/set_position.c **** set_position(long lat, long lon)
+  41:../freeRTOS750/lib_time/set_position.c **** {
+  35               	.LM0:
+  36               	.LFBB1:
+  37               	/* prologue: function */
+  38               	/* frame size = 0 */
+  39               	/* stack size = 0 */
+  40               	.L__stack_usage = 0
+  42:../freeRTOS750/lib_time/set_position.c **** 	__latitude = lat;
+  42               	.LM1:
+  43 0000 6093 0000 		sts __latitude,r22
+  44 0004 7093 0000 		sts __latitude+1,r23
+  45 0008 8093 0000 		sts __latitude+2,r24
+  46 000c 9093 0000 		sts __latitude+3,r25
+  43:../freeRTOS750/lib_time/set_position.c **** 	__longitude = lon;
+  48               	.LM2:
+  49 0010 2093 0000 		sts __longitude,r18
+  50 0014 3093 0000 		sts __longitude+1,r19
+  51 0018 4093 0000 		sts __longitude+2,r20
+  52 001c 5093 0000 		sts __longitude+3,r21
+  53 0020 0895      		ret
+  55               	.Lscope1:
+  57               		.stabd	78,0,0
+  59               	.Letext0:
+  60               		.ident	"GCC: (GNU) 4.7.2"
+DEFINED SYMBOLS
+                            *ABS*:00000000 set_position.c
+     /tmp/cc1mHwHW.s:2      *ABS*:0000003e __SP_H__
+     /tmp/cc1mHwHW.s:3      *ABS*:0000003d __SP_L__
+     /tmp/cc1mHwHW.s:4      *ABS*:0000003f __SREG__
+     /tmp/cc1mHwHW.s:5      *ABS*:00000000 __tmp_reg__
+     /tmp/cc1mHwHW.s:6      *ABS*:00000001 __zero_reg__
+     /tmp/cc1mHwHW.s:32     .text:00000000 set_position
+
+UNDEFINED SYMBOLS
+__latitude
+__longitude

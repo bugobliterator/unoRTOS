@@ -1,0 +1,3990 @@
+   1               		.file	"w5100.c"
+   2               	__SP_H__ = 0x3e
+   3               	__SP_L__ = 0x3d
+   4               	__SREG__ = 0x3f
+   5               	__tmp_reg__ = 0
+   6               	__zero_reg__ = 1
+   9               		.text
+  10               	.Ltext0:
+ 156               	.global	IINCHIP_getISR
+ 158               	IINCHIP_getISR:
+ 159               		.stabd	46,0,0
+   1:../freeRTOS750/lib_iinchip/w5100.c **** /*
+   2:../freeRTOS750/lib_iinchip/w5100.c ****  * (c)COPYRIGHT
+   3:../freeRTOS750/lib_iinchip/w5100.c ****  * ALL RIGHT RESERVED
+   4:../freeRTOS750/lib_iinchip/w5100.c ****  *
+   5:../freeRTOS750/lib_iinchip/w5100.c ****  * FileName : w5100.c
+   6:../freeRTOS750/lib_iinchip/w5100.c ****  * Revision History :
+   7:../freeRTOS750/lib_iinchip/w5100.c ****  * ----------	-------		------------------------------------------------
+   8:../freeRTOS750/lib_iinchip/w5100.c ****  * 	Date			version	  	Description
+   9:../freeRTOS750/lib_iinchip/w5100.c ****  * ----------	-------  	------------------------------------------------
+  10:../freeRTOS750/lib_iinchip/w5100.c ****  * 01/25/2007	1.1			Bug is Fixed in the Indirect Mode
+  11:../freeRTOS750/lib_iinchip/w5100.c ****  *							: Memory mapping error
+  12:../freeRTOS750/lib_iinchip/w5100.c ****  * ----------	-------		------------------------------------------------
+  13:../freeRTOS750/lib_iinchip/w5100.c ****  * 01/08/2008	1.2			Modification of Socket Command Part
+  14:../freeRTOS750/lib_iinchip/w5100.c ****  *							: Check if the appropriately performed after writing Sn_CR
+  15:../freeRTOS750/lib_iinchip/w5100.c ****  *
+  16:../freeRTOS750/lib_iinchip/w5100.c ****  *							Modification of SPI Part
+  17:../freeRTOS750/lib_iinchip/w5100.c ****  *							: SPI code changed by adding 'spi.h'.
+  18:../freeRTOS750/lib_iinchip/w5100.c ****  *							: Change control type for SPI port from byte to bit.
+  19:../freeRTOS750/lib_iinchip/w5100.c ****  * ----------	-------		------------------------------------------------
+  20:../freeRTOS750/lib_iinchip/w5100.c ****  * 01/15/2008	1.3			Bug is Fixed in the pppinit() function.
+  21:../freeRTOS750/lib_iinchip/w5100.c ****  *							: do not clear interrupt value, so fixed.
+  22:../freeRTOS750/lib_iinchip/w5100.c ****  *
+  23:../freeRTOS750/lib_iinchip/w5100.c ****  *		                   			Modification of ISR
+  24:../freeRTOS750/lib_iinchip/w5100.c ****  *                   				: Do not exit ISR, if there is interrupt.
+  25:../freeRTOS750/lib_iinchip/w5100.c ****  * ----------	-------		------------------------------------------------
+  26:../freeRTOS750/lib_iinchip/w5100.c ****  * 03/21/2008	1.4			Modification of SetMR() function
+  27:../freeRTOS750/lib_iinchip/w5100.c ****  *                   				: Use IINCHIP_write() function in Direct or SPI mode.
+  28:../freeRTOS750/lib_iinchip/w5100.c ****  * ----------	-------		------------------------------------------------
+  29:../freeRTOS750/lib_iinchip/w5100.c ****  * 03/21/2008	1.5			Bug is Fixed in the pppinit() function.
+  30:../freeRTOS750/lib_iinchip/w5100.c ****  *							: do not clear receive buffer, so fixed. +200903[bj] clear receive buffer
+  31:../freeRTOS750/lib_iinchip/w5100.c ****  * ----------	-------		------------------------------------------------
+  32:../freeRTOS750/lib_iinchip/w5100.c ****   * 03/13/2012	1.6.1		Added clearSUBR(), applySUBR() and modified setSUBR() functions
+  33:../freeRTOS750/lib_iinchip/w5100.c ****  *							      because of the ARP errata.
+  34:../freeRTOS750/lib_iinchip/w5100.c ****  *							Keep SUBR 0.0.0.0 unless using TCP connect() or UDP sendto()
+  35:../freeRTOS750/lib_iinchip/w5100.c ****  *							Use the SUBN_VAR variable to read the real subnet.
+  36:../freeRTOS750/lib_iinchip/w5100.c ****  * ----------	-------		------------------------------------------------
+  37:../freeRTOS750/lib_iinchip/w5100.c ****  */
+  38:../freeRTOS750/lib_iinchip/w5100.c **** 
+  39:../freeRTOS750/lib_iinchip/w5100.c **** #include <stdio.h>
+  40:../freeRTOS750/lib_iinchip/w5100.c **** #include <string.h>
+  41:../freeRTOS750/lib_iinchip/w5100.c **** 
+  42:../freeRTOS750/lib_iinchip/w5100.c **** #include <avr/interrupt.h>
+  43:../freeRTOS750/lib_iinchip/w5100.c **** #include <avr/pgmspace.h>
+  44:../freeRTOS750/lib_iinchip/w5100.c **** #include <util/delay.h> // for wait function
+  45:../freeRTOS750/lib_iinchip/w5100.c **** 
+  46:../freeRTOS750/lib_iinchip/w5100.c **** /* Scheduler include files. */
+  47:../freeRTOS750/lib_iinchip/w5100.c **** #include <FreeRTOS.h>
+  48:../freeRTOS750/lib_iinchip/w5100.c **** #include <freeRTOSBoardDefs.h>
+  49:../freeRTOS750/lib_iinchip/w5100.c **** #include <task.h>
+  50:../freeRTOS750/lib_iinchip/w5100.c **** #include <queue.h>
+  51:../freeRTOS750/lib_iinchip/w5100.c **** #include <semphr.h>
+  52:../freeRTOS750/lib_iinchip/w5100.c **** 
+  53:../freeRTOS750/lib_iinchip/w5100.c **** #include <spi.h>
+  54:../freeRTOS750/lib_iinchip/w5100.c **** #include <socket.h>
+  55:../freeRTOS750/lib_iinchip/w5100.c **** 
+  56:../freeRTOS750/lib_iinchip/w5100.c **** #ifndef portW5200
+  57:../freeRTOS750/lib_iinchip/w5100.c **** 
+  58:../freeRTOS750/lib_iinchip/w5100.c **** #include "w5100.h"
+  59:../freeRTOS750/lib_iinchip/w5100.c **** 
+  60:../freeRTOS750/lib_iinchip/w5100.c **** #ifdef __DEF_IINCHIP_DBG__
+  61:../freeRTOS750/lib_iinchip/w5100.c **** #include <lib_serial.h>
+  62:../freeRTOS750/lib_iinchip/w5100.c **** #endif
+  63:../freeRTOS750/lib_iinchip/w5100.c **** 
+  64:../freeRTOS750/lib_iinchip/w5100.c **** #ifdef __DEF_IINCHIP_PPP__
+  65:../freeRTOS750/lib_iinchip/w5100.c ****    #include "md5.h"
+  66:../freeRTOS750/lib_iinchip/w5100.c **** #endif
+  67:../freeRTOS750/lib_iinchip/w5100.c **** 
+  68:../freeRTOS750/lib_iinchip/w5100.c **** static uint8_t 	I_STATUS[MAX_SOCK_NUM];
+  69:../freeRTOS750/lib_iinchip/w5100.c **** static uint16_t SMASK[MAX_SOCK_NUM]; /**< Variable for Tx buffer MASK in each channel */
+  70:../freeRTOS750/lib_iinchip/w5100.c **** static uint16_t RMASK[MAX_SOCK_NUM]; /**< Variable for Rx buffer MASK in each channel */
+  71:../freeRTOS750/lib_iinchip/w5100.c **** static uint16_t SSIZE[MAX_SOCK_NUM]; /**< Max Tx buffer size by each channel */
+  72:../freeRTOS750/lib_iinchip/w5100.c **** static uint16_t RSIZE[MAX_SOCK_NUM]; /**< Max Rx buffer size by each channel */
+  73:../freeRTOS750/lib_iinchip/w5100.c **** static uint16_t SBUFBASEADDRESS[MAX_SOCK_NUM]; /**< Tx buffer base address by each channel */
+  74:../freeRTOS750/lib_iinchip/w5100.c **** static uint16_t RBUFBASEADDRESS[MAX_SOCK_NUM]; /**< Rx buffer base address by each channel */
+  75:../freeRTOS750/lib_iinchip/w5100.c **** 
+  76:../freeRTOS750/lib_iinchip/w5100.c **** static uint8_t SUBN_VAR[4]; // off-chip subnet mask address - solve Errata 2 & 3 v1.6 - March 2012
+  77:../freeRTOS750/lib_iinchip/w5100.c **** 
+  78:../freeRTOS750/lib_iinchip/w5100.c **** uint16_t IINCHIP_read_buf( uint16_t addr, uint8_t *buf, uint16_t len);
+  79:../freeRTOS750/lib_iinchip/w5100.c **** uint16_t IINCHIP_write_buf(uint16_t addr, uint8_t *buf, uint16_t len);
+  80:../freeRTOS750/lib_iinchip/w5100.c **** 
+  81:../freeRTOS750/lib_iinchip/w5100.c **** uint8_t IINCHIP_getISR(uint8_t s)
+  82:../freeRTOS750/lib_iinchip/w5100.c **** {
+ 161               	.LM0:
+ 162               	.LFBB1:
+ 163               	/* prologue: function */
+ 164               	/* frame size = 0 */
+ 165               	/* stack size = 0 */
+ 166               	.L__stack_usage = 0
+  83:../freeRTOS750/lib_iinchip/w5100.c **** 	return I_STATUS[s];
+ 168               	.LM1:
+ 169 0000 E82F      		mov r30,r24
+ 170 0002 F0E0      		ldi r31,0
+ 171 0004 E050      		subi r30,lo8(-(I_STATUS))
+ 172 0006 F040      		sbci r31,hi8(-(I_STATUS))
+  84:../freeRTOS750/lib_iinchip/w5100.c **** }
+ 174               	.LM2:
+ 175 0008 8081      		ld r24,Z
+ 176 000a 0895      		ret
+ 178               	.Lscope1:
+ 180               		.stabd	78,0,0
+ 184               	.global	IINCHIP_putISR
+ 186               	IINCHIP_putISR:
+ 187               		.stabd	46,0,0
+  85:../freeRTOS750/lib_iinchip/w5100.c **** void IINCHIP_putISR(uint8_t s, uint8_t val)
+  86:../freeRTOS750/lib_iinchip/w5100.c **** {
+ 189               	.LM3:
+ 190               	.LFBB2:
+ 191               	/* prologue: function */
+ 192               	/* frame size = 0 */
+ 193               	/* stack size = 0 */
+ 194               	.L__stack_usage = 0
+  87:../freeRTOS750/lib_iinchip/w5100.c ****    I_STATUS[s] = val;
+ 196               	.LM4:
+ 197 000c E82F      		mov r30,r24
+ 198 000e F0E0      		ldi r31,0
+ 199 0010 E050      		subi r30,lo8(-(I_STATUS))
+ 200 0012 F040      		sbci r31,hi8(-(I_STATUS))
+ 201 0014 6083      		st Z,r22
+ 202 0016 0895      		ret
+ 204               	.Lscope2:
+ 206               		.stabd	78,0,0
+ 209               	.global	getIINCHIP_RxMAX
+ 211               	getIINCHIP_RxMAX:
+ 212               		.stabd	46,0,0
+  88:../freeRTOS750/lib_iinchip/w5100.c **** }
+  89:../freeRTOS750/lib_iinchip/w5100.c **** uint16_t getIINCHIP_RxMAX(uint8_t s)
+  90:../freeRTOS750/lib_iinchip/w5100.c **** {
+ 214               	.LM5:
+ 215               	.LFBB3:
+ 216               	/* prologue: function */
+ 217               	/* frame size = 0 */
+ 218               	/* stack size = 0 */
+ 219               	.L__stack_usage = 0
+  91:../freeRTOS750/lib_iinchip/w5100.c ****    return RSIZE[s];
+ 221               	.LM6:
+ 222 0018 E82F      		mov r30,r24
+ 223 001a F0E0      		ldi r31,0
+ 224 001c EE0F      		lsl r30
+ 225 001e FF1F      		rol r31
+ 226 0020 E050      		subi r30,lo8(-(RSIZE))
+ 227 0022 F040      		sbci r31,hi8(-(RSIZE))
+  92:../freeRTOS750/lib_iinchip/w5100.c **** }
+ 229               	.LM7:
+ 230 0024 8081      		ld r24,Z
+ 231 0026 9181      		ldd r25,Z+1
+ 232 0028 0895      		ret
+ 234               	.Lscope3:
+ 236               		.stabd	78,0,0
+ 239               	.global	getIINCHIP_TxMAX
+ 241               	getIINCHIP_TxMAX:
+ 242               		.stabd	46,0,0
+  93:../freeRTOS750/lib_iinchip/w5100.c **** uint16_t getIINCHIP_TxMAX(uint8_t s)
+  94:../freeRTOS750/lib_iinchip/w5100.c **** {
+ 244               	.LM8:
+ 245               	.LFBB4:
+ 246               	/* prologue: function */
+ 247               	/* frame size = 0 */
+ 248               	/* stack size = 0 */
+ 249               	.L__stack_usage = 0
+  95:../freeRTOS750/lib_iinchip/w5100.c ****    return SSIZE[s];
+ 251               	.LM9:
+ 252 002a E82F      		mov r30,r24
+ 253 002c F0E0      		ldi r31,0
+ 254 002e EE0F      		lsl r30
+ 255 0030 FF1F      		rol r31
+ 256 0032 E050      		subi r30,lo8(-(SSIZE))
+ 257 0034 F040      		sbci r31,hi8(-(SSIZE))
+  96:../freeRTOS750/lib_iinchip/w5100.c **** }
+ 259               	.LM10:
+ 260 0036 8081      		ld r24,Z
+ 261 0038 9181      		ldd r25,Z+1
+ 262 003a 0895      		ret
+ 264               	.Lscope4:
+ 266               		.stabd	78,0,0
+ 269               	.global	getIINCHIP_RxMASK
+ 271               	getIINCHIP_RxMASK:
+ 272               		.stabd	46,0,0
+  97:../freeRTOS750/lib_iinchip/w5100.c **** uint16_t getIINCHIP_RxMASK(uint8_t s)
+  98:../freeRTOS750/lib_iinchip/w5100.c **** {
+ 274               	.LM11:
+ 275               	.LFBB5:
+ 276               	/* prologue: function */
+ 277               	/* frame size = 0 */
+ 278               	/* stack size = 0 */
+ 279               	.L__stack_usage = 0
+  99:../freeRTOS750/lib_iinchip/w5100.c ****    return RMASK[s];
+ 281               	.LM12:
+ 282 003c E82F      		mov r30,r24
+ 283 003e F0E0      		ldi r31,0
+ 284 0040 EE0F      		lsl r30
+ 285 0042 FF1F      		rol r31
+ 286 0044 E050      		subi r30,lo8(-(RMASK))
+ 287 0046 F040      		sbci r31,hi8(-(RMASK))
+ 100:../freeRTOS750/lib_iinchip/w5100.c **** }
+ 289               	.LM13:
+ 290 0048 8081      		ld r24,Z
+ 291 004a 9181      		ldd r25,Z+1
+ 292 004c 0895      		ret
+ 294               	.Lscope5:
+ 296               		.stabd	78,0,0
+ 299               	.global	getIINCHIP_TxMASK
+ 301               	getIINCHIP_TxMASK:
+ 302               		.stabd	46,0,0
+ 101:../freeRTOS750/lib_iinchip/w5100.c **** uint16_t getIINCHIP_TxMASK(uint8_t s)
+ 102:../freeRTOS750/lib_iinchip/w5100.c **** {
+ 304               	.LM14:
+ 305               	.LFBB6:
+ 306               	/* prologue: function */
+ 307               	/* frame size = 0 */
+ 308               	/* stack size = 0 */
+ 309               	.L__stack_usage = 0
+ 103:../freeRTOS750/lib_iinchip/w5100.c ****    return SMASK[s];
+ 311               	.LM15:
+ 312 004e E82F      		mov r30,r24
+ 313 0050 F0E0      		ldi r31,0
+ 314 0052 EE0F      		lsl r30
+ 315 0054 FF1F      		rol r31
+ 316 0056 E050      		subi r30,lo8(-(SMASK))
+ 317 0058 F040      		sbci r31,hi8(-(SMASK))
+ 104:../freeRTOS750/lib_iinchip/w5100.c **** }
+ 319               	.LM16:
+ 320 005a 8081      		ld r24,Z
+ 321 005c 9181      		ldd r25,Z+1
+ 322 005e 0895      		ret
+ 324               	.Lscope6:
+ 326               		.stabd	78,0,0
+ 329               	.global	getIINCHIP_RxBASE
+ 331               	getIINCHIP_RxBASE:
+ 332               		.stabd	46,0,0
+ 105:../freeRTOS750/lib_iinchip/w5100.c **** uint16_t getIINCHIP_RxBASE(uint8_t s)
+ 106:../freeRTOS750/lib_iinchip/w5100.c **** {
+ 334               	.LM17:
+ 335               	.LFBB7:
+ 336               	/* prologue: function */
+ 337               	/* frame size = 0 */
+ 338               	/* stack size = 0 */
+ 339               	.L__stack_usage = 0
+ 107:../freeRTOS750/lib_iinchip/w5100.c ****    return RBUFBASEADDRESS[s];
+ 341               	.LM18:
+ 342 0060 E82F      		mov r30,r24
+ 343 0062 F0E0      		ldi r31,0
+ 344 0064 EE0F      		lsl r30
+ 345 0066 FF1F      		rol r31
+ 346 0068 E050      		subi r30,lo8(-(RBUFBASEADDRESS))
+ 347 006a F040      		sbci r31,hi8(-(RBUFBASEADDRESS))
+ 108:../freeRTOS750/lib_iinchip/w5100.c **** }
+ 349               	.LM19:
+ 350 006c 8081      		ld r24,Z
+ 351 006e 9181      		ldd r25,Z+1
+ 352 0070 0895      		ret
+ 354               	.Lscope7:
+ 356               		.stabd	78,0,0
+ 359               	.global	getIINCHIP_TxBASE
+ 361               	getIINCHIP_TxBASE:
+ 362               		.stabd	46,0,0
+ 109:../freeRTOS750/lib_iinchip/w5100.c **** uint16_t getIINCHIP_TxBASE(uint8_t s)
+ 110:../freeRTOS750/lib_iinchip/w5100.c **** {
+ 364               	.LM20:
+ 365               	.LFBB8:
+ 366               	/* prologue: function */
+ 367               	/* frame size = 0 */
+ 368               	/* stack size = 0 */
+ 369               	.L__stack_usage = 0
+ 111:../freeRTOS750/lib_iinchip/w5100.c ****    return SBUFBASEADDRESS[s];
+ 371               	.LM21:
+ 372 0072 E82F      		mov r30,r24
+ 373 0074 F0E0      		ldi r31,0
+ 374 0076 EE0F      		lsl r30
+ 375 0078 FF1F      		rol r31
+ 376 007a E050      		subi r30,lo8(-(SBUFBASEADDRESS))
+ 377 007c F040      		sbci r31,hi8(-(SBUFBASEADDRESS))
+ 112:../freeRTOS750/lib_iinchip/w5100.c **** }
+ 379               	.LM22:
+ 380 007e 8081      		ld r24,Z
+ 381 0080 9181      		ldd r25,Z+1
+ 382 0082 0895      		ret
+ 384               	.Lscope8:
+ 386               		.stabd	78,0,0
+ 389               	.global	IINCHIP_write
+ 391               	IINCHIP_write:
+ 392               		.stabd	46,0,0
+ 113:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 114:../freeRTOS750/lib_iinchip/w5100.c ****  /**
+ 115:../freeRTOS750/lib_iinchip/w5100.c **** @brief	This function writes the data into W5100 registers.
+ 116:../freeRTOS750/lib_iinchip/w5100.c **** */
+ 117:../freeRTOS750/lib_iinchip/w5100.c **** uint8_t IINCHIP_write(uint16_t addr, uint8_t data)
+ 118:../freeRTOS750/lib_iinchip/w5100.c **** {
+ 394               	.LM23:
+ 395               	.LFBB9:
+ 396 0084 1F93      		push r17
+ 397 0086 CF93      		push r28
+ 398 0088 DF93      		push r29
+ 399 008a 00D0      		rcall .
+ 400 008c CDB7      		in r28,__SP_L__
+ 401 008e DEB7      		in r29,__SP_H__
+ 402               	/* prologue: function */
+ 403               	/* frame size = 2 */
+ 404               	/* stack size = 5 */
+ 405               	.L__stack_usage = 5
+ 406 0090 182F      		mov r17,r24
+ 119:../freeRTOS750/lib_iinchip/w5100.c **** 	uint8_t TxByte;
+ 120:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 121:../freeRTOS750/lib_iinchip/w5100.c **** 	IINCHIP_ISR_DISABLE();
+ 122:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 123:../freeRTOS750/lib_iinchip/w5100.c **** 	spiSelect(Wiznet);    						// CS=0, get semaphore, SPI start
+ 408               	.LM24:
+ 409 0092 80E0      		ldi r24,0
+ 410 0094 6983      		std Y+1,r22
+ 411 0096 9A83      		std Y+2,r25
+ 412 0098 0E94 0000 		call spiSelect
+ 124:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 125:../freeRTOS750/lib_iinchip/w5100.c **** 	spiSetDataMode(SPI_MODE0);					// Enable SPI function in mode 0, CPOL=0 CPHA=0
+ 414               	.LM25:
+ 415 009c 80E0      		ldi r24,0
+ 416 009e 0E94 0000 		call spiSetDataMode
+ 126:../freeRTOS750/lib_iinchip/w5100.c **** 	spiSetClockDivider(IINCHIP_SPI_DIVIDER);	// SPI at maximum speed
+ 418               	.LM26:
+ 419 00a2 80E0      		ldi r24,0
+ 420 00a4 0E94 0000 		call spiSetClockDivider
+ 127:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 128:../freeRTOS750/lib_iinchip/w5100.c **** 	// Make sure you manually pull slave select low to indicate start of transfer.
+ 129:../freeRTOS750/lib_iinchip/w5100.c **** 	// That is NOT done by this function..., because...
+ 130:../freeRTOS750/lib_iinchip/w5100.c **** 	// Some devices need to have their SS held low across multiple transfer calls.
+ 131:../freeRTOS750/lib_iinchip/w5100.c **** 	// Using spiSelect (SS_pin);
+ 132:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 133:../freeRTOS750/lib_iinchip/w5100.c **** 	// If the SPI module has not been enabled yet, then return with nothing.
+ 134:../freeRTOS750/lib_iinchip/w5100.c **** 	if ( !(SPCR & _BV(SPE)) ) return 0;
+ 422               	.LM27:
+ 423 00a8 6981      		ldd r22,Y+1
+ 424 00aa 9A81      		ldd r25,Y+2
+ 425 00ac 0CB4      		in __tmp_reg__,0x2c
+ 426 00ae 06FC      		sbrc __tmp_reg__,6
+ 427 00b0 00C0      		rjmp .L10
+ 428               	.L13:
+ 429 00b2 80E0      		ldi r24,0
+ 430 00b4 00C0      		rjmp .L11
+ 431               	.L10:
+ 135:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 136:../freeRTOS750/lib_iinchip/w5100.c **** 	// The SPI module is enabled, but it is in slave mode, so we can not
+ 137:../freeRTOS750/lib_iinchip/w5100.c **** 	// transmit the byte.  This can happen if SSbar is an input and it went low.
+ 138:../freeRTOS750/lib_iinchip/w5100.c **** 	// We will try to recover by setting the MSTR bit.
+ 139:../freeRTOS750/lib_iinchip/w5100.c **** 	// Check this once only at the start. Assume that things don't change.
+ 140:../freeRTOS750/lib_iinchip/w5100.c **** 	if ( !(SPCR & _BV(MSTR)) ) SPCR |= _BV(MSTR);
+ 433               	.LM28:
+ 434 00b6 0CB4      		in __tmp_reg__,0x2c
+ 435 00b8 04FC      		sbrc __tmp_reg__,4
+ 436 00ba 00C0      		rjmp .L12
+ 438               	.LM29:
+ 439 00bc 2CB5      		in r18,0x2c
+ 440 00be 2061      		ori r18,lo8(16)
+ 441 00c0 2CBD      		out 0x2c,r18
+ 442               	.L12:
+ 141:../freeRTOS750/lib_iinchip/w5100.c **** 	if ( !(SPCR & _BV(MSTR)) ) return 0;
+ 444               	.LM30:
+ 445 00c2 0CB4      		in __tmp_reg__,0x2c
+ 446 00c4 04FE      		sbrs __tmp_reg__,4
+ 447 00c6 00C0      		rjmp .L13
+ 448               	.LBB28:
+ 449               	.LBB29:
+ 142:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 143:../freeRTOS750/lib_iinchip/w5100.c **** 	portENTER_CRITICAL();
+ 451               	.LM31:
+ 452               	/* #APP */
+ 453               	 ;  143 "../freeRTOS750/lib_iinchip/w5100.c" 1
+ 454 00c8 0FB6      		in		__tmp_reg__, __SREG__
+ 455               	 ;  0 "" 2
+ 456               	 ;  143 "../freeRTOS750/lib_iinchip/w5100.c" 1
+ 457 00ca F894      		cli
+ 458               	 ;  0 "" 2
+ 459               	 ;  143 "../freeRTOS750/lib_iinchip/w5100.c" 1
+ 460 00cc 0F92      		push	__tmp_reg__
+ 461               	 ;  0 "" 2
+ 144:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 145:../freeRTOS750/lib_iinchip/w5100.c **** 	SPDR = 0xF0; // Begin transmission with Write Op Code
+ 463               	.LM32:
+ 464               	/* #NOAPP */
+ 465 00ce 80EF      		ldi r24,lo8(-16)
+ 466 00d0 8EBD      		out 0x2e,r24
+ 467               	.L14:
+ 146:../freeRTOS750/lib_iinchip/w5100.c **** 	TxByte = (addr & 0xFF00) >> 8; // pre-load the upper address to be transmitted
+ 147:../freeRTOS750/lib_iinchip/w5100.c **** 	while ( !(SPSR & _BV(SPIF)) );
+ 469               	.LM33:
+ 470 00d2 0DB4      		in __tmp_reg__,0x2d
+ 471 00d4 07FE      		sbrs __tmp_reg__,7
+ 472 00d6 00C0      		rjmp .L14
+ 148:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 149:../freeRTOS750/lib_iinchip/w5100.c **** 	SPDR = TxByte; // Continue transmission
+ 474               	.LM34:
+ 475 00d8 9EBD      		out 0x2e,r25
+ 476               	.L15:
+ 150:../freeRTOS750/lib_iinchip/w5100.c **** 	TxByte = (addr & 0x00FF); // pre-load the lower address to be transmitted
+ 151:../freeRTOS750/lib_iinchip/w5100.c **** 	while ( !(SPSR & _BV(SPIF)) );
+ 478               	.LM35:
+ 479 00da 0DB4      		in __tmp_reg__,0x2d
+ 480 00dc 07FE      		sbrs __tmp_reg__,7
+ 481 00de 00C0      		rjmp .L15
+ 152:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 153:../freeRTOS750/lib_iinchip/w5100.c **** 	SPDR = TxByte; // Continue transmission
+ 483               	.LM36:
+ 484 00e0 1EBD      		out 0x2e,r17
+ 485               	.L16:
+ 154:../freeRTOS750/lib_iinchip/w5100.c **** 	TxByte = data; // pre-load the byte to be transmitted
+ 155:../freeRTOS750/lib_iinchip/w5100.c **** 	while ( !(SPSR & _BV(SPIF)) );
+ 487               	.LM37:
+ 488 00e2 0DB4      		in __tmp_reg__,0x2d
+ 489 00e4 07FE      		sbrs __tmp_reg__,7
+ 490 00e6 00C0      		rjmp .L16
+ 156:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 157:../freeRTOS750/lib_iinchip/w5100.c **** 	SPDR = TxByte; // Continue transmission
+ 492               	.LM38:
+ 493 00e8 6EBD      		out 0x2e,r22
+ 494               	.L17:
+ 158:../freeRTOS750/lib_iinchip/w5100.c **** 	while ( !(SPSR & _BV(SPIF)) );
+ 496               	.LM39:
+ 497 00ea 0DB4      		in __tmp_reg__,0x2d
+ 498 00ec 07FE      		sbrs __tmp_reg__,7
+ 499 00ee 00C0      		rjmp .L17
+ 159:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 160:../freeRTOS750/lib_iinchip/w5100.c **** 	portEXIT_CRITICAL();
+ 501               	.LM40:
+ 502               	/* #APP */
+ 503               	 ;  160 "../freeRTOS750/lib_iinchip/w5100.c" 1
+ 504 00f0 0F90      		pop		__tmp_reg__
+ 505               	 ;  0 "" 2
+ 506               	 ;  160 "../freeRTOS750/lib_iinchip/w5100.c" 1
+ 507 00f2 0FBE      		out		__SREG__, __tmp_reg__
+ 508               	 ;  0 "" 2
+ 161:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 162:../freeRTOS750/lib_iinchip/w5100.c **** 	spiDeselect(Wiznet);	// CS=1, SPI end, give semaphore
+ 510               	.LM41:
+ 511               	/* #NOAPP */
+ 512 00f4 80E0      		ldi r24,0
+ 513 00f6 0E94 0000 		call spiDeselect
+ 514 00fa 81E0      		ldi r24,lo8(1)
+ 515               	.L11:
+ 516               	/* epilogue start */
+ 517               	.LBE29:
+ 518               	.LBE28:
+ 163:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 164:../freeRTOS750/lib_iinchip/w5100.c **** 	IINCHIP_ISR_ENABLE();
+ 165:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 166:../freeRTOS750/lib_iinchip/w5100.c **** 	return 1;
+ 167:../freeRTOS750/lib_iinchip/w5100.c **** }
+ 520               	.LM42:
+ 521 00fc 0F90      		pop __tmp_reg__
+ 522 00fe 0F90      		pop __tmp_reg__
+ 523 0100 DF91      		pop r29
+ 524 0102 CF91      		pop r28
+ 525 0104 1F91      		pop r17
+ 526 0106 0895      		ret
+ 528               	.Lscope9:
+ 530               		.stabd	78,0,0
+ 532               	.global	IINCHIP_read
+ 534               	IINCHIP_read:
+ 535               		.stabd	46,0,0
+ 168:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 169:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 170:../freeRTOS750/lib_iinchip/w5100.c **** /**
+ 171:../freeRTOS750/lib_iinchip/w5100.c **** @brief	This function reads the value from W5100 registers.
+ 172:../freeRTOS750/lib_iinchip/w5100.c **** */
+ 173:../freeRTOS750/lib_iinchip/w5100.c **** uint8_t IINCHIP_read(uint16_t addr)
+ 174:../freeRTOS750/lib_iinchip/w5100.c **** {
+ 537               	.LM43:
+ 538               	.LFBB10:
+ 539 0108 1F93      		push r17
+ 540 010a CF93      		push r28
+ 541 010c DF93      		push r29
+ 542 010e 1F92      		push __zero_reg__
+ 543 0110 CDB7      		in r28,__SP_L__
+ 544 0112 DEB7      		in r29,__SP_H__
+ 545               	/* prologue: function */
+ 546               	/* frame size = 1 */
+ 547               	/* stack size = 4 */
+ 548               	.L__stack_usage = 4
+ 549 0114 182F      		mov r17,r24
+ 175:../freeRTOS750/lib_iinchip/w5100.c **** 	uint8_t RxByte;
+ 176:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 177:../freeRTOS750/lib_iinchip/w5100.c **** 	IINCHIP_ISR_DISABLE();
+ 178:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 179:../freeRTOS750/lib_iinchip/w5100.c **** 	spiSelect(Wiznet);    						// CS=0, get semaphore, SPI start
+ 551               	.LM44:
+ 552 0116 80E0      		ldi r24,0
+ 553 0118 9983      		std Y+1,r25
+ 554 011a 0E94 0000 		call spiSelect
+ 180:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 181:../freeRTOS750/lib_iinchip/w5100.c **** 	spiSetDataMode(SPI_MODE0);					// Enable SPI function in mode 0, CPOL=0 CPHA=0
+ 556               	.LM45:
+ 557 011e 80E0      		ldi r24,0
+ 558 0120 0E94 0000 		call spiSetDataMode
+ 182:../freeRTOS750/lib_iinchip/w5100.c **** 	spiSetClockDivider(IINCHIP_SPI_DIVIDER);	// SPI at maximum speed
+ 560               	.LM46:
+ 561 0124 80E0      		ldi r24,0
+ 562 0126 0E94 0000 		call spiSetClockDivider
+ 183:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 184:../freeRTOS750/lib_iinchip/w5100.c **** 	// Make sure you manually pull slave select low to indicate start of transfer.
+ 185:../freeRTOS750/lib_iinchip/w5100.c **** 	// That is NOT done by this function..., because...
+ 186:../freeRTOS750/lib_iinchip/w5100.c **** 	// Some devices need to have their SS held low across multiple transfer calls.
+ 187:../freeRTOS750/lib_iinchip/w5100.c **** 	// Using spiSelect (SS_pin);
+ 188:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 189:../freeRTOS750/lib_iinchip/w5100.c **** 	// If the SPI module has not been enabled yet, then return with nothing.
+ 190:../freeRTOS750/lib_iinchip/w5100.c **** 	if ( !(SPCR & _BV(SPE)) ) return 0;
+ 564               	.LM47:
+ 565 012a 9981      		ldd r25,Y+1
+ 566 012c 0CB4      		in __tmp_reg__,0x2c
+ 567 012e 06FC      		sbrc __tmp_reg__,6
+ 568 0130 00C0      		rjmp .L26
+ 569               	.L29:
+ 570 0132 10E0      		ldi r17,0
+ 571 0134 00C0      		rjmp .L27
+ 572               	.L26:
+ 191:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 192:../freeRTOS750/lib_iinchip/w5100.c **** 	// The SPI module is enabled, but it is in slave mode, so we can not
+ 193:../freeRTOS750/lib_iinchip/w5100.c **** 	// transmit the byte.  This can happen if SSbar is an input and it went low.
+ 194:../freeRTOS750/lib_iinchip/w5100.c **** 	// We will try to recover by setting the MSTR bit.
+ 195:../freeRTOS750/lib_iinchip/w5100.c **** 	// Check this once only at the start. Assume that things don't change.
+ 196:../freeRTOS750/lib_iinchip/w5100.c **** 	if ( !(SPCR & _BV(MSTR)) ) SPCR |= _BV(MSTR);
+ 574               	.LM48:
+ 575 0136 0CB4      		in __tmp_reg__,0x2c
+ 576 0138 04FC      		sbrc __tmp_reg__,4
+ 577 013a 00C0      		rjmp .L28
+ 579               	.LM49:
+ 580 013c 2CB5      		in r18,0x2c
+ 581 013e 2061      		ori r18,lo8(16)
+ 582 0140 2CBD      		out 0x2c,r18
+ 583               	.L28:
+ 197:../freeRTOS750/lib_iinchip/w5100.c **** 	if ( !(SPCR & _BV(MSTR)) ) return 0;
+ 585               	.LM50:
+ 586 0142 0CB4      		in __tmp_reg__,0x2c
+ 587 0144 04FE      		sbrs __tmp_reg__,4
+ 588 0146 00C0      		rjmp .L29
+ 589               	.LBB32:
+ 590               	.LBB33:
+ 198:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 199:../freeRTOS750/lib_iinchip/w5100.c **** 	portENTER_CRITICAL();
+ 592               	.LM51:
+ 593               	/* #APP */
+ 594               	 ;  199 "../freeRTOS750/lib_iinchip/w5100.c" 1
+ 595 0148 0FB6      		in		__tmp_reg__, __SREG__
+ 596               	 ;  0 "" 2
+ 597               	 ;  199 "../freeRTOS750/lib_iinchip/w5100.c" 1
+ 598 014a F894      		cli
+ 599               	 ;  0 "" 2
+ 600               	 ;  199 "../freeRTOS750/lib_iinchip/w5100.c" 1
+ 601 014c 0F92      		push	__tmp_reg__
+ 602               	 ;  0 "" 2
+ 200:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 201:../freeRTOS750/lib_iinchip/w5100.c **** 	SPDR = 0x0F; // Begin transmission with Read Op Code
+ 604               	.LM52:
+ 605               	/* #NOAPP */
+ 606 014e 8FE0      		ldi r24,lo8(15)
+ 607 0150 8EBD      		out 0x2e,r24
+ 608               	.L30:
+ 202:../freeRTOS750/lib_iinchip/w5100.c **** 	RxByte = (addr & 0xFF00) >> 8; // pre-load the upper address to be transmitted
+ 203:../freeRTOS750/lib_iinchip/w5100.c **** 	while ( !(SPSR & _BV(SPIF)) );
+ 610               	.LM53:
+ 611 0152 0DB4      		in __tmp_reg__,0x2d
+ 612 0154 07FE      		sbrs __tmp_reg__,7
+ 613 0156 00C0      		rjmp .L30
+ 204:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 205:../freeRTOS750/lib_iinchip/w5100.c **** 	SPDR = RxByte; // Continue transmission
+ 615               	.LM54:
+ 616 0158 9EBD      		out 0x2e,r25
+ 617               	.L31:
+ 206:../freeRTOS750/lib_iinchip/w5100.c **** 	RxByte = (addr & 0x00FF); // pre-load the lower address to be transmitted
+ 207:../freeRTOS750/lib_iinchip/w5100.c **** 	while ( !(SPSR & _BV(SPIF)) );
+ 619               	.LM55:
+ 620 015a 0DB4      		in __tmp_reg__,0x2d
+ 621 015c 07FE      		sbrs __tmp_reg__,7
+ 622 015e 00C0      		rjmp .L31
+ 208:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 209:../freeRTOS750/lib_iinchip/w5100.c **** 	SPDR = RxByte; // Continue transmission
+ 624               	.LM56:
+ 625 0160 1EBD      		out 0x2e,r17
+ 626               	.L32:
+ 210:../freeRTOS750/lib_iinchip/w5100.c **** 	RxByte = 0xFF; // pre-load a dummy byte to be transmitted
+ 211:../freeRTOS750/lib_iinchip/w5100.c **** 	while ( !(SPSR & _BV(SPIF)) );
+ 628               	.LM57:
+ 629 0162 0DB4      		in __tmp_reg__,0x2d
+ 630 0164 07FE      		sbrs __tmp_reg__,7
+ 631 0166 00C0      		rjmp .L32
+ 212:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 213:../freeRTOS750/lib_iinchip/w5100.c **** 	SPDR = RxByte; // Continue transmission
+ 633               	.LM58:
+ 634 0168 8FEF      		ldi r24,lo8(-1)
+ 635 016a 8EBD      		out 0x2e,r24
+ 636               	.L33:
+ 214:../freeRTOS750/lib_iinchip/w5100.c **** 	while ( !(SPSR & _BV(SPIF)) );
+ 638               	.LM59:
+ 639 016c 0DB4      		in __tmp_reg__,0x2d
+ 640 016e 07FE      		sbrs __tmp_reg__,7
+ 641 0170 00C0      		rjmp .L33
+ 215:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 216:../freeRTOS750/lib_iinchip/w5100.c **** 	RxByte = SPDR; // copy received byte
+ 643               	.LM60:
+ 644 0172 1EB5      		in r17,0x2e
+ 217:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 218:../freeRTOS750/lib_iinchip/w5100.c **** 	portEXIT_CRITICAL();
+ 646               	.LM61:
+ 647               	/* #APP */
+ 648               	 ;  218 "../freeRTOS750/lib_iinchip/w5100.c" 1
+ 649 0174 0F90      		pop		__tmp_reg__
+ 650               	 ;  0 "" 2
+ 651               	 ;  218 "../freeRTOS750/lib_iinchip/w5100.c" 1
+ 652 0176 0FBE      		out		__SREG__, __tmp_reg__
+ 653               	 ;  0 "" 2
+ 219:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 220:../freeRTOS750/lib_iinchip/w5100.c **** 	spiDeselect(Wiznet);	// CS=1, SPI end, give semaphore
+ 655               	.LM62:
+ 656               	/* #NOAPP */
+ 657 0178 80E0      		ldi r24,0
+ 658 017a 0E94 0000 		call spiDeselect
+ 659               	.L27:
+ 660               	.LBE33:
+ 661               	.LBE32:
+ 221:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 222:../freeRTOS750/lib_iinchip/w5100.c **** 	IINCHIP_ISR_ENABLE();
+ 223:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 224:../freeRTOS750/lib_iinchip/w5100.c **** 	return RxByte;
+ 225:../freeRTOS750/lib_iinchip/w5100.c **** }
+ 663               	.LM63:
+ 664 017e 812F      		mov r24,r17
+ 665               	/* epilogue start */
+ 666 0180 0F90      		pop __tmp_reg__
+ 667 0182 DF91      		pop r29
+ 668 0184 CF91      		pop r28
+ 669 0186 1F91      		pop r17
+ 670 0188 0895      		ret
+ 675               	.Lscope10:
+ 677               		.stabd	78,0,0
+ 681               	.global	IINCHIP_write_buf
+ 683               	IINCHIP_write_buf:
+ 684               		.stabd	46,0,0
+ 226:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 227:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 228:../freeRTOS750/lib_iinchip/w5100.c **** /**
+ 229:../freeRTOS750/lib_iinchip/w5100.c **** @brief	This function writes into W5100 memory (Buffer)
+ 230:../freeRTOS750/lib_iinchip/w5100.c **** */
+ 231:../freeRTOS750/lib_iinchip/w5100.c **** uint16_t IINCHIP_write_buf(uint16_t addr, uint8_t *buf, uint16_t len)
+ 232:../freeRTOS750/lib_iinchip/w5100.c **** {
+ 686               	.LM64:
+ 687               	.LFBB11:
+ 688 018a EF92      		push r14
+ 689 018c FF92      		push r15
+ 690 018e 0F93      		push r16
+ 691 0190 1F93      		push r17
+ 692 0192 CF93      		push r28
+ 693 0194 DF93      		push r29
+ 694 0196 00D0      		rcall .
+ 695 0198 CDB7      		in r28,__SP_L__
+ 696 019a DEB7      		in r29,__SP_H__
+ 697               	/* prologue: function */
+ 698               	/* frame size = 2 */
+ 699               	/* stack size = 8 */
+ 700               	.L__stack_usage = 8
+ 701 019c 8C01      		movw r16,r24
+ 702 019e 7A01      		movw r14,r20
+ 233:../freeRTOS750/lib_iinchip/w5100.c **** 	uint8_t TxByte;
+ 234:../freeRTOS750/lib_iinchip/w5100.c **** 	uint16_t i;
+ 235:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 236:../freeRTOS750/lib_iinchip/w5100.c ****     if(len == 0)
+ 704               	.LM65:
+ 705 01a0 4115      		cp r20,__zero_reg__
+ 706 01a2 5105      		cpc r21,__zero_reg__
+ 707 01a4 01F4      		brne .L42
+ 708 01a6 00C0      		rjmp .L53
+ 709               	.L42:
+ 237:../freeRTOS750/lib_iinchip/w5100.c ****     {
+ 238:../freeRTOS750/lib_iinchip/w5100.c ****       return 0;
+ 239:../freeRTOS750/lib_iinchip/w5100.c ****     }
+ 240:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 241:../freeRTOS750/lib_iinchip/w5100.c **** 	IINCHIP_ISR_DISABLE();
+ 242:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 243:../freeRTOS750/lib_iinchip/w5100.c **** 	// Make sure you manually pull slave select low to indicate start of transfer.
+ 244:../freeRTOS750/lib_iinchip/w5100.c **** 	// That is NOT done by this function..., because...
+ 245:../freeRTOS750/lib_iinchip/w5100.c **** 	// Some devices need to have their SS held low across multiple transfer calls.
+ 246:../freeRTOS750/lib_iinchip/w5100.c **** 	// Using spiSelect (SS_pin);
+ 247:../freeRTOS750/lib_iinchip/w5100.c **** 	// But, this one needs the SS pin toggled to finish a transmission.
+ 248:../freeRTOS750/lib_iinchip/w5100.c **** 	// So call the fast macro to make it snappy. No need to release semaphore.
+ 249:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 250:../freeRTOS750/lib_iinchip/w5100.c **** 	spiSelect(Wiznet);    						// SS=0, SPI start, get semaphore
+ 711               	.LM66:
+ 712 01a8 80E0      		ldi r24,0
+ 713 01aa 6983      		std Y+1,r22
+ 714 01ac 7A83      		std Y+2,r23
+ 715 01ae 0E94 0000 		call spiSelect
+ 251:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 252:../freeRTOS750/lib_iinchip/w5100.c **** 	spiSetDataMode(SPI_MODE0);					// Enable SPI function in mode 0, CPOL=0 CPHA=0
+ 717               	.LM67:
+ 718 01b2 80E0      		ldi r24,0
+ 719 01b4 0E94 0000 		call spiSetDataMode
+ 253:../freeRTOS750/lib_iinchip/w5100.c **** 	spiSetClockDivider(IINCHIP_SPI_DIVIDER);	// SPI at maximum speed
+ 721               	.LM68:
+ 722 01b8 80E0      		ldi r24,0
+ 723 01ba 0E94 0000 		call spiSetClockDivider
+ 254:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 255:../freeRTOS750/lib_iinchip/w5100.c **** 	// If the SPI module has not been enabled yet, then return with nothing.
+ 256:../freeRTOS750/lib_iinchip/w5100.c **** 	if ( !(SPCR & _BV(SPE)) ) return 0;
+ 725               	.LM69:
+ 726 01be 6981      		ldd r22,Y+1
+ 727 01c0 7A81      		ldd r23,Y+2
+ 728 01c2 0CB4      		in __tmp_reg__,0x2c
+ 729 01c4 06FE      		sbrs __tmp_reg__,6
+ 730 01c6 00C0      		rjmp .L53
+ 257:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 258:../freeRTOS750/lib_iinchip/w5100.c **** 	// The SPI module is enabled, but it is in slave mode, so we can not
+ 259:../freeRTOS750/lib_iinchip/w5100.c **** 	// transmit the byte.  This can happen if SSbar is an input and it went low.
+ 260:../freeRTOS750/lib_iinchip/w5100.c **** 	// We will try to recover by setting the MSTR bit.
+ 261:../freeRTOS750/lib_iinchip/w5100.c **** 	// Check this once only at the start. Assume that things don't change.
+ 262:../freeRTOS750/lib_iinchip/w5100.c **** 	if ( !(SPCR & _BV(MSTR)) ) SPCR |= _BV(MSTR);
+ 732               	.LM70:
+ 733 01c8 0CB4      		in __tmp_reg__,0x2c
+ 734 01ca 04FC      		sbrc __tmp_reg__,4
+ 735 01cc 00C0      		rjmp .L45
+ 737               	.LM71:
+ 738 01ce 8CB5      		in r24,0x2c
+ 739 01d0 8061      		ori r24,lo8(16)
+ 740 01d2 8CBD      		out 0x2c,r24
+ 741               	.L45:
+ 263:../freeRTOS750/lib_iinchip/w5100.c **** 	if ( !(SPCR & _BV(MSTR)) ) return 0;
+ 743               	.LM72:
+ 744 01d4 0CB4      		in __tmp_reg__,0x2c
+ 745 01d6 04FE      		sbrs __tmp_reg__,4
+ 746 01d8 00C0      		rjmp .L53
+ 747 01da FB01      		movw r30,r22
+ 231:../freeRTOS750/lib_iinchip/w5100.c **** uint16_t IINCHIP_write_buf(uint16_t addr, uint8_t *buf, uint16_t len)
+ 749               	.LM73:
+ 750 01dc CB01      		movw r24,r22
+ 751 01de 8E0D      		add r24,r14
+ 752 01e0 9F1D      		adc r25,r15
+ 753               	.LBB36:
+ 754               	.LBB37:
+ 264:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 265:../freeRTOS750/lib_iinchip/w5100.c **** #ifdef __DEF_IINCHIP_DBG__
+ 266:../freeRTOS750/lib_iinchip/w5100.c **** 	xSerialPrintf_P(PSTR("IINCHIP_write_buf: tx_ptr: %.4x "), addr);
+ 267:../freeRTOS750/lib_iinchip/w5100.c **** #endif
+ 268:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 269:../freeRTOS750/lib_iinchip/w5100.c **** 	for( i=0; i<len; ++i)
+ 270:../freeRTOS750/lib_iinchip/w5100.c **** 	{
+ 271:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 272:../freeRTOS750/lib_iinchip/w5100.c **** 		portENTER_CRITICAL();
+ 273:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 274:../freeRTOS750/lib_iinchip/w5100.c **** 		SPI_PORT &= ~SPI_BIT_SS_WIZNET;	// SS=0, SPI start
+ 275:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 276:../freeRTOS750/lib_iinchip/w5100.c **** 		SPDR = 0xF0; // Begin transmission with Write Op Code
+ 756               	.LM74:
+ 757 01e2 20EF      		ldi r18,lo8(-16)
+ 758 01e4 00C0      		rjmp .L46
+ 759               	.L51:
+ 272:../freeRTOS750/lib_iinchip/w5100.c **** 		portENTER_CRITICAL();
+ 761               	.LM75:
+ 762               	/* #APP */
+ 763               	 ;  272 "../freeRTOS750/lib_iinchip/w5100.c" 1
+ 764 01e6 0FB6      		in		__tmp_reg__, __SREG__
+ 765               	 ;  0 "" 2
+ 766               	 ;  272 "../freeRTOS750/lib_iinchip/w5100.c" 1
+ 767 01e8 F894      		cli
+ 768               	 ;  0 "" 2
+ 769               	 ;  272 "../freeRTOS750/lib_iinchip/w5100.c" 1
+ 770 01ea 0F92      		push	__tmp_reg__
+ 771               	 ;  0 "" 2
+ 274:../freeRTOS750/lib_iinchip/w5100.c **** 		SPI_PORT &= ~SPI_BIT_SS_WIZNET;	// SS=0, SPI start
+ 773               	.LM76:
+ 774               	/* #NOAPP */
+ 775 01ec 2A98      		cbi 0x5,2
+ 777               	.LM77:
+ 778 01ee 2EBD      		out 0x2e,r18
+ 277:../freeRTOS750/lib_iinchip/w5100.c **** 		TxByte = (((addr+i) & 0xFF00) >> 8); // pre-load the upper address to be transmitted
+ 780               	.LM78:
+ 781 01f0 312F      		mov r19,r17
+ 782               	.L47:
+ 278:../freeRTOS750/lib_iinchip/w5100.c **** 		while ( !(SPSR & _BV(SPIF)) );
+ 784               	.LM79:
+ 785 01f2 0DB4      		in __tmp_reg__,0x2d
+ 786 01f4 07FE      		sbrs __tmp_reg__,7
+ 787 01f6 00C0      		rjmp .L47
+ 279:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 280:../freeRTOS750/lib_iinchip/w5100.c **** 		SPDR = TxByte; // Continue transmission
+ 789               	.LM80:
+ 790 01f8 3EBD      		out 0x2e,r19
+ 281:../freeRTOS750/lib_iinchip/w5100.c **** 		TxByte = ((addr+i) & 0x00FF); // pre-load the lower address to be transmitted
+ 792               	.LM81:
+ 793 01fa 302F      		mov r19,r16
+ 794               	.L48:
+ 282:../freeRTOS750/lib_iinchip/w5100.c **** 		while ( !(SPSR & _BV(SPIF)) );
+ 796               	.LM82:
+ 797 01fc 0DB4      		in __tmp_reg__,0x2d
+ 798 01fe 07FE      		sbrs __tmp_reg__,7
+ 799 0200 00C0      		rjmp .L48
+ 283:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 284:../freeRTOS750/lib_iinchip/w5100.c **** 		SPDR = TxByte; // Continue transmission
+ 801               	.LM83:
+ 802 0202 3EBD      		out 0x2e,r19
+ 285:../freeRTOS750/lib_iinchip/w5100.c **** 		TxByte = buf[i]; // pre-load the byte to be transmitted
+ 804               	.LM84:
+ 805 0204 3191      		ld r19,Z+
+ 806               	.L49:
+ 286:../freeRTOS750/lib_iinchip/w5100.c **** 		while ( !(SPSR & _BV(SPIF)) );
+ 808               	.LM85:
+ 809 0206 0DB4      		in __tmp_reg__,0x2d
+ 810 0208 07FE      		sbrs __tmp_reg__,7
+ 811 020a 00C0      		rjmp .L49
+ 287:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 288:../freeRTOS750/lib_iinchip/w5100.c **** 		SPDR = TxByte; // Continue transmission
+ 813               	.LM86:
+ 814 020c 3EBD      		out 0x2e,r19
+ 815               	.L50:
+ 289:../freeRTOS750/lib_iinchip/w5100.c **** 		while ( !(SPSR & _BV(SPIF)) );
+ 817               	.LM87:
+ 818 020e 0DB4      		in __tmp_reg__,0x2d
+ 819 0210 07FE      		sbrs __tmp_reg__,7
+ 820 0212 00C0      		rjmp .L50
+ 290:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 291:../freeRTOS750/lib_iinchip/w5100.c **** 		SPI_PORT |= SPI_BIT_SS_WIZNET;	// SS=1, SPI stop, but keep semaphore
+ 822               	.LM88:
+ 823 0214 2A9A      		sbi 0x5,2
+ 292:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 293:../freeRTOS750/lib_iinchip/w5100.c **** 		portEXIT_CRITICAL();
+ 825               	.LM89:
+ 826               	/* #APP */
+ 827               	 ;  293 "../freeRTOS750/lib_iinchip/w5100.c" 1
+ 828 0216 0F90      		pop		__tmp_reg__
+ 829               	 ;  0 "" 2
+ 830               	 ;  293 "../freeRTOS750/lib_iinchip/w5100.c" 1
+ 831 0218 0FBE      		out		__SREG__, __tmp_reg__
+ 832               	 ;  0 "" 2
+ 833               	/* #NOAPP */
+ 834 021a 0F5F      		subi r16,-1
+ 835 021c 1F4F      		sbci r17,-1
+ 836               	.L46:
+ 269:../freeRTOS750/lib_iinchip/w5100.c **** 	for( i=0; i<len; ++i)
+ 838               	.LM90:
+ 839 021e E817      		cp r30,r24
+ 840 0220 F907      		cpc r31,r25
+ 841 0222 01F4      		brne .L51
+ 294:../freeRTOS750/lib_iinchip/w5100.c **** 	}
+ 295:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 296:../freeRTOS750/lib_iinchip/w5100.c **** 	if ( !(SPCR & _BV(MSTR)) ) return 0; 	// The SPI module is enabled, but it is in slave mode.
+ 843               	.LM91:
+ 844 0224 0CB4      		in __tmp_reg__,0x2c
+ 845 0226 04FE      		sbrs __tmp_reg__,4
+ 846 0228 00C0      		rjmp .L53
+ 297:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 298:../freeRTOS750/lib_iinchip/w5100.c **** 	spiDeselect(Wiznet);	// SS=1, SPI end
+ 848               	.LM92:
+ 849 022a 80E0      		ldi r24,0
+ 850 022c 0E94 0000 		call spiDeselect
+ 851 0230 00C0      		rjmp .L43
+ 852               	.L53:
+ 296:../freeRTOS750/lib_iinchip/w5100.c **** 	if ( !(SPCR & _BV(MSTR)) ) return 0; 	// The SPI module is enabled, but it is in slave mode.
+ 854               	.LM93:
+ 855 0232 E12C      		mov r14,__zero_reg__
+ 856 0234 F12C      		mov r15,__zero_reg__
+ 857               	.L43:
+ 858               	.LBE37:
+ 859               	.LBE36:
+ 299:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 300:../freeRTOS750/lib_iinchip/w5100.c **** 	IINCHIP_ISR_ENABLE();
+ 301:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 302:../freeRTOS750/lib_iinchip/w5100.c **** #ifdef __DEF_IINCHIP_DBG__
+ 303:../freeRTOS750/lib_iinchip/w5100.c **** 	xSerialPrintf_P(PSTR(" %.4x tx_len: %.4x\r\n"), addr+i, len);
+ 304:../freeRTOS750/lib_iinchip/w5100.c **** #endif
+ 305:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 306:../freeRTOS750/lib_iinchip/w5100.c **** 	return len;
+ 307:../freeRTOS750/lib_iinchip/w5100.c **** }
+ 861               	.LM94:
+ 862 0236 C701      		movw r24,r14
+ 863               	/* epilogue start */
+ 864 0238 0F90      		pop __tmp_reg__
+ 865 023a 0F90      		pop __tmp_reg__
+ 866 023c DF91      		pop r29
+ 867 023e CF91      		pop r28
+ 868 0240 1F91      		pop r17
+ 869 0242 0F91      		pop r16
+ 870 0244 FF90      		pop r15
+ 871 0246 EF90      		pop r14
+ 872 0248 0895      		ret
+ 874               	.Lscope11:
+ 876               		.stabd	78,0,0
+ 880               	.global	IINCHIP_read_buf
+ 882               	IINCHIP_read_buf:
+ 883               		.stabd	46,0,0
+ 308:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 309:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 310:../freeRTOS750/lib_iinchip/w5100.c **** /**
+ 311:../freeRTOS750/lib_iinchip/w5100.c **** @brief	This function reads from W5100 memory (Buffer)
+ 312:../freeRTOS750/lib_iinchip/w5100.c **** */
+ 313:../freeRTOS750/lib_iinchip/w5100.c **** uint16_t IINCHIP_read_buf(uint16_t addr, uint8_t *buf, uint16_t len)
+ 314:../freeRTOS750/lib_iinchip/w5100.c **** {
+ 885               	.LM95:
+ 886               	.LFBB12:
+ 887 024a EF92      		push r14
+ 888 024c FF92      		push r15
+ 889 024e 0F93      		push r16
+ 890 0250 1F93      		push r17
+ 891 0252 CF93      		push r28
+ 892 0254 DF93      		push r29
+ 893 0256 00D0      		rcall .
+ 894 0258 CDB7      		in r28,__SP_L__
+ 895 025a DEB7      		in r29,__SP_H__
+ 896               	/* prologue: function */
+ 897               	/* frame size = 2 */
+ 898               	/* stack size = 8 */
+ 899               	.L__stack_usage = 8
+ 900 025c 8C01      		movw r16,r24
+ 901 025e 7A01      		movw r14,r20
+ 315:../freeRTOS750/lib_iinchip/w5100.c **** 	uint8_t RxByte;
+ 316:../freeRTOS750/lib_iinchip/w5100.c **** 	uint16_t i;
+ 317:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 318:../freeRTOS750/lib_iinchip/w5100.c **** 	IINCHIP_ISR_DISABLE();
+ 319:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 320:../freeRTOS750/lib_iinchip/w5100.c **** 	// Make sure you manually pull slave select low to indicate start of transfer.
+ 321:../freeRTOS750/lib_iinchip/w5100.c **** 	// That is NOT done by this function..., because...
+ 322:../freeRTOS750/lib_iinchip/w5100.c **** 	// Some devices need to have their SS held low across multiple transfer calls.
+ 323:../freeRTOS750/lib_iinchip/w5100.c **** 	// Using spiSelect (SS_pin);
+ 324:../freeRTOS750/lib_iinchip/w5100.c **** 	// But, this one needs the SS pin toggled to finish a transmission.
+ 325:../freeRTOS750/lib_iinchip/w5100.c **** 	// So call the fast macro to make it snappy. No need to release semaphore.
+ 326:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 327:../freeRTOS750/lib_iinchip/w5100.c **** 	spiSelect(Wiznet);    						// SS=0, SPI start
+ 903               	.LM96:
+ 904 0260 80E0      		ldi r24,0
+ 905 0262 6983      		std Y+1,r22
+ 906 0264 7A83      		std Y+2,r23
+ 907 0266 0E94 0000 		call spiSelect
+ 328:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 329:../freeRTOS750/lib_iinchip/w5100.c **** 	spiSetDataMode(SPI_MODE0);					// Enable SPI function in mode 0, CPOL=0 CPHA=0
+ 909               	.LM97:
+ 910 026a 80E0      		ldi r24,0
+ 911 026c 0E94 0000 		call spiSetDataMode
+ 330:../freeRTOS750/lib_iinchip/w5100.c **** 	spiSetClockDivider(IINCHIP_SPI_DIVIDER);	// SPI at maximum speed
+ 913               	.LM98:
+ 914 0270 80E0      		ldi r24,0
+ 915 0272 0E94 0000 		call spiSetClockDivider
+ 331:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 332:../freeRTOS750/lib_iinchip/w5100.c **** 	// If the SPI module has not been enabled yet, then return with nothing.
+ 333:../freeRTOS750/lib_iinchip/w5100.c **** 	if ( !(SPCR & _BV(SPE)) ) return 0;
+ 917               	.LM99:
+ 918 0276 6981      		ldd r22,Y+1
+ 919 0278 7A81      		ldd r23,Y+2
+ 920 027a 0CB4      		in __tmp_reg__,0x2c
+ 921 027c 06FE      		sbrs __tmp_reg__,6
+ 922 027e 00C0      		rjmp .L76
+ 923               	.L65:
+ 334:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 335:../freeRTOS750/lib_iinchip/w5100.c **** 	// The SPI module is enabled, but it is in slave mode, so we can not
+ 336:../freeRTOS750/lib_iinchip/w5100.c **** 	// transmit the byte.  This can happen if SSbar is an input and it went low.
+ 337:../freeRTOS750/lib_iinchip/w5100.c **** 	// We will try to recover by setting the MSTR bit.
+ 338:../freeRTOS750/lib_iinchip/w5100.c **** 	// Check this once only at the start. Assume that things don't change.
+ 339:../freeRTOS750/lib_iinchip/w5100.c **** 	if ( !(SPCR & _BV(MSTR)) ) SPCR |= _BV(MSTR);
+ 925               	.LM100:
+ 926 0280 0CB4      		in __tmp_reg__,0x2c
+ 927 0282 04FC      		sbrc __tmp_reg__,4
+ 928 0284 00C0      		rjmp .L67
+ 930               	.LM101:
+ 931 0286 8CB5      		in r24,0x2c
+ 932 0288 8061      		ori r24,lo8(16)
+ 933 028a 8CBD      		out 0x2c,r24
+ 934               	.L67:
+ 340:../freeRTOS750/lib_iinchip/w5100.c **** 	if ( !(SPCR & _BV(MSTR)) ) return 0;
+ 936               	.LM102:
+ 937 028c 0CB4      		in __tmp_reg__,0x2c
+ 938 028e 04FE      		sbrs __tmp_reg__,4
+ 939 0290 00C0      		rjmp .L76
+ 940 0292 FB01      		movw r30,r22
+ 313:../freeRTOS750/lib_iinchip/w5100.c **** uint16_t IINCHIP_read_buf(uint16_t addr, uint8_t *buf, uint16_t len)
+ 942               	.LM103:
+ 943 0294 CB01      		movw r24,r22
+ 944 0296 8E0D      		add r24,r14
+ 945 0298 9F1D      		adc r25,r15
+ 946               	.LBB40:
+ 947               	.LBB41:
+ 341:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 342:../freeRTOS750/lib_iinchip/w5100.c **** #ifdef __DEF_IINCHIP_DBG__
+ 343:../freeRTOS750/lib_iinchip/w5100.c **** 	xSerialPrintf_P(PSTR("IINCHIP_read_buf: rx_ptr: %.4x "), addr);
+ 344:../freeRTOS750/lib_iinchip/w5100.c **** #endif
+ 345:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 346:../freeRTOS750/lib_iinchip/w5100.c **** 	for ( i=0; i<len; ++i)
+ 347:../freeRTOS750/lib_iinchip/w5100.c ****     {
+ 348:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 349:../freeRTOS750/lib_iinchip/w5100.c **** 		portENTER_CRITICAL();
+ 350:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 351:../freeRTOS750/lib_iinchip/w5100.c **** 		SPI_PORT &= ~SPI_BIT_SS_WIZNET;	// SS=0, SPI start
+ 352:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 353:../freeRTOS750/lib_iinchip/w5100.c **** 		SPDR = 0x0F; // Begin transmission with Read Op Code
+ 949               	.LM104:
+ 950 029a 2FE0      		ldi r18,lo8(15)
+ 354:../freeRTOS750/lib_iinchip/w5100.c **** 		RxByte = (((addr+i) & 0xFF00) >> 8); // pre-load the upper address to be transmitted
+ 355:../freeRTOS750/lib_iinchip/w5100.c **** 		while ( !(SPSR & _BV(SPIF)) );
+ 356:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 357:../freeRTOS750/lib_iinchip/w5100.c **** 		SPDR = RxByte; // Continue transmission
+ 358:../freeRTOS750/lib_iinchip/w5100.c **** 		RxByte = ((addr+i) & 0x00FF); // pre-load the lower address to be transmitted
+ 359:../freeRTOS750/lib_iinchip/w5100.c **** 		while ( !(SPSR & _BV(SPIF)) );
+ 360:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 361:../freeRTOS750/lib_iinchip/w5100.c **** 		SPDR = RxByte; // Continue transmission
+ 362:../freeRTOS750/lib_iinchip/w5100.c **** 		RxByte = 0xFF; // pre-load a dummy byte to be transmitted
+ 363:../freeRTOS750/lib_iinchip/w5100.c **** 		while ( !(SPSR & _BV(SPIF)) );
+ 364:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 365:../freeRTOS750/lib_iinchip/w5100.c **** 		SPDR = RxByte; // Continue transmission
+ 952               	.LM105:
+ 953 029c 3FEF      		ldi r19,lo8(-1)
+ 954 029e 00C0      		rjmp .L69
+ 955               	.L74:
+ 349:../freeRTOS750/lib_iinchip/w5100.c **** 		portENTER_CRITICAL();
+ 957               	.LM106:
+ 958               	/* #APP */
+ 959               	 ;  349 "../freeRTOS750/lib_iinchip/w5100.c" 1
+ 960 02a0 0FB6      		in		__tmp_reg__, __SREG__
+ 961               	 ;  0 "" 2
+ 962               	 ;  349 "../freeRTOS750/lib_iinchip/w5100.c" 1
+ 963 02a2 F894      		cli
+ 964               	 ;  0 "" 2
+ 965               	 ;  349 "../freeRTOS750/lib_iinchip/w5100.c" 1
+ 966 02a4 0F92      		push	__tmp_reg__
+ 967               	 ;  0 "" 2
+ 351:../freeRTOS750/lib_iinchip/w5100.c **** 		SPI_PORT &= ~SPI_BIT_SS_WIZNET;	// SS=0, SPI start
+ 969               	.LM107:
+ 970               	/* #NOAPP */
+ 971 02a6 2A98      		cbi 0x5,2
+ 353:../freeRTOS750/lib_iinchip/w5100.c **** 		SPDR = 0x0F; // Begin transmission with Read Op Code
+ 973               	.LM108:
+ 974 02a8 2EBD      		out 0x2e,r18
+ 354:../freeRTOS750/lib_iinchip/w5100.c **** 		RxByte = (((addr+i) & 0xFF00) >> 8); // pre-load the upper address to be transmitted
+ 976               	.LM109:
+ 977 02aa 412F      		mov r20,r17
+ 978               	.L70:
+ 355:../freeRTOS750/lib_iinchip/w5100.c **** 		while ( !(SPSR & _BV(SPIF)) );
+ 980               	.LM110:
+ 981 02ac 0DB4      		in __tmp_reg__,0x2d
+ 982 02ae 07FE      		sbrs __tmp_reg__,7
+ 983 02b0 00C0      		rjmp .L70
+ 357:../freeRTOS750/lib_iinchip/w5100.c **** 		SPDR = RxByte; // Continue transmission
+ 985               	.LM111:
+ 986 02b2 4EBD      		out 0x2e,r20
+ 358:../freeRTOS750/lib_iinchip/w5100.c **** 		RxByte = ((addr+i) & 0x00FF); // pre-load the lower address to be transmitted
+ 988               	.LM112:
+ 989 02b4 402F      		mov r20,r16
+ 990               	.L71:
+ 359:../freeRTOS750/lib_iinchip/w5100.c **** 		while ( !(SPSR & _BV(SPIF)) );
+ 992               	.LM113:
+ 993 02b6 0DB4      		in __tmp_reg__,0x2d
+ 994 02b8 07FE      		sbrs __tmp_reg__,7
+ 995 02ba 00C0      		rjmp .L71
+ 361:../freeRTOS750/lib_iinchip/w5100.c **** 		SPDR = RxByte; // Continue transmission
+ 997               	.LM114:
+ 998 02bc 4EBD      		out 0x2e,r20
+ 999               	.L72:
+ 363:../freeRTOS750/lib_iinchip/w5100.c **** 		while ( !(SPSR & _BV(SPIF)) );
+ 1001               	.LM115:
+ 1002 02be 0DB4      		in __tmp_reg__,0x2d
+ 1003 02c0 07FE      		sbrs __tmp_reg__,7
+ 1004 02c2 00C0      		rjmp .L72
+ 1006               	.LM116:
+ 1007 02c4 3EBD      		out 0x2e,r19
+ 1008               	.L73:
+ 366:../freeRTOS750/lib_iinchip/w5100.c **** 		while ( !(SPSR & _BV(SPIF)) );
+ 1010               	.LM117:
+ 1011 02c6 0DB4      		in __tmp_reg__,0x2d
+ 1012 02c8 07FE      		sbrs __tmp_reg__,7
+ 1013 02ca 00C0      		rjmp .L73
+ 367:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 368:../freeRTOS750/lib_iinchip/w5100.c **** 		buf[i] = SPDR; // copy received byte
+ 1015               	.LM118:
+ 1016 02cc 4EB5      		in r20,0x2e
+ 1017 02ce 4193      		st Z+,r20
+ 369:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 370:../freeRTOS750/lib_iinchip/w5100.c **** 		SPI_PORT |= SPI_BIT_SS_WIZNET;	// SS=1, SPI stop, but keep semaphore
+ 1019               	.LM119:
+ 1020 02d0 2A9A      		sbi 0x5,2
+ 371:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 372:../freeRTOS750/lib_iinchip/w5100.c **** 		portEXIT_CRITICAL();
+ 1022               	.LM120:
+ 1023               	/* #APP */
+ 1024               	 ;  372 "../freeRTOS750/lib_iinchip/w5100.c" 1
+ 1025 02d2 0F90      		pop		__tmp_reg__
+ 1026               	 ;  0 "" 2
+ 1027               	 ;  372 "../freeRTOS750/lib_iinchip/w5100.c" 1
+ 1028 02d4 0FBE      		out		__SREG__, __tmp_reg__
+ 1029               	 ;  0 "" 2
+ 1030               	/* #NOAPP */
+ 1031 02d6 0F5F      		subi r16,-1
+ 1032 02d8 1F4F      		sbci r17,-1
+ 1033               	.L69:
+ 346:../freeRTOS750/lib_iinchip/w5100.c **** 	for ( i=0; i<len; ++i)
+ 1035               	.LM121:
+ 1036 02da E817      		cp r30,r24
+ 1037 02dc F907      		cpc r31,r25
+ 1038 02de 01F4      		brne .L74
+ 373:../freeRTOS750/lib_iinchip/w5100.c **** 	}
+ 374:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 375:../freeRTOS750/lib_iinchip/w5100.c **** 	if ( !(SPCR & _BV(MSTR)) ) return 0; 	// The SPI module is enabled, but it is in slave mode.
+ 1040               	.LM122:
+ 1041 02e0 0CB4      		in __tmp_reg__,0x2c
+ 1042 02e2 04FE      		sbrs __tmp_reg__,4
+ 1043 02e4 00C0      		rjmp .L76
+ 376:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 377:../freeRTOS750/lib_iinchip/w5100.c **** 	spiDeselect(Wiznet);	// SS=1, SPI end
+ 1045               	.LM123:
+ 1046 02e6 80E0      		ldi r24,0
+ 1047 02e8 0E94 0000 		call spiDeselect
+ 1048 02ec 00C0      		rjmp .L66
+ 1049               	.L76:
+ 375:../freeRTOS750/lib_iinchip/w5100.c **** 	if ( !(SPCR & _BV(MSTR)) ) return 0; 	// The SPI module is enabled, but it is in slave mode.
+ 1051               	.LM124:
+ 1052 02ee E12C      		mov r14,__zero_reg__
+ 1053 02f0 F12C      		mov r15,__zero_reg__
+ 1054               	.L66:
+ 1055               	.LBE41:
+ 1056               	.LBE40:
+ 378:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 379:../freeRTOS750/lib_iinchip/w5100.c **** 	IINCHIP_ISR_ENABLE();
+ 380:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 381:../freeRTOS750/lib_iinchip/w5100.c **** #ifdef __DEF_IINCHIP_DBG__
+ 382:../freeRTOS750/lib_iinchip/w5100.c **** 	xSerialPrintf_P(PSTR(" %.4x rx_len: %.4x\r\n"), addr+i, len);
+ 383:../freeRTOS750/lib_iinchip/w5100.c **** #endif
+ 384:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 385:../freeRTOS750/lib_iinchip/w5100.c **** 	return len;
+ 386:../freeRTOS750/lib_iinchip/w5100.c **** }
+ 1058               	.LM125:
+ 1059 02f2 C701      		movw r24,r14
+ 1060               	/* epilogue start */
+ 1061 02f4 0F90      		pop __tmp_reg__
+ 1062 02f6 0F90      		pop __tmp_reg__
+ 1063 02f8 DF91      		pop r29
+ 1064 02fa CF91      		pop r28
+ 1065 02fc 1F91      		pop r17
+ 1066 02fe 0F91      		pop r16
+ 1067 0300 FF90      		pop r15
+ 1068 0302 EF90      		pop r14
+ 1069 0304 0895      		ret
+ 1071               	.Lscope12:
+ 1073               		.stabd	78,0,0
+ 1075               	.global	__vector_1
+ 1077               	__vector_1:
+ 1078               		.stabd	46,0,0
+ 387:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 388:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 389:../freeRTOS750/lib_iinchip/w5100.c **** /**
+ 390:../freeRTOS750/lib_iinchip/w5100.c **** @brief	Socket interrupt routine
+ 391:../freeRTOS750/lib_iinchip/w5100.c **** */
+ 392:../freeRTOS750/lib_iinchip/w5100.c **** #if defined(__AVR_ATmega640__) || defined(__AVR_ATmega1280__) || defined(__AVR_ATmega1281__) || def
+ 393:../freeRTOS750/lib_iinchip/w5100.c **** ISR(INT4_vect)
+ 394:../freeRTOS750/lib_iinchip/w5100.c **** #elif defined(__AVR_ATmega168__) || defined(__AVR_ATmega328P__) || defined(__AVR_ATmega1284P__)
+ 395:../freeRTOS750/lib_iinchip/w5100.c **** ISR(INT0_vect)
+ 396:../freeRTOS750/lib_iinchip/w5100.c **** #endif
+ 397:../freeRTOS750/lib_iinchip/w5100.c **** {
+ 1080               	.LM126:
+ 1081               	.LFBB13:
+ 1082 0306 1F92      		push r1
+ 1083 0308 0F92      		push r0
+ 1084 030a 0FB6      		in r0,__SREG__
+ 1085 030c 0F92      		push r0
+ 1086 030e 1124      		clr __zero_reg__
+ 1087               	/* prologue: Signal */
+ 1088               	/* frame size = 0 */
+ 1089               	/* stack size = 3 */
+ 1090               	.L__stack_usage = 3
+ 1091               	/* epilogue start */
+ 398:../freeRTOS750/lib_iinchip/w5100.c **** #ifdef __DEF_IINCHIP_INT__
+ 399:../freeRTOS750/lib_iinchip/w5100.c **** 	uint8_t int_val;
+ 400:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 401:../freeRTOS750/lib_iinchip/w5100.c **** 	IINCHIP_ISR_DISABLE();
+ 402:../freeRTOS750/lib_iinchip/w5100.c **** 	int_val = IINCHIP_read(IR);
+ 403:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 404:../freeRTOS750/lib_iinchip/w5100.c **** 	/* process all of interrupt */
+ 405:../freeRTOS750/lib_iinchip/w5100.c ****    do {
+ 406:../freeRTOS750/lib_iinchip/w5100.c ****    /*---*/
+ 407:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 408:../freeRTOS750/lib_iinchip/w5100.c ****    	if (int_val & IR_CONFLICT)
+ 409:../freeRTOS750/lib_iinchip/w5100.c ****    	{
+ 410:../freeRTOS750/lib_iinchip/w5100.c ****    		xSerialPrintf_P(PSTR("IP conflict : %.2x\r\n"), int_val);
+ 411:../freeRTOS750/lib_iinchip/w5100.c ****    	}
+ 412:../freeRTOS750/lib_iinchip/w5100.c ****    	if (int_val & IR_UNREACH)
+ 413:../freeRTOS750/lib_iinchip/w5100.c ****    	{
+ 414:../freeRTOS750/lib_iinchip/w5100.c ****    		xSerialPrintf_P(PSTR("INT Port Unreachable : %.2x\r\n"), int_val);
+ 415:../freeRTOS750/lib_iinchip/w5100.c ****    		xSerialPrintf_P(PSTR("UIPR0 : %d.%d.%d.%d\r\n"), IINCHIP_read(UIPR0), IINCHIP_read(UIPR0+1), I
+ 416:../freeRTOS750/lib_iinchip/w5100.c ****    		xSerialPrintf_P(PSTR("UPORT0 : %.2x %.2x\r\n"), IINCHIP_read(UPORT0), IINCHIP_read(UPORT0+1));
+ 417:../freeRTOS750/lib_iinchip/w5100.c ****    	}
+ 418:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 419:../freeRTOS750/lib_iinchip/w5100.c ****    	/* interrupt clear */
+ 420:../freeRTOS750/lib_iinchip/w5100.c ****    	IINCHIP_write(IR, 0xf0);
+ 421:../freeRTOS750/lib_iinchip/w5100.c ****       /*---*/
+ 422:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 423:../freeRTOS750/lib_iinchip/w5100.c ****    	if (int_val & IR_SOCK(0))
+ 424:../freeRTOS750/lib_iinchip/w5100.c ****    	{
+ 425:../freeRTOS750/lib_iinchip/w5100.c ****    	/* save interrupt value*/
+ 426:../freeRTOS750/lib_iinchip/w5100.c ****    		I_STATUS[0] |= IINCHIP_read(Sn_IR(0)); // can be come to over two times.
+ 427:../freeRTOS750/lib_iinchip/w5100.c ****    		IINCHIP_write(Sn_IR(0), I_STATUS[0]);
+ 428:../freeRTOS750/lib_iinchip/w5100.c ****       /*---*/
+ 429:../freeRTOS750/lib_iinchip/w5100.c ****    	}
+ 430:../freeRTOS750/lib_iinchip/w5100.c ****    	if (int_val & IR_SOCK(1))
+ 431:../freeRTOS750/lib_iinchip/w5100.c ****    	{
+ 432:../freeRTOS750/lib_iinchip/w5100.c ****    	/* save interrupt value*/
+ 433:../freeRTOS750/lib_iinchip/w5100.c ****    		I_STATUS[1] |= IINCHIP_read(Sn_IR(1));
+ 434:../freeRTOS750/lib_iinchip/w5100.c ****    		IINCHIP_write(Sn_IR(1), I_STATUS[1]);
+ 435:../freeRTOS750/lib_iinchip/w5100.c ****       /*---*/
+ 436:../freeRTOS750/lib_iinchip/w5100.c ****    	}
+ 437:../freeRTOS750/lib_iinchip/w5100.c ****    	if (int_val & IR_SOCK(2))
+ 438:../freeRTOS750/lib_iinchip/w5100.c ****    	{
+ 439:../freeRTOS750/lib_iinchip/w5100.c ****    	/* save interrupt value*/
+ 440:../freeRTOS750/lib_iinchip/w5100.c ****    		I_STATUS[2] |= IINCHIP_read(Sn_IR(2));
+ 441:../freeRTOS750/lib_iinchip/w5100.c ****    		IINCHIP_write(Sn_IR(2), I_STATUS[2]);
+ 442:../freeRTOS750/lib_iinchip/w5100.c ****       /*---*/
+ 443:../freeRTOS750/lib_iinchip/w5100.c ****    	}
+ 444:../freeRTOS750/lib_iinchip/w5100.c ****    	if (int_val & IR_SOCK(3))
+ 445:../freeRTOS750/lib_iinchip/w5100.c ****    	{
+ 446:../freeRTOS750/lib_iinchip/w5100.c ****    	/* save interrupt value*/
+ 447:../freeRTOS750/lib_iinchip/w5100.c ****    		I_STATUS[3] |= IINCHIP_read(Sn_IR(3));
+ 448:../freeRTOS750/lib_iinchip/w5100.c ****    		IINCHIP_write(Sn_IR(3), I_STATUS[3]);
+ 449:../freeRTOS750/lib_iinchip/w5100.c ****       /*---*/
+ 450:../freeRTOS750/lib_iinchip/w5100.c ****    	}
+ 451:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 452:../freeRTOS750/lib_iinchip/w5100.c ****    	/* re-read interrupt value*/
+ 453:../freeRTOS750/lib_iinchip/w5100.c ****    	int_val = IINCHIP_read(IR);
+ 454:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 455:../freeRTOS750/lib_iinchip/w5100.c **** 	/* if exist, continue to process */
+ 456:../freeRTOS750/lib_iinchip/w5100.c ****    } while (int_val != 0x00);
+ 457:../freeRTOS750/lib_iinchip/w5100.c ****    /*---*/
+ 458:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 459:../freeRTOS750/lib_iinchip/w5100.c **** 	IINCHIP_ISR_ENABLE();
+ 460:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 461:../freeRTOS750/lib_iinchip/w5100.c **** #endif
+ 462:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 463:../freeRTOS750/lib_iinchip/w5100.c **** }
+ 1093               	.LM127:
+ 1094 0310 0F90      		pop r0
+ 1095 0312 0FBE      		out __SREG__,r0
+ 1096 0314 0F90      		pop r0
+ 1097 0316 1F90      		pop r1
+ 1098 0318 1895      		reti
+ 1100               	.Lscope13:
+ 1102               		.stabd	78,0,0
+ 1106               	.global	IINCHIP_sysinit
+ 1108               	IINCHIP_sysinit:
+ 1109               		.stabd	46,0,0
+ 464:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 465:../freeRTOS750/lib_iinchip/w5100.c **** /**
+ 466:../freeRTOS750/lib_iinchip/w5100.c ****  * @brief	This function is for resetting of the W5100. Initialises the W5100 to work in SPI mode
+ 467:../freeRTOS750/lib_iinchip/w5100.c ****  */
+ 468:../freeRTOS750/lib_iinchip/w5100.c **** void IINCHIP_init(void)
+ 469:../freeRTOS750/lib_iinchip/w5100.c **** {
+ 470:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 471:../freeRTOS750/lib_iinchip/w5100.c **** 	_delay_ms(200); // AVR can't delay its boot long as the W5100 needs to, so add 200ms wait before w
+ 472:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 473:../freeRTOS750/lib_iinchip/w5100.c **** 	spiBegin(Wiznet);							// enable the EtherMega W5100
+ 474:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 475:../freeRTOS750/lib_iinchip/w5100.c **** 	spiSetDataMode(SPI_MODE0);					// Enable SPI function in mode 0, CPOL=0 CPHA=0
+ 476:../freeRTOS750/lib_iinchip/w5100.c **** 	spiSetClockDivider(IINCHIP_SPI_DIVIDER);	// SPI at maximum speed
+ 477:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 478:../freeRTOS750/lib_iinchip/w5100.c **** 	setMR( MR_RST ); // reset the W5100 chip.
+ 479:../freeRTOS750/lib_iinchip/w5100.c **** 	_delay_ms(20);  // data sheet says 10ms after reset.
+ 480:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 481:../freeRTOS750/lib_iinchip/w5100.c **** #if defined(_GOLDILOCKS_) && defined(_W5100_H_)
+ 482:../freeRTOS750/lib_iinchip/w5100.c **** 	spiSetClockDivider(IINCHIP_SPI_DIVIDER);
+ 483:../freeRTOS750/lib_iinchip/w5100.c **** #endif
+ 484:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 485:../freeRTOS750/lib_iinchip/w5100.c **** }
+ 486:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 487:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 488:../freeRTOS750/lib_iinchip/w5100.c **** /**
+ 489:../freeRTOS750/lib_iinchip/w5100.c **** @brief	This function set the transmit & receive buffer size as per the channels is used
+ 490:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 491:../freeRTOS750/lib_iinchip/w5100.c **** Note for TMSR and RMSR bits are as follows\n
+ 492:../freeRTOS750/lib_iinchip/w5100.c **** bit 1-0 : memory size of channel #0 \n
+ 493:../freeRTOS750/lib_iinchip/w5100.c **** bit 3-2 : memory size of channel #1 \n
+ 494:../freeRTOS750/lib_iinchip/w5100.c **** bit 5-4 : memory size of channel #2 \n
+ 495:../freeRTOS750/lib_iinchip/w5100.c **** bit 7-6 : memory size of channel #3 \n\n
+ 496:../freeRTOS750/lib_iinchip/w5100.c **** Maximum memory size for Tx, Rx in the W5100 is 8K Bytes,\n
+ 497:../freeRTOS750/lib_iinchip/w5100.c **** In the range of 8KBytes, the memory size could be allocated dynamically by each channel.\n
+ 498:../freeRTOS750/lib_iinchip/w5100.c **** Be attentive to sum of memory size shouldn't exceed 8Kbytes\n
+ 499:../freeRTOS750/lib_iinchip/w5100.c **** and to data transmission and reception from non-allocated channel may cause some problems.\n
+ 500:../freeRTOS750/lib_iinchip/w5100.c **** If the 8KBytes memory is already  assigned to certain channel, \n
+ 501:../freeRTOS750/lib_iinchip/w5100.c **** other 3 channels couldn't be used, for there's no available memory.\n
+ 502:../freeRTOS750/lib_iinchip/w5100.c **** If two 4KBytes memory are assigned to two each channels, \n
+ 503:../freeRTOS750/lib_iinchip/w5100.c **** other 2 channels couldn't be used, for there's no available memory.\n
+ 504:../freeRTOS750/lib_iinchip/w5100.c **** */
+ 505:../freeRTOS750/lib_iinchip/w5100.c **** void IINCHIP_sysinit(
+ 506:../freeRTOS750/lib_iinchip/w5100.c **** 	uint8_t tx_size, 	/**< tx_size Tx memory size (0x00 - 1KByte, 0x01- 2KByte, 0x10 - 4KByte, 0x11 - 
+ 507:../freeRTOS750/lib_iinchip/w5100.c **** 	uint8_t rx_size		/**< rx_size Rx memory size (0x00 - 1KByte, 0x01- 2KByte, 0x10 - 4KByte, 0x11 - 8
+ 508:../freeRTOS750/lib_iinchip/w5100.c **** 	)
+ 509:../freeRTOS750/lib_iinchip/w5100.c **** {
+ 1111               	.LM128:
+ 1112               	.LFBB14:
+ 1113 031a 2F92      		push r2
+ 1114 031c 3F92      		push r3
+ 1115 031e 4F92      		push r4
+ 1116 0320 5F92      		push r5
+ 1117 0322 6F92      		push r6
+ 1118 0324 7F92      		push r7
+ 1119 0326 8F92      		push r8
+ 1120 0328 9F92      		push r9
+ 1121 032a AF92      		push r10
+ 1122 032c BF92      		push r11
+ 1123 032e CF92      		push r12
+ 1124 0330 DF92      		push r13
+ 1125 0332 EF92      		push r14
+ 1126 0334 FF92      		push r15
+ 1127 0336 0F93      		push r16
+ 1128 0338 1F93      		push r17
+ 1129 033a CF93      		push r28
+ 1130 033c DF93      		push r29
+ 1131 033e CDB7      		in r28,__SP_L__
+ 1132 0340 DEB7      		in r29,__SP_H__
+ 1133 0342 2997      		sbiw r28,9
+ 1134 0344 0FB6      		in __tmp_reg__,__SREG__
+ 1135 0346 F894      		cli
+ 1136 0348 DEBF      		out __SP_H__,r29
+ 1137 034a 0FBE      		out __SREG__,__tmp_reg__
+ 1138 034c CDBF      		out __SP_L__,r28
+ 1139               	/* prologue: function */
+ 1140               	/* frame size = 9 */
+ 1141               	/* stack size = 27 */
+ 1142               	.L__stack_usage = 27
+ 1143 034e E82E      		mov r14,r24
+ 1144 0350 F62E      		mov r15,r22
+ 510:../freeRTOS750/lib_iinchip/w5100.c **** 	int16_t ssum,rsum;
+ 511:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 512:../freeRTOS750/lib_iinchip/w5100.c **** #ifdef __DEF_IINCHIP_DBG__
+ 513:../freeRTOS750/lib_iinchip/w5100.c **** 	xSerialPrint_P(PSTR(" sysinit()\r\n"));
+ 514:../freeRTOS750/lib_iinchip/w5100.c **** #endif
+ 515:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 516:../freeRTOS750/lib_iinchip/w5100.c **** 	ssum = 0;
+ 517:../freeRTOS750/lib_iinchip/w5100.c **** 	rsum = 0;
+ 518:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 519:../freeRTOS750/lib_iinchip/w5100.c **** 	IINCHIP_write(TMSR,tx_size);	/* Set Tx memory size for each channel */
+ 1146               	.LM129:
+ 1147 0352 682F      		mov r22,r24
+ 1148 0354 8BE1      		ldi r24,lo8(27)
+ 1149 0356 90E0      		ldi r25,0
+ 1150 0358 0E94 0000 		call IINCHIP_write
+ 520:../freeRTOS750/lib_iinchip/w5100.c **** 	IINCHIP_write(RMSR,rx_size);	/* Set Rx memory size for each channel */
+ 1152               	.LM130:
+ 1153 035c 6F2D      		mov r22,r15
+ 1154 035e 8AE1      		ldi r24,lo8(26)
+ 1155 0360 90E0      		ldi r25,0
+ 1156 0362 0E94 0000 		call IINCHIP_write
+ 521:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 522:../freeRTOS750/lib_iinchip/w5100.c **** 	SBUFBASEADDRESS[0] = (uint16_t)(__DEF_IINCHIP_MAP_TXBUF__);		/* Set base address of Tx memory for 
+ 1158               	.LM131:
+ 1159 0366 20E0      		ldi r18,0
+ 1160 0368 30E4      		ldi r19,lo8(64)
+ 1161 036a 3093 0000 		sts SBUFBASEADDRESS+1,r19
+ 1162 036e 2093 0000 		sts SBUFBASEADDRESS,r18
+ 523:../freeRTOS750/lib_iinchip/w5100.c **** 	RBUFBASEADDRESS[0] = (uint16_t)(__DEF_IINCHIP_MAP_RXBUF__);		/* Set base address of Rx memory for 
+ 1164               	.LM132:
+ 1165 0372 20E0      		ldi r18,0
+ 1166 0374 30E6      		ldi r19,lo8(96)
+ 1167 0376 3093 0000 		sts RBUFBASEADDRESS+1,r19
+ 1168 037a 2093 0000 		sts RBUFBASEADDRESS,r18
+ 1169 037e 80E0      		ldi r24,lo8(SSIZE)
+ 1170 0380 90E0      		ldi r25,hi8(SSIZE)
+ 1171 0382 9F83      		std Y+7,r25
+ 1172 0384 8E83      		std Y+6,r24
+ 1173 0386 E0E0      		ldi r30,lo8(RSIZE)
+ 1174 0388 F0E0      		ldi r31,hi8(RSIZE)
+ 1175 038a 40E0      		ldi r20,lo8(RMASK)
+ 1176 038c 50E0      		ldi r21,hi8(RMASK)
+ 1177 038e A0E0      		ldi r26,lo8(SMASK)
+ 1178 0390 B0E0      		ldi r27,hi8(SMASK)
+ 1179 0392 B987      		std Y+9,r27
+ 1180 0394 A887      		std Y+8,r26
+ 1181 0396 20E0      		ldi r18,0
+ 1182 0398 30E0      		ldi r19,0
+ 524:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 525:../freeRTOS750/lib_iinchip/w5100.c **** #ifdef __DEF_IINCHIP_DBG__
+ 526:../freeRTOS750/lib_iinchip/w5100.c **** 	xSerialPrint_P(PSTR("Channel : SEND MEM SIZE : RECV MEM SIZE\r\n"));
+ 527:../freeRTOS750/lib_iinchip/w5100.c **** #endif
+ 528:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 529:../freeRTOS750/lib_iinchip/w5100.c ****    for (uint8_t i = 0 ; i < MAX_SOCK_NUM; ++i)       // Set the size, masking and base address of T
+ 1184               	.LM133:
+ 1185 039a 1982      		std Y+1,__zero_reg__
+ 517:../freeRTOS750/lib_iinchip/w5100.c **** 	rsum = 0;
+ 1187               	.LM134:
+ 1188 039c 00E0      		ldi r16,0
+ 1189 039e 10E0      		ldi r17,0
+ 516:../freeRTOS750/lib_iinchip/w5100.c **** 	ssum = 0;
+ 1191               	.LM135:
+ 1192 03a0 A12C      		mov r10,__zero_reg__
+ 1193 03a2 B12C      		mov r11,__zero_reg__
+ 1194               	.LBB42:
+ 530:../freeRTOS750/lib_iinchip/w5100.c **** 	{
+ 531:../freeRTOS750/lib_iinchip/w5100.c **** 		SSIZE[i] = (int16_t)(0);
+ 532:../freeRTOS750/lib_iinchip/w5100.c **** 		RSIZE[i] = (int16_t)(0);
+ 533:../freeRTOS750/lib_iinchip/w5100.c **** 		if (ssum <= 8192)
+ 534:../freeRTOS750/lib_iinchip/w5100.c **** 		{
+ 535:../freeRTOS750/lib_iinchip/w5100.c ****          switch((tx_size >> i*2) & 0x03)  // Set Tx memory size
+ 1196               	.LM136:
+ 1197 03a4 8E2D      		mov r24,r14
+ 1198 03a6 90E0      		ldi r25,0
+ 1199 03a8 9B83      		std Y+3,r25
+ 1200 03aa 8A83      		std Y+2,r24
+ 536:../freeRTOS750/lib_iinchip/w5100.c **** 			{
+ 537:../freeRTOS750/lib_iinchip/w5100.c **** 			case 0:
+ 538:../freeRTOS750/lib_iinchip/w5100.c **** 				SSIZE[i] = (int16_t)(1024);
+ 539:../freeRTOS750/lib_iinchip/w5100.c **** 				SMASK[i] = (uint16_t)(0x03FF);
+ 540:../freeRTOS750/lib_iinchip/w5100.c **** 				break;
+ 541:../freeRTOS750/lib_iinchip/w5100.c **** 			case 1:
+ 542:../freeRTOS750/lib_iinchip/w5100.c **** 				SSIZE[i] = (int16_t)(2048);
+ 543:../freeRTOS750/lib_iinchip/w5100.c **** 				SMASK[i] = (uint16_t)(0x07FF);
+ 544:../freeRTOS750/lib_iinchip/w5100.c **** 				break;
+ 545:../freeRTOS750/lib_iinchip/w5100.c **** 			case 2:
+ 546:../freeRTOS750/lib_iinchip/w5100.c **** 				SSIZE[i] = (int16_t)(4096);
+ 1202               	.LM137:
+ 1203 03ac C12C      		mov r12,__zero_reg__
+ 1204 03ae 60E1      		ldi r22,lo8(16)
+ 1205 03b0 D62E      		mov r13,r22
+ 542:../freeRTOS750/lib_iinchip/w5100.c **** 				SSIZE[i] = (int16_t)(2048);
+ 1207               	.LM138:
+ 1208 03b2 212C      		mov r2,__zero_reg__
+ 1209 03b4 78E0      		ldi r23,lo8(8)
+ 1210 03b6 372E      		mov r3,r23
+ 543:../freeRTOS750/lib_iinchip/w5100.c **** 				SMASK[i] = (uint16_t)(0x07FF);
+ 1212               	.LM139:
+ 1213 03b8 4424      		clr r4
+ 1214 03ba 4A94      		dec r4
+ 1215 03bc A7E0      		ldi r26,lo8(7)
+ 1216 03be 5A2E      		mov r5,r26
+ 538:../freeRTOS750/lib_iinchip/w5100.c **** 				SSIZE[i] = (int16_t)(1024);
+ 1218               	.LM140:
+ 1219 03c0 612C      		mov r6,__zero_reg__
+ 1220 03c2 B4E0      		ldi r27,lo8(4)
+ 1221 03c4 7B2E      		mov r7,r27
+ 539:../freeRTOS750/lib_iinchip/w5100.c **** 				SMASK[i] = (uint16_t)(0x03FF);
+ 1223               	.LM141:
+ 1224 03c6 8824      		clr r8
+ 1225 03c8 8A94      		dec r8
+ 1226 03ca 83E0      		ldi r24,lo8(3)
+ 1227 03cc 982E      		mov r9,r24
+ 547:../freeRTOS750/lib_iinchip/w5100.c **** 				SMASK[i] = (uint16_t)(0x0FFF);
+ 548:../freeRTOS750/lib_iinchip/w5100.c **** 				break;
+ 549:../freeRTOS750/lib_iinchip/w5100.c **** 			case 3:
+ 550:../freeRTOS750/lib_iinchip/w5100.c **** 				SSIZE[i] = (int16_t)(8192);
+ 551:../freeRTOS750/lib_iinchip/w5100.c **** 				SMASK[i] = (uint16_t)(0x1FFF);
+ 552:../freeRTOS750/lib_iinchip/w5100.c **** 				break;
+ 553:../freeRTOS750/lib_iinchip/w5100.c **** 			}
+ 554:../freeRTOS750/lib_iinchip/w5100.c **** 		}
+ 555:../freeRTOS750/lib_iinchip/w5100.c **** 		if (rsum <= 8192)
+ 556:../freeRTOS750/lib_iinchip/w5100.c **** 		{
+ 557:../freeRTOS750/lib_iinchip/w5100.c ****          switch((rx_size >> i*2) & 0x03)     // Set Rx memory size
+ 1229               	.LM142:
+ 1230 03ce AF2D      		mov r26,r15
+ 1231 03d0 B0E0      		ldi r27,0
+ 1232 03d2 BD83      		std Y+5,r27
+ 1233 03d4 AC83      		std Y+4,r26
+ 1234               	.L97:
+ 531:../freeRTOS750/lib_iinchip/w5100.c **** 		SSIZE[i] = (int16_t)(0);
+ 1236               	.LM143:
+ 1237 03d6 AE81      		ldd r26,Y+6
+ 1238 03d8 BF81      		ldd r27,Y+7
+ 1239 03da 1D92      		st X+,__zero_reg__
+ 1240 03dc 1C92      		st X,__zero_reg__
+ 532:../freeRTOS750/lib_iinchip/w5100.c **** 		RSIZE[i] = (int16_t)(0);
+ 1242               	.LM144:
+ 1243 03de 1182      		std Z+1,__zero_reg__
+ 1244 03e0 1082      		st Z,__zero_reg__
+ 533:../freeRTOS750/lib_iinchip/w5100.c **** 		if (ssum <= 8192)
+ 1246               	.LM145:
+ 1247 03e2 B1E0      		ldi r27,1
+ 1248 03e4 AB16      		cp r10,r27
+ 1249 03e6 B0E2      		ldi r27,32
+ 1250 03e8 BB06      		cpc r11,r27
+ 1251 03ea 04F4      		brge .L86
+ 535:../freeRTOS750/lib_iinchip/w5100.c ****          switch((tx_size >> i*2) & 0x03)  // Set Tx memory size
+ 1253               	.LM146:
+ 1254 03ec 8A81      		ldd r24,Y+2
+ 1255 03ee 9B81      		ldd r25,Y+3
+ 1256 03f0 022E      		mov r0,r18
+ 1257 03f2 00C0      		rjmp 2f
+ 1258               		1:
+ 1259 03f4 9595      		asr r25
+ 1260 03f6 8795      		ror r24
+ 1261               		2:
+ 1262 03f8 0A94      		dec r0
+ 1263 03fa 02F4      		brpl 1b
+ 1264 03fc 8370      		andi r24,3
+ 1265 03fe 9927      		clr r25
+ 1266 0400 8230      		cpi r24,2
+ 1267 0402 9105      		cpc r25,__zero_reg__
+ 1268 0404 01F0      		breq .L89
+ 1269 0406 8330      		cpi r24,3
+ 1270 0408 9105      		cpc r25,__zero_reg__
+ 1271 040a 01F0      		breq .L90
+ 542:../freeRTOS750/lib_iinchip/w5100.c **** 				SSIZE[i] = (int16_t)(2048);
+ 1273               	.LM147:
+ 1274 040c AE81      		ldd r26,Y+6
+ 1275 040e BF81      		ldd r27,Y+7
+ 535:../freeRTOS750/lib_iinchip/w5100.c ****          switch((tx_size >> i*2) & 0x03)  // Set Tx memory size
+ 1277               	.LM148:
+ 1278 0410 0197      		sbiw r24,1
+ 1279 0412 01F0      		breq .L88
+ 538:../freeRTOS750/lib_iinchip/w5100.c **** 				SSIZE[i] = (int16_t)(1024);
+ 1281               	.LM149:
+ 1282 0414 6D92      		st X+,r6
+ 1283 0416 7C92      		st X,r7
+ 539:../freeRTOS750/lib_iinchip/w5100.c **** 				SMASK[i] = (uint16_t)(0x03FF);
+ 1285               	.LM150:
+ 1286 0418 A885      		ldd r26,Y+8
+ 1287 041a B985      		ldd r27,Y+9
+ 1288 041c 8D92      		st X+,r8
+ 1289 041e 9C92      		st X,r9
+ 540:../freeRTOS750/lib_iinchip/w5100.c **** 				break;
+ 1291               	.LM151:
+ 1292 0420 00C0      		rjmp .L86
+ 1293               	.L88:
+ 542:../freeRTOS750/lib_iinchip/w5100.c **** 				SSIZE[i] = (int16_t)(2048);
+ 1295               	.LM152:
+ 1296 0422 2D92      		st X+,r2
+ 1297 0424 3C92      		st X,r3
+ 543:../freeRTOS750/lib_iinchip/w5100.c **** 				SMASK[i] = (uint16_t)(0x07FF);
+ 1299               	.LM153:
+ 1300 0426 A885      		ldd r26,Y+8
+ 1301 0428 B985      		ldd r27,Y+9
+ 1302 042a 4D92      		st X+,r4
+ 1303 042c 5C92      		st X,r5
+ 544:../freeRTOS750/lib_iinchip/w5100.c **** 				break;
+ 1305               	.LM154:
+ 1306 042e 00C0      		rjmp .L86
+ 1307               	.L89:
+ 546:../freeRTOS750/lib_iinchip/w5100.c **** 				SSIZE[i] = (int16_t)(4096);
+ 1309               	.LM155:
+ 1310 0430 AE81      		ldd r26,Y+6
+ 1311 0432 BF81      		ldd r27,Y+7
+ 1312 0434 CD92      		st X+,r12
+ 1313 0436 DC92      		st X,r13
+ 547:../freeRTOS750/lib_iinchip/w5100.c **** 				SMASK[i] = (uint16_t)(0x0FFF);
+ 1315               	.LM156:
+ 1316 0438 8FEF      		ldi r24,lo8(-1)
+ 1317 043a 9FE0      		ldi r25,lo8(15)
+ 1318 043c 00C0      		rjmp .L102
+ 1319               	.L90:
+ 550:../freeRTOS750/lib_iinchip/w5100.c **** 				SSIZE[i] = (int16_t)(8192);
+ 1321               	.LM157:
+ 1322 043e 80E0      		ldi r24,0
+ 1323 0440 90E2      		ldi r25,lo8(32)
+ 1324 0442 AE81      		ldd r26,Y+6
+ 1325 0444 BF81      		ldd r27,Y+7
+ 1326 0446 8D93      		st X+,r24
+ 1327 0448 9C93      		st X,r25
+ 551:../freeRTOS750/lib_iinchip/w5100.c **** 				SMASK[i] = (uint16_t)(0x1FFF);
+ 1329               	.LM158:
+ 1330 044a 8FEF      		ldi r24,lo8(-1)
+ 1331 044c 9FE1      		ldi r25,lo8(31)
+ 1332               	.L102:
+ 1333 044e A885      		ldd r26,Y+8
+ 1334 0450 B985      		ldd r27,Y+9
+ 1335 0452 8D93      		st X+,r24
+ 1336 0454 9C93      		st X,r25
+ 1337               	.L86:
+ 555:../freeRTOS750/lib_iinchip/w5100.c **** 		if (rsum <= 8192)
+ 1339               	.LM159:
+ 1340 0456 0130      		cpi r16,1
+ 1341 0458 90E2      		ldi r25,32
+ 1342 045a 1907      		cpc r17,r25
+ 1343 045c 04F4      		brge .L91
+ 1345               	.LM160:
+ 1346 045e 8C81      		ldd r24,Y+4
+ 1347 0460 9D81      		ldd r25,Y+5
+ 1348 0462 022E      		mov r0,r18
+ 1349 0464 00C0      		rjmp 2f
+ 1350               		1:
+ 1351 0466 9595      		asr r25
+ 1352 0468 8795      		ror r24
+ 1353               		2:
+ 1354 046a 0A94      		dec r0
+ 1355 046c 02F4      		brpl 1b
+ 1356 046e 8370      		andi r24,3
+ 1357 0470 9927      		clr r25
+ 1358 0472 8230      		cpi r24,2
+ 1359 0474 9105      		cpc r25,__zero_reg__
+ 1360 0476 01F0      		breq .L94
+ 1361 0478 8330      		cpi r24,3
+ 1362 047a 9105      		cpc r25,__zero_reg__
+ 1363 047c 01F0      		breq .L95
+ 1364 047e 0197      		sbiw r24,1
+ 1365 0480 01F0      		breq .L93
+ 558:../freeRTOS750/lib_iinchip/w5100.c **** 			{
+ 559:../freeRTOS750/lib_iinchip/w5100.c **** 			case 0:
+ 560:../freeRTOS750/lib_iinchip/w5100.c **** 				RSIZE[i] = (int16_t)(1024);
+ 1367               	.LM161:
+ 1368 0482 7182      		std Z+1,r7
+ 1369 0484 6082      		st Z,r6
+ 561:../freeRTOS750/lib_iinchip/w5100.c **** 				RMASK[i] = (uint16_t)(0x03FF);
+ 1371               	.LM162:
+ 1372 0486 DA01      		movw r26,r20
+ 1373 0488 8D92      		st X+,r8
+ 1374 048a 9C92      		st X,r9
+ 562:../freeRTOS750/lib_iinchip/w5100.c **** 				break;
+ 1376               	.LM163:
+ 1377 048c 00C0      		rjmp .L91
+ 1378               	.L93:
+ 563:../freeRTOS750/lib_iinchip/w5100.c **** 			case 1:
+ 564:../freeRTOS750/lib_iinchip/w5100.c **** 				RSIZE[i] = (int16_t)(2048);
+ 1380               	.LM164:
+ 1381 048e 3182      		std Z+1,r3
+ 1382 0490 2082      		st Z,r2
+ 565:../freeRTOS750/lib_iinchip/w5100.c **** 				RMASK[i] = (uint16_t)(0x07FF);
+ 1384               	.LM165:
+ 1385 0492 DA01      		movw r26,r20
+ 1386 0494 4D92      		st X+,r4
+ 1387 0496 5C92      		st X,r5
+ 566:../freeRTOS750/lib_iinchip/w5100.c **** 				break;
+ 1389               	.LM166:
+ 1390 0498 00C0      		rjmp .L91
+ 1391               	.L94:
+ 567:../freeRTOS750/lib_iinchip/w5100.c **** 			case 2:
+ 568:../freeRTOS750/lib_iinchip/w5100.c **** 				RSIZE[i] = (int16_t)(4096);
+ 1393               	.LM167:
+ 1394 049a D182      		std Z+1,r13
+ 1395 049c C082      		st Z,r12
+ 569:../freeRTOS750/lib_iinchip/w5100.c **** 				RMASK[i] = (uint16_t)(0x0FFF);
+ 1397               	.LM168:
+ 1398 049e 8FEF      		ldi r24,lo8(-1)
+ 1399 04a0 9FE0      		ldi r25,lo8(15)
+ 1400 04a2 00C0      		rjmp .L103
+ 1401               	.L95:
+ 570:../freeRTOS750/lib_iinchip/w5100.c **** 				break;
+ 571:../freeRTOS750/lib_iinchip/w5100.c **** 			case 3:
+ 572:../freeRTOS750/lib_iinchip/w5100.c **** 				RSIZE[i] = (int16_t)(8192);
+ 1403               	.LM169:
+ 1404 04a4 A0E0      		ldi r26,0
+ 1405 04a6 B0E2      		ldi r27,lo8(32)
+ 1406 04a8 B183      		std Z+1,r27
+ 1407 04aa A083      		st Z,r26
+ 573:../freeRTOS750/lib_iinchip/w5100.c **** 				RMASK[i] = (uint16_t)(0x1FFF);
+ 1409               	.LM170:
+ 1410 04ac 8FEF      		ldi r24,lo8(-1)
+ 1411 04ae 9FE1      		ldi r25,lo8(31)
+ 1412               	.L103:
+ 1413 04b0 DA01      		movw r26,r20
+ 1414 04b2 8D93      		st X+,r24
+ 1415 04b4 9C93      		st X,r25
+ 1416               	.L91:
+ 574:../freeRTOS750/lib_iinchip/w5100.c **** 				break;
+ 575:../freeRTOS750/lib_iinchip/w5100.c **** 			}
+ 576:../freeRTOS750/lib_iinchip/w5100.c **** 		}
+ 577:../freeRTOS750/lib_iinchip/w5100.c **** 		ssum += SSIZE[i];
+ 1418               	.LM171:
+ 1419 04b6 AE81      		ldd r26,Y+6
+ 1420 04b8 BF81      		ldd r27,Y+7
+ 1421 04ba 8D91      		ld r24,X+
+ 1422 04bc 9C91      		ld r25,X
+ 1423 04be A80E      		add r10,r24
+ 1424 04c0 B91E      		adc r11,r25
+ 578:../freeRTOS750/lib_iinchip/w5100.c **** 		rsum += RSIZE[i];
+ 1426               	.LM172:
+ 1427 04c2 8081      		ld r24,Z
+ 1428 04c4 9181      		ldd r25,Z+1
+ 1429 04c6 080F      		add r16,r24
+ 1430 04c8 191F      		adc r17,r25
+ 579:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 580:../freeRTOS750/lib_iinchip/w5100.c ****         if (i != 0)             // Sets base address of Tx and Rx memory for channel #1,#2,#3
+ 1432               	.LM173:
+ 1433 04ca B981      		ldd r27,Y+1
+ 1434 04cc BB23      		tst r27
+ 1435 04ce 01F0      		breq .L96
+ 505:../freeRTOS750/lib_iinchip/w5100.c **** void IINCHIP_sysinit(
+ 1437               	.LM174:
+ 1438 04d0 B901      		movw r22,r18
+ 1439 04d2 6050      		subi r22,lo8(-(SBUFBASEADDRESS))
+ 1440 04d4 7040      		sbci r23,hi8(-(SBUFBASEADDRESS))
+ 1441 04d6 8E81      		ldd r24,Y+6
+ 1442 04d8 9F81      		ldd r25,Y+7
+ 1443 04da 0297      		sbiw r24,2
+ 1444 04dc 7B01      		movw r14,r22
+ 1445 04de A2E0      		ldi r26,2
+ 1446 04e0 EA1A      		sub r14,r26
+ 1447 04e2 F108      		sbc r15,__zero_reg__
+ 581:../freeRTOS750/lib_iinchip/w5100.c **** 		{
+ 582:../freeRTOS750/lib_iinchip/w5100.c **** 			SBUFBASEADDRESS[i] = SBUFBASEADDRESS[i-1] + SSIZE[i-1];
+ 1449               	.LM175:
+ 1450 04e4 DC01      		movw r26,r24
+ 1451 04e6 8D91      		ld r24,X+
+ 1452 04e8 9C91      		ld r25,X
+ 1453 04ea D701      		movw r26,r14
+ 1454 04ec ED90      		ld r14,X+
+ 1455 04ee FC90      		ld r15,X
+ 1456 04f0 8E0D      		add r24,r14
+ 1457 04f2 9F1D      		adc r25,r15
+ 1458 04f4 DB01      		movw r26,r22
+ 1459 04f6 8D93      		st X+,r24
+ 1460 04f8 9C93      		st X,r25
+ 505:../freeRTOS750/lib_iinchip/w5100.c **** void IINCHIP_sysinit(
+ 1462               	.LM176:
+ 1463 04fa B901      		movw r22,r18
+ 1464 04fc 6050      		subi r22,lo8(-(RBUFBASEADDRESS))
+ 1465 04fe 7040      		sbci r23,hi8(-(RBUFBASEADDRESS))
+ 1466 0500 CF01      		movw r24,r30
+ 1467 0502 0297      		sbiw r24,2
+ 1468 0504 7B01      		movw r14,r22
+ 1469 0506 B2E0      		ldi r27,2
+ 1470 0508 EB1A      		sub r14,r27
+ 1471 050a F108      		sbc r15,__zero_reg__
+ 583:../freeRTOS750/lib_iinchip/w5100.c **** 			RBUFBASEADDRESS[i] = RBUFBASEADDRESS[i-1] + RSIZE[i-1];
+ 1473               	.LM177:
+ 1474 050c DC01      		movw r26,r24
+ 1475 050e 8D91      		ld r24,X+
+ 1476 0510 9C91      		ld r25,X
+ 1477 0512 D701      		movw r26,r14
+ 1478 0514 ED90      		ld r14,X+
+ 1479 0516 FC90      		ld r15,X
+ 1480 0518 8E0D      		add r24,r14
+ 1481 051a 9F1D      		adc r25,r15
+ 1482 051c DB01      		movw r26,r22
+ 1483 051e 8D93      		st X+,r24
+ 1484 0520 9C93      		st X,r25
+ 1485               	.L96:
+ 529:../freeRTOS750/lib_iinchip/w5100.c ****    for (uint8_t i = 0 ; i < MAX_SOCK_NUM; ++i)       // Set the size, masking and base address of T
+ 1487               	.LM178:
+ 1488 0522 B981      		ldd r27,Y+1
+ 1489 0524 BF5F      		subi r27,lo8(-(1))
+ 1490 0526 B983      		std Y+1,r27
+ 1491 0528 2E5F      		subi r18,-2
+ 1492 052a 3F4F      		sbci r19,-1
+ 1493 052c 8E81      		ldd r24,Y+6
+ 1494 052e 9F81      		ldd r25,Y+7
+ 1495 0530 0296      		adiw r24,2
+ 1496 0532 9F83      		std Y+7,r25
+ 1497 0534 8E83      		std Y+6,r24
+ 1498 0536 3296      		adiw r30,2
+ 1499 0538 4E5F      		subi r20,-2
+ 1500 053a 5F4F      		sbci r21,-1
+ 1501 053c A885      		ldd r26,Y+8
+ 1502 053e B985      		ldd r27,Y+9
+ 1503 0540 1296      		adiw r26,2
+ 1504 0542 B987      		std Y+9,r27
+ 1505 0544 A887      		std Y+8,r26
+ 1506 0546 2830      		cpi r18,8
+ 1507 0548 3105      		cpc r19,__zero_reg__
+ 1508 054a 01F0      		breq .+2
+ 1509 054c 00C0      		rjmp .L97
+ 1510               	/* epilogue start */
+ 1511               	.LBE42:
+ 584:../freeRTOS750/lib_iinchip/w5100.c **** 		}
+ 585:../freeRTOS750/lib_iinchip/w5100.c **** #ifdef __DEF_IINCHIP_DBG__
+ 586:../freeRTOS750/lib_iinchip/w5100.c **** 		xSerialPrintf_P(PSTR("%d : %.4x : %.4x : %.4x : %.4x\r\n"), i, (uint16_t)SBUFBASEADDRESS[i], (uin
+ 587:../freeRTOS750/lib_iinchip/w5100.c **** #endif
+ 588:../freeRTOS750/lib_iinchip/w5100.c **** 	}
+ 589:../freeRTOS750/lib_iinchip/w5100.c **** }
+ 1513               	.LM179:
+ 1514 054e 2996      		adiw r28,9
+ 1515 0550 0FB6      		in __tmp_reg__,__SREG__
+ 1516 0552 F894      		cli
+ 1517 0554 DEBF      		out __SP_H__,r29
+ 1518 0556 0FBE      		out __SREG__,__tmp_reg__
+ 1519 0558 CDBF      		out __SP_L__,r28
+ 1520 055a DF91      		pop r29
+ 1521 055c CF91      		pop r28
+ 1522 055e 1F91      		pop r17
+ 1523 0560 0F91      		pop r16
+ 1524 0562 FF90      		pop r15
+ 1525 0564 EF90      		pop r14
+ 1526 0566 DF90      		pop r13
+ 1527 0568 CF90      		pop r12
+ 1528 056a BF90      		pop r11
+ 1529 056c AF90      		pop r10
+ 1530 056e 9F90      		pop r9
+ 1531 0570 8F90      		pop r8
+ 1532 0572 7F90      		pop r7
+ 1533 0574 6F90      		pop r6
+ 1534 0576 5F90      		pop r5
+ 1535 0578 4F90      		pop r4
+ 1536 057a 3F90      		pop r3
+ 1537 057c 2F90      		pop r2
+ 1538 057e 0895      		ret
+ 1547               	.Lscope14:
+ 1549               		.stabd	78,0,0
+ 1552               	.global	setMR
+ 1554               	setMR:
+ 1555               		.stabd	46,0,0
+ 590:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 591:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 592:../freeRTOS750/lib_iinchip/w5100.c **** void setMR(uint8_t val)
+ 593:../freeRTOS750/lib_iinchip/w5100.c **** {
+ 1557               	.LM180:
+ 1558               	.LFBB15:
+ 1559               	/* prologue: function */
+ 1560               	/* frame size = 0 */
+ 1561               	/* stack size = 0 */
+ 1562               	.L__stack_usage = 0
+ 594:../freeRTOS750/lib_iinchip/w5100.c **** 	/* 	DIRECT ACCESS	*/
+ 595:../freeRTOS750/lib_iinchip/w5100.c **** 	IINCHIP_write(MR,val);
+ 1564               	.LM181:
+ 1565 0580 682F      		mov r22,r24
+ 1566 0582 80E0      		ldi r24,0
+ 1567 0584 90E8      		ldi r25,lo8(-128)
+ 1568 0586 0C94 0000 		jmp IINCHIP_write
+ 1570               	.Lscope15:
+ 1572               		.stabd	78,0,0
+ 1574               	.global	IINCHIP_init
+ 1576               	IINCHIP_init:
+ 1577               		.stabd	46,0,0
+ 469:../freeRTOS750/lib_iinchip/w5100.c **** {
+ 1579               	.LM182:
+ 1580               	.LFBB16:
+ 1581               	/* prologue: function */
+ 1582               	/* frame size = 0 */
+ 1583               	/* stack size = 0 */
+ 1584               	.L__stack_usage = 0
+ 1585               	.LBB43:
+ 1586               	.LBB44:
+ 1588               	.Ltext1:
+   1:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h **** /* Copyright (c) 2002, Marek Michalkiewicz
+   2:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****    Copyright (c) 2004,2005,2007 Joerg Wunsch
+   3:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****    Copyright (c) 2007  Florin-Viorel Petrov
+   4:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****    All rights reserved.
+   5:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h **** 
+   6:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****    Redistribution and use in source and binary forms, with or without
+   7:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****    modification, are permitted provided that the following conditions are met:
+   8:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h **** 
+   9:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****    * Redistributions of source code must retain the above copyright
+  10:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****      notice, this list of conditions and the following disclaimer.
+  11:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h **** 
+  12:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****    * Redistributions in binary form must reproduce the above copyright
+  13:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****      notice, this list of conditions and the following disclaimer in
+  14:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****      the documentation and/or other materials provided with the
+  15:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****      distribution.
+  16:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h **** 
+  17:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****    * Neither the name of the copyright holders nor the names of
+  18:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****      contributors may be used to endorse or promote products derived
+  19:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****      from this software without specific prior written permission.
+  20:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h **** 
+  21:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  22:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****   AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  23:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****   IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  24:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****   ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+  25:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****   LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+  26:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****   CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+  27:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****   SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+  28:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****   INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+  29:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****   CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+  30:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****   ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+  31:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****   POSSIBILITY OF SUCH DAMAGE. */
+  32:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h **** 
+  33:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h **** /* $Id: delay.h.in 2251 2011-09-14 08:20:33Z joerg_wunsch $ */
+  34:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h **** 
+  35:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h **** #ifndef _UTIL_DELAY_H_
+  36:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h **** #define _UTIL_DELAY_H_ 1
+  37:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h **** 
+  38:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h **** #ifndef __HAS_DELAY_CYCLES
+  39:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h **** #define __HAS_DELAY_CYCLES 1
+  40:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h **** #endif
+  41:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h **** 
+  42:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h **** #include <inttypes.h>
+  43:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h **** #include <util/delay_basic.h>
+  44:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h **** #include <math.h>
+  45:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h **** 
+  46:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h **** /** \file */
+  47:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h **** /** \defgroup util_delay <util/delay.h>: Convenience functions for busy-wait delay loops
+  48:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****     \code
+  49:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****     #define F_CPU 1000000UL  // 1 MHz
+  50:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****     //#define F_CPU 14.7456E6
+  51:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****     #include <util/delay.h>
+  52:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****     \endcode
+  53:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h **** 
+  54:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****     \note As an alternative method, it is possible to pass the
+  55:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****     F_CPU macro down to the compiler from the Makefile.
+  56:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****     Obviously, in that case, no \c \#define statement should be
+  57:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****     used.
+  58:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h **** 
+  59:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****     The functions in this header file are wrappers around the basic
+  60:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****     busy-wait functions from <util/delay_basic.h>.  They are meant as
+  61:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****     convenience functions where actual time values can be specified
+  62:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****     rather than a number of cycles to wait for.  The idea behind is
+  63:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****     that compile-time constant expressions will be eliminated by
+  64:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****     compiler optimization so floating-point expressions can be used
+  65:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****     to calculate the number of delay cycles needed based on the CPU
+  66:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****     frequency passed by the macro F_CPU.
+  67:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h **** 
+  68:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****     \note In order for these functions to work as intended, compiler
+  69:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****     optimizations <em>must</em> be enabled, and the delay time
+  70:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****     <em>must</em> be an expression that is a known constant at
+  71:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****     compile-time.  If these requirements are not met, the resulting
+  72:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****     delay will be much longer (and basically unpredictable), and
+  73:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****     applications that otherwise do not use floating-point calculations
+  74:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****     will experience severe code bloat by the floating-point library
+  75:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****     routines linked into the application.
+  76:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h **** 
+  77:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****     The functions available allow the specification of microsecond, and
+  78:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****     millisecond delays directly, using the application-supplied macro
+  79:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****     F_CPU as the CPU clock frequency (in Hertz).
+  80:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h **** 
+  81:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h **** */
+  82:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h **** 
+  83:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h **** #if !defined(__DOXYGEN__)
+  84:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h **** static inline void _delay_us(double __us) __attribute__((always_inline));
+  85:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h **** static inline void _delay_ms(double __ms) __attribute__((always_inline));
+  86:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h **** #endif
+  87:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h **** 
+  88:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h **** #ifndef F_CPU
+  89:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h **** /* prevent compiler error by supplying a default */
+  90:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h **** # warning "F_CPU not defined for <util/delay.h>"
+  91:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h **** # define F_CPU 1000000UL
+  92:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h **** #endif
+  93:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h **** 
+  94:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h **** #ifndef __OPTIMIZE__
+  95:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h **** # warning "Compiler optimizations disabled; functions from <util/delay.h> won't work as designed"
+  96:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h **** #endif
+  97:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h **** 
+  98:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h **** #if __HAS_DELAY_CYCLES && defined(__OPTIMIZE__) && \
+  99:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****   !defined(__DELAY_BACKWARD_COMPATIBLE__) &&	   \
+ 100:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****   __STDC_HOSTED__
+ 101:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h **** #  include <math.h>
+ 102:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h **** #endif
+ 103:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h **** 
+ 104:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h **** /**
+ 105:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****    \ingroup util_delay
+ 106:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h **** 
+ 107:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****    Perform a delay of \c __ms milliseconds, using _delay_loop_2().
+ 108:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h **** 
+ 109:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****    The macro F_CPU is supposed to be defined to a
+ 110:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****    constant defining the CPU clock frequency (in Hertz).
+ 111:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h **** 
+ 112:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****    The maximal possible delay is 262.14 ms / F_CPU in MHz.
+ 113:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h **** 
+ 114:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****    When the user request delay which exceed the maximum possible one,
+ 115:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****    _delay_ms() provides a decreased resolution functionality. In this
+ 116:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****    mode _delay_ms() will work with a resolution of 1/10 ms, providing
+ 117:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****    delays up to 6.5535 seconds (independent from CPU frequency).  The
+ 118:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****    user will not be informed about decreased resolution.
+ 119:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h **** 
+ 120:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****    If the avr-gcc toolchain has __builtin_avr_delay_cycles(unsigned long)
+ 121:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****    support, maximal possible delay is 4294967.295 ms/ F_CPU in MHz. For
+ 122:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****    values greater than the maximal possible delay, overflows results in
+ 123:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****    no delay i.e., 0ms.
+ 124:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h **** 
+ 125:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****    Conversion of __us into clock cycles may not always result in integer.
+ 126:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****    By default, the clock cycles rounded up to next integer. This ensures that
+ 127:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****    the user gets atleast __us microseconds of delay.
+ 128:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h **** 
+ 129:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****    Alternatively, user can define __DELAY_ROUND_DOWN__ and __DELAY_ROUND_CLOSEST__
+ 130:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****    to round down and round to closest integer.
+ 131:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h **** 
+ 132:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****    Note: The new implementation of _delay_ms(double __ms) with 
+ 133:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****     __builtin_avr_delay_cycles(unsigned long) support is not backward compatible. 
+ 134:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****    User can define __DELAY_BACKWARD_COMPATIBLE__ to get a backward compatible delay.
+ 135:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****    Also, the backward compatible
+ 136:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****    algorithm will be chosen if the code is compiled in a <em>freestanding
+ 137:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****    environment</em> (GCC option \c -ffreestanding), as the math functions
+ 138:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****    required for rounding are not available to the compiler then.
+ 139:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h **** 
+ 140:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****  */
+ 141:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h **** void
+ 142:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h **** _delay_ms(double __ms)
+ 143:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h **** {
+ 144:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h **** 	uint16_t __ticks;
+ 145:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h **** 	double __tmp ; 
+ 146:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h **** #if __HAS_DELAY_CYCLES && defined(__OPTIMIZE__) && \
+ 147:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****   !defined(__DELAY_BACKWARD_COMPATIBLE__) &&	   \
+ 148:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h ****   __STDC_HOSTED__
+ 149:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h **** 	uint32_t __ticks_dc;
+ 150:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h **** 	extern void __builtin_avr_delay_cycles(unsigned long);
+ 151:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h **** 	__tmp = ((F_CPU) / 1e3) * __ms;
+ 152:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h **** 
+ 153:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h **** 	#if defined(__DELAY_ROUND_DOWN__)
+ 154:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h **** 		__ticks_dc = (uint32_t)fabs(__tmp);
+ 155:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h **** 
+ 156:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h **** 	#elif defined(__DELAY_ROUND_CLOSEST__)
+ 157:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h **** 		__ticks_dc = (uint32_t)(fabs(__tmp)+0.5);
+ 158:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h **** 
+ 159:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h **** 	#else
+ 160:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h **** 		//round up by default
+ 161:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h **** 		__ticks_dc = (uint32_t)(ceil(fabs(__tmp)));
+ 162:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h **** 	#endif
+ 163:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h **** 
+ 164:/usr/lib/gcc/avr/4.7.2/../../../avr/include/util/delay.h **** 	__builtin_avr_delay_cycles(__ticks_dc);
+ 1590               	.LM183:
+ 1591 058a 8FE4      		ldi r24,lo8(-15537)
+ 1592 058c 93EC      		ldi r25,hi8(-15537)
+ 1593 058e 0197      		1: sbiw r24,1
+ 1594 0590 01F4      		brne 1b
+ 1595 0592 00C0      		rjmp .
+ 1596 0594 0000      		nop
+ 1597               	.LBE44:
+ 1598               	.LBE43:
+ 1600               	.Ltext2:
+ 473:../freeRTOS750/lib_iinchip/w5100.c **** 	spiBegin(Wiznet);							// enable the EtherMega W5100
+ 1602               	.LM184:
+ 1603 0596 80E0      		ldi r24,0
+ 1604 0598 0E94 0000 		call spiBegin
+ 475:../freeRTOS750/lib_iinchip/w5100.c **** 	spiSetDataMode(SPI_MODE0);					// Enable SPI function in mode 0, CPOL=0 CPHA=0
+ 1606               	.LM185:
+ 1607 059c 80E0      		ldi r24,0
+ 1608 059e 0E94 0000 		call spiSetDataMode
+ 476:../freeRTOS750/lib_iinchip/w5100.c **** 	spiSetClockDivider(IINCHIP_SPI_DIVIDER);	// SPI at maximum speed
+ 1610               	.LM186:
+ 1611 05a2 80E0      		ldi r24,0
+ 1612 05a4 0E94 0000 		call spiSetClockDivider
+ 478:../freeRTOS750/lib_iinchip/w5100.c **** 	setMR( MR_RST ); // reset the W5100 chip.
+ 1614               	.LM187:
+ 1615 05a8 80E8      		ldi r24,lo8(-128)
+ 1616 05aa 0E94 0000 		call setMR
+ 1617               	.LBB45:
+ 1618               	.LBB46:
+ 1620               	.Ltext3:
+ 1622               	.LM188:
+ 1623 05ae 87E8      		ldi r24,lo8(4999)
+ 1624 05b0 93E1      		ldi r25,hi8(4999)
+ 1625 05b2 0197      		1: sbiw r24,1
+ 1626 05b4 01F4      		brne 1b
+ 1627 05b6 00C0      		rjmp .
+ 1628 05b8 0000      		nop
+ 1629 05ba 0895      		ret
+ 1630               	.LBE46:
+ 1631               	.LBE45:
+ 1633               	.Lscope16:
+ 1635               		.stabd	78,0,0
+ 1638               	.global	setGAR
+ 1640               	setGAR:
+ 1641               		.stabd	46,0,0
+ 1643               	.Ltext4:
+ 596:../freeRTOS750/lib_iinchip/w5100.c **** }
+ 597:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 598:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 599:../freeRTOS750/lib_iinchip/w5100.c **** /**
+ 600:../freeRTOS750/lib_iinchip/w5100.c **** @brief	This function sets up gateway IP address.
+ 601:../freeRTOS750/lib_iinchip/w5100.c **** */
+ 602:../freeRTOS750/lib_iinchip/w5100.c **** void setGAR(
+ 603:../freeRTOS750/lib_iinchip/w5100.c **** 	uint8_t * addr	/**< a pointer to a 4 -byte array responsible to set the Gateway IP address. */
+ 604:../freeRTOS750/lib_iinchip/w5100.c **** 	)
+ 605:../freeRTOS750/lib_iinchip/w5100.c **** {
+ 1645               	.LM189:
+ 1646               	.LFBB17:
+ 1647 05bc CF93      		push r28
+ 1648 05be DF93      		push r29
+ 1649               	/* prologue: function */
+ 1650               	/* frame size = 0 */
+ 1651               	/* stack size = 2 */
+ 1652               	.L__stack_usage = 2
+ 1653 05c0 EC01      		movw r28,r24
+ 606:../freeRTOS750/lib_iinchip/w5100.c **** 	IINCHIP_write((GAR0 + 0),addr[0]);
+ 1655               	.LM190:
+ 1656 05c2 6881      		ld r22,Y
+ 1657 05c4 81E0      		ldi r24,lo8(1)
+ 1658 05c6 90E0      		ldi r25,0
+ 1659 05c8 0E94 0000 		call IINCHIP_write
+ 607:../freeRTOS750/lib_iinchip/w5100.c **** 	IINCHIP_write((GAR0 + 1),addr[1]);
+ 1661               	.LM191:
+ 1662 05cc 6981      		ldd r22,Y+1
+ 1663 05ce 82E0      		ldi r24,lo8(2)
+ 1664 05d0 90E0      		ldi r25,0
+ 1665 05d2 0E94 0000 		call IINCHIP_write
+ 608:../freeRTOS750/lib_iinchip/w5100.c **** 	IINCHIP_write((GAR0 + 2),addr[2]);
+ 1667               	.LM192:
+ 1668 05d6 6A81      		ldd r22,Y+2
+ 1669 05d8 83E0      		ldi r24,lo8(3)
+ 1670 05da 90E0      		ldi r25,0
+ 1671 05dc 0E94 0000 		call IINCHIP_write
+ 609:../freeRTOS750/lib_iinchip/w5100.c **** 	IINCHIP_write((GAR0 + 3),addr[3]);
+ 1673               	.LM193:
+ 1674 05e0 6B81      		ldd r22,Y+3
+ 1675 05e2 84E0      		ldi r24,lo8(4)
+ 1676 05e4 90E0      		ldi r25,0
+ 1677               	/* epilogue start */
+ 610:../freeRTOS750/lib_iinchip/w5100.c **** }
+ 1679               	.LM194:
+ 1680 05e6 DF91      		pop r29
+ 1681 05e8 CF91      		pop r28
+ 609:../freeRTOS750/lib_iinchip/w5100.c **** 	IINCHIP_write((GAR0 + 3),addr[3]);
+ 1683               	.LM195:
+ 1684 05ea 0C94 0000 		jmp IINCHIP_write
+ 1686               	.Lscope17:
+ 1688               		.stabd	78,0,0
+ 1691               	.global	getGWIP
+ 1693               	getGWIP:
+ 1694               		.stabd	46,0,0
+ 611:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 612:../freeRTOS750/lib_iinchip/w5100.c **** void getGWIP(uint8_t * addr)
+ 613:../freeRTOS750/lib_iinchip/w5100.c **** {
+ 1696               	.LM196:
+ 1697               	.LFBB18:
+ 1698 05ee CF93      		push r28
+ 1699 05f0 DF93      		push r29
+ 1700               	/* prologue: function */
+ 1701               	/* frame size = 0 */
+ 1702               	/* stack size = 2 */
+ 1703               	.L__stack_usage = 2
+ 1704 05f2 EC01      		movw r28,r24
+ 614:../freeRTOS750/lib_iinchip/w5100.c **** 	addr[0] = IINCHIP_read((GAR0 + 0));
+ 1706               	.LM197:
+ 1707 05f4 81E0      		ldi r24,lo8(1)
+ 1708 05f6 90E0      		ldi r25,0
+ 1709 05f8 0E94 0000 		call IINCHIP_read
+ 1710 05fc 8883      		st Y,r24
+ 615:../freeRTOS750/lib_iinchip/w5100.c **** 	addr[1] = IINCHIP_read((GAR0 + 1));
+ 1712               	.LM198:
+ 1713 05fe 82E0      		ldi r24,lo8(2)
+ 1714 0600 90E0      		ldi r25,0
+ 1715 0602 0E94 0000 		call IINCHIP_read
+ 1716 0606 8983      		std Y+1,r24
+ 616:../freeRTOS750/lib_iinchip/w5100.c **** 	addr[2] = IINCHIP_read((GAR0 + 2));
+ 1718               	.LM199:
+ 1719 0608 83E0      		ldi r24,lo8(3)
+ 1720 060a 90E0      		ldi r25,0
+ 1721 060c 0E94 0000 		call IINCHIP_read
+ 1722 0610 8A83      		std Y+2,r24
+ 617:../freeRTOS750/lib_iinchip/w5100.c **** 	addr[3] = IINCHIP_read((GAR0 + 3));
+ 1724               	.LM200:
+ 1725 0612 84E0      		ldi r24,lo8(4)
+ 1726 0614 90E0      		ldi r25,0
+ 1727 0616 0E94 0000 		call IINCHIP_read
+ 1728 061a 8B83      		std Y+3,r24
+ 1729               	/* epilogue start */
+ 618:../freeRTOS750/lib_iinchip/w5100.c **** }
+ 1731               	.LM201:
+ 1732 061c DF91      		pop r29
+ 1733 061e CF91      		pop r28
+ 1734 0620 0895      		ret
+ 1736               	.Lscope18:
+ 1738               		.stabd	78,0,0
+ 1741               	.global	saveSUBR
+ 1743               	saveSUBR:
+ 1744               		.stabd	46,0,0
+ 619:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 620:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 621:../freeRTOS750/lib_iinchip/w5100.c **** /**
+ 622:../freeRTOS750/lib_iinchip/w5100.c **** @brief	It sets up SubnetMask address
+ 623:../freeRTOS750/lib_iinchip/w5100.c **** */
+ 624:../freeRTOS750/lib_iinchip/w5100.c **** void saveSUBR(
+ 625:../freeRTOS750/lib_iinchip/w5100.c **** 	uint8_t *addr	/**< a pointer to a 4 -byte array responsible to set the SubnetMask address */
+ 626:../freeRTOS750/lib_iinchip/w5100.c **** 	)
+ 627:../freeRTOS750/lib_iinchip/w5100.c **** {
+ 1746               	.LM202:
+ 1747               	.LFBB19:
+ 1748               	/* prologue: function */
+ 1749               	/* frame size = 0 */
+ 1750               	/* stack size = 0 */
+ 1751               	.L__stack_usage = 0
+ 1752 0622 FC01      		movw r30,r24
+ 628:../freeRTOS750/lib_iinchip/w5100.c **** 	// write to off-chip subnet mask address - solve Errata 2 & 3 v1.6
+ 629:../freeRTOS750/lib_iinchip/w5100.c **** 	// Basically the hardware ARP engine is broken, unless it is set to 0.0.0.0
+ 630:../freeRTOS750/lib_iinchip/w5100.c **** 	// so we have to keep it so, unless we're using TCP connect() or UDP sendto()
+ 631:../freeRTOS750/lib_iinchip/w5100.c **** 	SUBN_VAR[0] = addr[0];
+ 1754               	.LM203:
+ 1755 0624 8081      		ld r24,Z
+ 1756 0626 8093 0000 		sts SUBN_VAR,r24
+ 632:../freeRTOS750/lib_iinchip/w5100.c **** 	SUBN_VAR[1] = addr[1];
+ 1758               	.LM204:
+ 1759 062a 8181      		ldd r24,Z+1
+ 1760 062c 8093 0000 		sts SUBN_VAR+1,r24
+ 633:../freeRTOS750/lib_iinchip/w5100.c **** 	SUBN_VAR[2] = addr[2];
+ 1762               	.LM205:
+ 1763 0630 8281      		ldd r24,Z+2
+ 1764 0632 8093 0000 		sts SUBN_VAR+2,r24
+ 634:../freeRTOS750/lib_iinchip/w5100.c **** 	SUBN_VAR[3] = addr[3];
+ 1766               	.LM206:
+ 1767 0636 8381      		ldd r24,Z+3
+ 1768 0638 8093 0000 		sts SUBN_VAR+3,r24
+ 1769 063c 0895      		ret
+ 1771               	.Lscope19:
+ 1773               		.stabd	78,0,0
+ 1775               	.global	setSUBR
+ 1777               	setSUBR:
+ 1778               		.stabd	46,0,0
+ 635:../freeRTOS750/lib_iinchip/w5100.c **** }
+ 636:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 637:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 638:../freeRTOS750/lib_iinchip/w5100.c **** /**
+ 639:../freeRTOS750/lib_iinchip/w5100.c **** @brief	It sets up SubnetMask address
+ 640:../freeRTOS750/lib_iinchip/w5100.c **** */
+ 641:../freeRTOS750/lib_iinchip/w5100.c **** void setSUBR(
+ 642:../freeRTOS750/lib_iinchip/w5100.c **** 	void
+ 643:../freeRTOS750/lib_iinchip/w5100.c **** 	)
+ 644:../freeRTOS750/lib_iinchip/w5100.c **** {
+ 1780               	.LM207:
+ 1781               	.LFBB20:
+ 1782               	/* prologue: function */
+ 1783               	/* frame size = 0 */
+ 1784               	/* stack size = 0 */
+ 1785               	.L__stack_usage = 0
+ 645:../freeRTOS750/lib_iinchip/w5100.c **** 	// apply off-chip subnet mask address - solve Errata 2 & 3 v1.6
+ 646:../freeRTOS750/lib_iinchip/w5100.c **** 	IINCHIP_write((SUBR0 + 0), SUBN_VAR[0]);
+ 1787               	.LM208:
+ 1788 063e 6091 0000 		lds r22,SUBN_VAR
+ 1789 0642 85E0      		ldi r24,lo8(5)
+ 1790 0644 90E0      		ldi r25,0
+ 1791 0646 0E94 0000 		call IINCHIP_write
+ 647:../freeRTOS750/lib_iinchip/w5100.c **** 	IINCHIP_write((SUBR0 + 1), SUBN_VAR[1]);
+ 1793               	.LM209:
+ 1794 064a 6091 0000 		lds r22,SUBN_VAR+1
+ 1795 064e 86E0      		ldi r24,lo8(6)
+ 1796 0650 90E0      		ldi r25,0
+ 1797 0652 0E94 0000 		call IINCHIP_write
+ 648:../freeRTOS750/lib_iinchip/w5100.c **** 	IINCHIP_write((SUBR0 + 2), SUBN_VAR[2]);
+ 1799               	.LM210:
+ 1800 0656 6091 0000 		lds r22,SUBN_VAR+2
+ 1801 065a 87E0      		ldi r24,lo8(7)
+ 1802 065c 90E0      		ldi r25,0
+ 1803 065e 0E94 0000 		call IINCHIP_write
+ 649:../freeRTOS750/lib_iinchip/w5100.c **** 	IINCHIP_write((SUBR0 + 3), SUBN_VAR[3]);
+ 1805               	.LM211:
+ 1806 0662 6091 0000 		lds r22,SUBN_VAR+3
+ 1807 0666 88E0      		ldi r24,lo8(8)
+ 1808 0668 90E0      		ldi r25,0
+ 1809 066a 0C94 0000 		jmp IINCHIP_write
+ 1811               	.Lscope20:
+ 1813               		.stabd	78,0,0
+ 1815               	.global	clearSUBR
+ 1817               	clearSUBR:
+ 1818               		.stabd	46,0,0
+ 650:../freeRTOS750/lib_iinchip/w5100.c **** }
+ 651:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 652:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 653:../freeRTOS750/lib_iinchip/w5100.c **** /**
+ 654:../freeRTOS750/lib_iinchip/w5100.c **** @brief	It sets up SubnetMask address
+ 655:../freeRTOS750/lib_iinchip/w5100.c **** */
+ 656:../freeRTOS750/lib_iinchip/w5100.c **** void clearSUBR(
+ 657:../freeRTOS750/lib_iinchip/w5100.c **** 	void
+ 658:../freeRTOS750/lib_iinchip/w5100.c **** 	)
+ 659:../freeRTOS750/lib_iinchip/w5100.c **** {
+ 1820               	.LM212:
+ 1821               	.LFBB21:
+ 1822               	/* prologue: function */
+ 1823               	/* frame size = 0 */
+ 1824               	/* stack size = 0 */
+ 1825               	.L__stack_usage = 0
+ 660:../freeRTOS750/lib_iinchip/w5100.c **** 	// clear on-chip subnet mask address - solve Errata 2 & 3 v1.6
+ 661:../freeRTOS750/lib_iinchip/w5100.c **** 	IINCHIP_write((SUBR0 + 0), 0);
+ 1827               	.LM213:
+ 1828 066e 60E0      		ldi r22,0
+ 1829 0670 85E0      		ldi r24,lo8(5)
+ 1830 0672 90E0      		ldi r25,0
+ 1831 0674 0E94 0000 		call IINCHIP_write
+ 662:../freeRTOS750/lib_iinchip/w5100.c **** 	IINCHIP_write((SUBR0 + 1), 0);
+ 1833               	.LM214:
+ 1834 0678 60E0      		ldi r22,0
+ 1835 067a 86E0      		ldi r24,lo8(6)
+ 1836 067c 90E0      		ldi r25,0
+ 1837 067e 0E94 0000 		call IINCHIP_write
+ 663:../freeRTOS750/lib_iinchip/w5100.c **** 	IINCHIP_write((SUBR0 + 2), 0);
+ 1839               	.LM215:
+ 1840 0682 60E0      		ldi r22,0
+ 1841 0684 87E0      		ldi r24,lo8(7)
+ 1842 0686 90E0      		ldi r25,0
+ 1843 0688 0E94 0000 		call IINCHIP_write
+ 664:../freeRTOS750/lib_iinchip/w5100.c **** 	IINCHIP_write((SUBR0 + 3), 0);
+ 1845               	.LM216:
+ 1846 068c 60E0      		ldi r22,0
+ 1847 068e 88E0      		ldi r24,lo8(8)
+ 1848 0690 90E0      		ldi r25,0
+ 1849 0692 0C94 0000 		jmp IINCHIP_write
+ 1851               	.Lscope21:
+ 1853               		.stabd	78,0,0
+ 1856               	.global	setSHAR
+ 1858               	setSHAR:
+ 1859               		.stabd	46,0,0
+ 665:../freeRTOS750/lib_iinchip/w5100.c **** }
+ 666:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 667:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 668:../freeRTOS750/lib_iinchip/w5100.c **** /**
+ 669:../freeRTOS750/lib_iinchip/w5100.c **** @brief	This function sets up MAC address.
+ 670:../freeRTOS750/lib_iinchip/w5100.c **** */
+ 671:../freeRTOS750/lib_iinchip/w5100.c **** void setSHAR(
+ 672:../freeRTOS750/lib_iinchip/w5100.c **** 	uint8_t * addr	/**< a pointer to a 6 -byte array responsible to set the MAC address. */
+ 673:../freeRTOS750/lib_iinchip/w5100.c **** 	)
+ 674:../freeRTOS750/lib_iinchip/w5100.c **** {
+ 1861               	.LM217:
+ 1862               	.LFBB22:
+ 1863 0696 CF93      		push r28
+ 1864 0698 DF93      		push r29
+ 1865               	/* prologue: function */
+ 1866               	/* frame size = 0 */
+ 1867               	/* stack size = 2 */
+ 1868               	.L__stack_usage = 2
+ 1869 069a EC01      		movw r28,r24
+ 675:../freeRTOS750/lib_iinchip/w5100.c **** 	IINCHIP_write((SHAR0 + 0),addr[0]);
+ 1871               	.LM218:
+ 1872 069c 6881      		ld r22,Y
+ 1873 069e 89E0      		ldi r24,lo8(9)
+ 1874 06a0 90E0      		ldi r25,0
+ 1875 06a2 0E94 0000 		call IINCHIP_write
+ 676:../freeRTOS750/lib_iinchip/w5100.c **** 	IINCHIP_write((SHAR0 + 1),addr[1]);
+ 1877               	.LM219:
+ 1878 06a6 6981      		ldd r22,Y+1
+ 1879 06a8 8AE0      		ldi r24,lo8(10)
+ 1880 06aa 90E0      		ldi r25,0
+ 1881 06ac 0E94 0000 		call IINCHIP_write
+ 677:../freeRTOS750/lib_iinchip/w5100.c **** 	IINCHIP_write((SHAR0 + 2),addr[2]);
+ 1883               	.LM220:
+ 1884 06b0 6A81      		ldd r22,Y+2
+ 1885 06b2 8BE0      		ldi r24,lo8(11)
+ 1886 06b4 90E0      		ldi r25,0
+ 1887 06b6 0E94 0000 		call IINCHIP_write
+ 678:../freeRTOS750/lib_iinchip/w5100.c **** 	IINCHIP_write((SHAR0 + 3),addr[3]);
+ 1889               	.LM221:
+ 1890 06ba 6B81      		ldd r22,Y+3
+ 1891 06bc 8CE0      		ldi r24,lo8(12)
+ 1892 06be 90E0      		ldi r25,0
+ 1893 06c0 0E94 0000 		call IINCHIP_write
+ 679:../freeRTOS750/lib_iinchip/w5100.c **** 	IINCHIP_write((SHAR0 + 4),addr[4]);
+ 1895               	.LM222:
+ 1896 06c4 6C81      		ldd r22,Y+4
+ 1897 06c6 8DE0      		ldi r24,lo8(13)
+ 1898 06c8 90E0      		ldi r25,0
+ 1899 06ca 0E94 0000 		call IINCHIP_write
+ 680:../freeRTOS750/lib_iinchip/w5100.c **** 	IINCHIP_write((SHAR0 + 5),addr[5]);
+ 1901               	.LM223:
+ 1902 06ce 6D81      		ldd r22,Y+5
+ 1903 06d0 8EE0      		ldi r24,lo8(14)
+ 1904 06d2 90E0      		ldi r25,0
+ 1905               	/* epilogue start */
+ 681:../freeRTOS750/lib_iinchip/w5100.c **** }
+ 1907               	.LM224:
+ 1908 06d4 DF91      		pop r29
+ 1909 06d6 CF91      		pop r28
+ 680:../freeRTOS750/lib_iinchip/w5100.c **** 	IINCHIP_write((SHAR0 + 5),addr[5]);
+ 1911               	.LM225:
+ 1912 06d8 0C94 0000 		jmp IINCHIP_write
+ 1914               	.Lscope22:
+ 1916               		.stabd	78,0,0
+ 1919               	.global	setSIPR
+ 1921               	setSIPR:
+ 1922               		.stabd	46,0,0
+ 682:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 683:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 684:../freeRTOS750/lib_iinchip/w5100.c **** /**
+ 685:../freeRTOS750/lib_iinchip/w5100.c **** @brief	This function sets up Source IP address.
+ 686:../freeRTOS750/lib_iinchip/w5100.c **** */
+ 687:../freeRTOS750/lib_iinchip/w5100.c **** void setSIPR(
+ 688:../freeRTOS750/lib_iinchip/w5100.c **** 	uint8_t * addr	/**< a pointer to a 4 -byte array responsible to set the Source IP address. */
+ 689:../freeRTOS750/lib_iinchip/w5100.c **** 	)
+ 690:../freeRTOS750/lib_iinchip/w5100.c **** {
+ 1924               	.LM226:
+ 1925               	.LFBB23:
+ 1926 06dc CF93      		push r28
+ 1927 06de DF93      		push r29
+ 1928               	/* prologue: function */
+ 1929               	/* frame size = 0 */
+ 1930               	/* stack size = 2 */
+ 1931               	.L__stack_usage = 2
+ 1932 06e0 EC01      		movw r28,r24
+ 691:../freeRTOS750/lib_iinchip/w5100.c **** 	IINCHIP_write((SIPR0 + 0),addr[0]);
+ 1934               	.LM227:
+ 1935 06e2 6881      		ld r22,Y
+ 1936 06e4 8FE0      		ldi r24,lo8(15)
+ 1937 06e6 90E0      		ldi r25,0
+ 1938 06e8 0E94 0000 		call IINCHIP_write
+ 692:../freeRTOS750/lib_iinchip/w5100.c **** 	IINCHIP_write((SIPR0 + 1),addr[1]);
+ 1940               	.LM228:
+ 1941 06ec 6981      		ldd r22,Y+1
+ 1942 06ee 80E1      		ldi r24,lo8(16)
+ 1943 06f0 90E0      		ldi r25,0
+ 1944 06f2 0E94 0000 		call IINCHIP_write
+ 693:../freeRTOS750/lib_iinchip/w5100.c **** 	IINCHIP_write((SIPR0 + 2),addr[2]);
+ 1946               	.LM229:
+ 1947 06f6 6A81      		ldd r22,Y+2
+ 1948 06f8 81E1      		ldi r24,lo8(17)
+ 1949 06fa 90E0      		ldi r25,0
+ 1950 06fc 0E94 0000 		call IINCHIP_write
+ 694:../freeRTOS750/lib_iinchip/w5100.c **** 	IINCHIP_write((SIPR0 + 3),addr[3]);
+ 1952               	.LM230:
+ 1953 0700 6B81      		ldd r22,Y+3
+ 1954 0702 82E1      		ldi r24,lo8(18)
+ 1955 0704 90E0      		ldi r25,0
+ 1956               	/* epilogue start */
+ 695:../freeRTOS750/lib_iinchip/w5100.c **** }
+ 1958               	.LM231:
+ 1959 0706 DF91      		pop r29
+ 1960 0708 CF91      		pop r28
+ 694:../freeRTOS750/lib_iinchip/w5100.c **** 	IINCHIP_write((SIPR0 + 3),addr[3]);
+ 1962               	.LM232:
+ 1963 070a 0C94 0000 		jmp IINCHIP_write
+ 1965               	.Lscope23:
+ 1967               		.stabd	78,0,0
+ 1969               	.global	getIR
+ 1971               	getIR:
+ 1972               		.stabd	46,0,0
+ 696:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 697:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 698:../freeRTOS750/lib_iinchip/w5100.c **** /**
+ 699:../freeRTOS750/lib_iinchip/w5100.c **** @brief	This function gets Interrupt register in common register.
+ 700:../freeRTOS750/lib_iinchip/w5100.c ****  */
+ 701:../freeRTOS750/lib_iinchip/w5100.c **** uint8_t getIR( void )
+ 702:../freeRTOS750/lib_iinchip/w5100.c **** {
+ 1974               	.LM233:
+ 1975               	.LFBB24:
+ 1976               	/* prologue: function */
+ 1977               	/* frame size = 0 */
+ 1978               	/* stack size = 0 */
+ 1979               	.L__stack_usage = 0
+ 703:../freeRTOS750/lib_iinchip/w5100.c ****    return IINCHIP_read(IR);
+ 1981               	.LM234:
+ 1982 070e 85E1      		ldi r24,lo8(21)
+ 1983 0710 90E0      		ldi r25,0
+ 1984 0712 0C94 0000 		jmp IINCHIP_read
+ 1986               	.Lscope24:
+ 1988               		.stabd	78,0,0
+ 1990               	.global	setRTR
+ 1992               	setRTR:
+ 1993               		.stabd	46,0,0
+ 704:../freeRTOS750/lib_iinchip/w5100.c **** }
+ 705:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 706:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 707:../freeRTOS750/lib_iinchip/w5100.c **** /**
+ 708:../freeRTOS750/lib_iinchip/w5100.c ****  Retransmission
+ 709:../freeRTOS750/lib_iinchip/w5100.c ****  **/
+ 710:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 711:../freeRTOS750/lib_iinchip/w5100.c **** /**
+ 712:../freeRTOS750/lib_iinchip/w5100.c **** @brief	This function sets up Retransmission time.
+ 713:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 714:../freeRTOS750/lib_iinchip/w5100.c **** If there is no response from the peer or delay in response then retransmission
+ 715:../freeRTOS750/lib_iinchip/w5100.c **** will be there as per RTR (Retry Time-value Register) setting
+ 716:../freeRTOS750/lib_iinchip/w5100.c **** */
+ 717:../freeRTOS750/lib_iinchip/w5100.c **** void setRTR(uint16_t timeout)
+ 718:../freeRTOS750/lib_iinchip/w5100.c **** {
+ 1995               	.LM235:
+ 1996               	.LFBB25:
+ 1997 0716 CF93      		push r28
+ 1998               	/* prologue: function */
+ 1999               	/* frame size = 0 */
+ 2000               	/* stack size = 1 */
+ 2001               	.L__stack_usage = 1
+ 2002 0718 C82F      		mov r28,r24
+ 719:../freeRTOS750/lib_iinchip/w5100.c **** 	IINCHIP_write(RTR0,(uint8_t)((timeout & 0xff00) >> 8));
+ 2004               	.LM236:
+ 2005 071a 692F      		mov r22,r25
+ 2006 071c 87E1      		ldi r24,lo8(23)
+ 2007 071e 90E0      		ldi r25,0
+ 2008 0720 0E94 0000 		call IINCHIP_write
+ 720:../freeRTOS750/lib_iinchip/w5100.c **** 	IINCHIP_write((RTR1),(uint8_t)(timeout & 0x00ff));
+ 2010               	.LM237:
+ 2011 0724 6C2F      		mov r22,r28
+ 2012 0726 88E1      		ldi r24,lo8(24)
+ 2013 0728 90E0      		ldi r25,0
+ 2014               	/* epilogue start */
+ 721:../freeRTOS750/lib_iinchip/w5100.c **** }
+ 2016               	.LM238:
+ 2017 072a CF91      		pop r28
+ 720:../freeRTOS750/lib_iinchip/w5100.c **** 	IINCHIP_write((RTR1),(uint8_t)(timeout & 0x00ff));
+ 2019               	.LM239:
+ 2020 072c 0C94 0000 		jmp IINCHIP_write
+ 2022               	.Lscope25:
+ 2024               		.stabd	78,0,0
+ 2027               	.global	setRCR
+ 2029               	setRCR:
+ 2030               		.stabd	46,0,0
+ 722:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 723:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 724:../freeRTOS750/lib_iinchip/w5100.c **** /**
+ 725:../freeRTOS750/lib_iinchip/w5100.c **** @brief	This function set the number of Retransmission.
+ 726:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 727:../freeRTOS750/lib_iinchip/w5100.c **** If there is no response from the peer or delay in response then recorded time
+ 728:../freeRTOS750/lib_iinchip/w5100.c **** as per RTR & RCR register setting then time out will occur.
+ 729:../freeRTOS750/lib_iinchip/w5100.c **** */
+ 730:../freeRTOS750/lib_iinchip/w5100.c **** void setRCR(uint8_t retry)
+ 731:../freeRTOS750/lib_iinchip/w5100.c **** {
+ 2032               	.LM240:
+ 2033               	.LFBB26:
+ 2034               	/* prologue: function */
+ 2035               	/* frame size = 0 */
+ 2036               	/* stack size = 0 */
+ 2037               	.L__stack_usage = 0
+ 732:../freeRTOS750/lib_iinchip/w5100.c **** 	IINCHIP_write(RCR,retry);
+ 2039               	.LM241:
+ 2040 0730 682F      		mov r22,r24
+ 2041 0732 89E1      		ldi r24,lo8(25)
+ 2042 0734 90E0      		ldi r25,0
+ 2043 0736 0C94 0000 		jmp IINCHIP_write
+ 2045               	.Lscope26:
+ 2047               		.stabd	78,0,0
+ 2050               	.global	setIMR
+ 2052               	setIMR:
+ 2053               		.stabd	46,0,0
+ 733:../freeRTOS750/lib_iinchip/w5100.c **** }
+ 734:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 735:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 736:../freeRTOS750/lib_iinchip/w5100.c **** /**
+ 737:../freeRTOS750/lib_iinchip/w5100.c **** @brief	This function set the interrupt mask Enable/Disable appropriate Interrupt. ('1' : interrupt 
+ 738:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 739:../freeRTOS750/lib_iinchip/w5100.c **** If any bit in IMR is set as '0' then there is not interrupt signal though the bit is
+ 740:../freeRTOS750/lib_iinchip/w5100.c **** set in IR register.
+ 741:../freeRTOS750/lib_iinchip/w5100.c **** */
+ 742:../freeRTOS750/lib_iinchip/w5100.c **** void setIMR(uint8_t mask)
+ 743:../freeRTOS750/lib_iinchip/w5100.c **** {
+ 2055               	.LM242:
+ 2056               	.LFBB27:
+ 2057               	/* prologue: function */
+ 2058               	/* frame size = 0 */
+ 2059               	/* stack size = 0 */
+ 2060               	.L__stack_usage = 0
+ 744:../freeRTOS750/lib_iinchip/w5100.c **** 	IINCHIP_write(IMR,mask); // must be set to 0x10.
+ 2062               	.LM243:
+ 2063 073a 682F      		mov r22,r24
+ 2064 073c 86E1      		ldi r24,lo8(22)
+ 2065 073e 90E0      		ldi r25,0
+ 2066 0740 0C94 0000 		jmp IINCHIP_write
+ 2068               	.Lscope27:
+ 2070               		.stabd	78,0,0
+ 2073               	.global	getGAR
+ 2075               	getGAR:
+ 2076               		.stabd	46,0,0
+ 745:../freeRTOS750/lib_iinchip/w5100.c **** }
+ 746:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 747:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 748:../freeRTOS750/lib_iinchip/w5100.c **** /**
+ 749:../freeRTOS750/lib_iinchip/w5100.c **** @brief	These below functions are used to get the Gateway, SubnetMask
+ 750:../freeRTOS750/lib_iinchip/w5100.c **** 		and Source Hardware Address (MAC Address) and Source IP address
+ 751:../freeRTOS750/lib_iinchip/w5100.c **** */
+ 752:../freeRTOS750/lib_iinchip/w5100.c **** void getGAR(uint8_t * addr)
+ 753:../freeRTOS750/lib_iinchip/w5100.c **** {
+ 2078               	.LM244:
+ 2079               	.LFBB28:
+ 2080 0744 CF93      		push r28
+ 2081 0746 DF93      		push r29
+ 2082               	/* prologue: function */
+ 2083               	/* frame size = 0 */
+ 2084               	/* stack size = 2 */
+ 2085               	.L__stack_usage = 2
+ 2086 0748 EC01      		movw r28,r24
+ 754:../freeRTOS750/lib_iinchip/w5100.c **** 	addr[0] = IINCHIP_read(GAR0);
+ 2088               	.LM245:
+ 2089 074a 81E0      		ldi r24,lo8(1)
+ 2090 074c 90E0      		ldi r25,0
+ 2091 074e 0E94 0000 		call IINCHIP_read
+ 2092 0752 8883      		st Y,r24
+ 755:../freeRTOS750/lib_iinchip/w5100.c **** 	addr[1] = IINCHIP_read(GAR0+1);
+ 2094               	.LM246:
+ 2095 0754 82E0      		ldi r24,lo8(2)
+ 2096 0756 90E0      		ldi r25,0
+ 2097 0758 0E94 0000 		call IINCHIP_read
+ 2098 075c 8983      		std Y+1,r24
+ 756:../freeRTOS750/lib_iinchip/w5100.c **** 	addr[2] = IINCHIP_read(GAR0+2);
+ 2100               	.LM247:
+ 2101 075e 83E0      		ldi r24,lo8(3)
+ 2102 0760 90E0      		ldi r25,0
+ 2103 0762 0E94 0000 		call IINCHIP_read
+ 2104 0766 8A83      		std Y+2,r24
+ 757:../freeRTOS750/lib_iinchip/w5100.c **** 	addr[3] = IINCHIP_read(GAR0+3);
+ 2106               	.LM248:
+ 2107 0768 84E0      		ldi r24,lo8(4)
+ 2108 076a 90E0      		ldi r25,0
+ 2109 076c 0E94 0000 		call IINCHIP_read
+ 2110 0770 8B83      		std Y+3,r24
+ 2111               	/* epilogue start */
+ 758:../freeRTOS750/lib_iinchip/w5100.c **** }
+ 2113               	.LM249:
+ 2114 0772 DF91      		pop r29
+ 2115 0774 CF91      		pop r28
+ 2116 0776 0895      		ret
+ 2118               	.Lscope28:
+ 2120               		.stabd	78,0,0
+ 2123               	.global	getSHAR
+ 2125               	getSHAR:
+ 2126               		.stabd	46,0,0
+ 759:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 760:../freeRTOS750/lib_iinchip/w5100.c **** /**
+ 761:../freeRTOS750/lib_iinchip/w5100.c **** @brief	This function sets up MAC address.
+ 762:../freeRTOS750/lib_iinchip/w5100.c **** */
+ 763:../freeRTOS750/lib_iinchip/w5100.c **** void getSHAR(uint8_t * addr)
+ 764:../freeRTOS750/lib_iinchip/w5100.c **** {
+ 2128               	.LM250:
+ 2129               	.LFBB29:
+ 2130 0778 CF93      		push r28
+ 2131 077a DF93      		push r29
+ 2132               	/* prologue: function */
+ 2133               	/* frame size = 0 */
+ 2134               	/* stack size = 2 */
+ 2135               	.L__stack_usage = 2
+ 2136 077c EC01      		movw r28,r24
+ 765:../freeRTOS750/lib_iinchip/w5100.c **** 	addr[0] = IINCHIP_read(SHAR0);
+ 2138               	.LM251:
+ 2139 077e 89E0      		ldi r24,lo8(9)
+ 2140 0780 90E0      		ldi r25,0
+ 2141 0782 0E94 0000 		call IINCHIP_read
+ 2142 0786 8883      		st Y,r24
+ 766:../freeRTOS750/lib_iinchip/w5100.c **** 	addr[1] = IINCHIP_read(SHAR0+1);
+ 2144               	.LM252:
+ 2145 0788 8AE0      		ldi r24,lo8(10)
+ 2146 078a 90E0      		ldi r25,0
+ 2147 078c 0E94 0000 		call IINCHIP_read
+ 2148 0790 8983      		std Y+1,r24
+ 767:../freeRTOS750/lib_iinchip/w5100.c **** 	addr[2] = IINCHIP_read(SHAR0+2);
+ 2150               	.LM253:
+ 2151 0792 8BE0      		ldi r24,lo8(11)
+ 2152 0794 90E0      		ldi r25,0
+ 2153 0796 0E94 0000 		call IINCHIP_read
+ 2154 079a 8A83      		std Y+2,r24
+ 768:../freeRTOS750/lib_iinchip/w5100.c **** 	addr[3] = IINCHIP_read(SHAR0+3);
+ 2156               	.LM254:
+ 2157 079c 8CE0      		ldi r24,lo8(12)
+ 2158 079e 90E0      		ldi r25,0
+ 2159 07a0 0E94 0000 		call IINCHIP_read
+ 2160 07a4 8B83      		std Y+3,r24
+ 769:../freeRTOS750/lib_iinchip/w5100.c **** 	addr[4] = IINCHIP_read(SHAR0+4);
+ 2162               	.LM255:
+ 2163 07a6 8DE0      		ldi r24,lo8(13)
+ 2164 07a8 90E0      		ldi r25,0
+ 2165 07aa 0E94 0000 		call IINCHIP_read
+ 2166 07ae 8C83      		std Y+4,r24
+ 770:../freeRTOS750/lib_iinchip/w5100.c **** 	addr[5] = IINCHIP_read(SHAR0+5);
+ 2168               	.LM256:
+ 2169 07b0 8EE0      		ldi r24,lo8(14)
+ 2170 07b2 90E0      		ldi r25,0
+ 2171 07b4 0E94 0000 		call IINCHIP_read
+ 2172 07b8 8D83      		std Y+5,r24
+ 2173               	/* epilogue start */
+ 771:../freeRTOS750/lib_iinchip/w5100.c **** }
+ 2175               	.LM257:
+ 2176 07ba DF91      		pop r29
+ 2177 07bc CF91      		pop r28
+ 2178 07be 0895      		ret
+ 2180               	.Lscope29:
+ 2182               		.stabd	78,0,0
+ 2185               	.global	getSIPR
+ 2187               	getSIPR:
+ 2188               		.stabd	46,0,0
+ 772:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 773:../freeRTOS750/lib_iinchip/w5100.c **** void getSIPR(uint8_t * addr)
+ 774:../freeRTOS750/lib_iinchip/w5100.c **** {
+ 2190               	.LM258:
+ 2191               	.LFBB30:
+ 2192 07c0 CF93      		push r28
+ 2193 07c2 DF93      		push r29
+ 2194               	/* prologue: function */
+ 2195               	/* frame size = 0 */
+ 2196               	/* stack size = 2 */
+ 2197               	.L__stack_usage = 2
+ 2198 07c4 EC01      		movw r28,r24
+ 775:../freeRTOS750/lib_iinchip/w5100.c **** 	addr[0] = IINCHIP_read(SIPR0);
+ 2200               	.LM259:
+ 2201 07c6 8FE0      		ldi r24,lo8(15)
+ 2202 07c8 90E0      		ldi r25,0
+ 2203 07ca 0E94 0000 		call IINCHIP_read
+ 2204 07ce 8883      		st Y,r24
+ 776:../freeRTOS750/lib_iinchip/w5100.c **** 	addr[1] = IINCHIP_read(SIPR0+1);
+ 2206               	.LM260:
+ 2207 07d0 80E1      		ldi r24,lo8(16)
+ 2208 07d2 90E0      		ldi r25,0
+ 2209 07d4 0E94 0000 		call IINCHIP_read
+ 2210 07d8 8983      		std Y+1,r24
+ 777:../freeRTOS750/lib_iinchip/w5100.c **** 	addr[2] = IINCHIP_read(SIPR0+2);
+ 2212               	.LM261:
+ 2213 07da 81E1      		ldi r24,lo8(17)
+ 2214 07dc 90E0      		ldi r25,0
+ 2215 07de 0E94 0000 		call IINCHIP_read
+ 2216 07e2 8A83      		std Y+2,r24
+ 778:../freeRTOS750/lib_iinchip/w5100.c **** 	addr[3] = IINCHIP_read(SIPR0+3);
+ 2218               	.LM262:
+ 2219 07e4 82E1      		ldi r24,lo8(18)
+ 2220 07e6 90E0      		ldi r25,0
+ 2221 07e8 0E94 0000 		call IINCHIP_read
+ 2222 07ec 8B83      		std Y+3,r24
+ 2223               	/* epilogue start */
+ 779:../freeRTOS750/lib_iinchip/w5100.c **** }
+ 2225               	.LM263:
+ 2226 07ee DF91      		pop r29
+ 2227 07f0 CF91      		pop r28
+ 2228 07f2 0895      		ret
+ 2230               	.Lscope30:
+ 2232               		.stabd	78,0,0
+ 2236               	.global	getSn_DHAR
+ 2238               	getSn_DHAR:
+ 2239               		.stabd	46,0,0
+ 780:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 781:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 782:../freeRTOS750/lib_iinchip/w5100.c **** /**
+ 783:../freeRTOS750/lib_iinchip/w5100.c **** @brief	These below functions are used to get the Destination Hardware Address (MAC Address), Destin
+ 784:../freeRTOS750/lib_iinchip/w5100.c **** */
+ 785:../freeRTOS750/lib_iinchip/w5100.c **** void getSn_DHAR(SOCKET s, uint8_t * addr)
+ 786:../freeRTOS750/lib_iinchip/w5100.c **** {
+ 2241               	.LM264:
+ 2242               	.LFBB31:
+ 2243 07f4 0F93      		push r16
+ 2244 07f6 1F93      		push r17
+ 2245 07f8 CF93      		push r28
+ 2246 07fa DF93      		push r29
+ 2247               	/* prologue: function */
+ 2248               	/* frame size = 0 */
+ 2249               	/* stack size = 4 */
+ 2250               	.L__stack_usage = 4
+ 2251 07fc EB01      		movw r28,r22
+ 787:../freeRTOS750/lib_iinchip/w5100.c **** 	addr[0] = IINCHIP_read(Sn_DHAR0(s));
+ 2253               	.LM265:
+ 2254 07fe 082F      		mov r16,r24
+ 2255 0800 10E0      		ldi r17,0
+ 2256 0802 0C5F      		subi r16,-4
+ 2257 0804 1F4F      		sbci r17,-1
+ 2258 0806 102F      		mov r17,r16
+ 2259 0808 0027      		clr r16
+ 2260 080a C801      		movw r24,r16
+ 2261 080c 0696      		adiw r24,6
+ 2262 080e 0E94 0000 		call IINCHIP_read
+ 2263 0812 8883      		st Y,r24
+ 788:../freeRTOS750/lib_iinchip/w5100.c **** 	addr[1] = IINCHIP_read(Sn_DHAR0(s)+1);
+ 2265               	.LM266:
+ 2266 0814 C801      		movw r24,r16
+ 2267 0816 0796      		adiw r24,7
+ 2268 0818 0E94 0000 		call IINCHIP_read
+ 2269 081c 8983      		std Y+1,r24
+ 789:../freeRTOS750/lib_iinchip/w5100.c **** 	addr[2] = IINCHIP_read(Sn_DHAR0(s)+2);
+ 2271               	.LM267:
+ 2272 081e C801      		movw r24,r16
+ 2273 0820 0896      		adiw r24,8
+ 2274 0822 0E94 0000 		call IINCHIP_read
+ 2275 0826 8A83      		std Y+2,r24
+ 790:../freeRTOS750/lib_iinchip/w5100.c **** 	addr[3] = IINCHIP_read(Sn_DHAR0(s)+3);
+ 2277               	.LM268:
+ 2278 0828 C801      		movw r24,r16
+ 2279 082a 0996      		adiw r24,9
+ 2280 082c 0E94 0000 		call IINCHIP_read
+ 2281 0830 8B83      		std Y+3,r24
+ 791:../freeRTOS750/lib_iinchip/w5100.c **** 	addr[4] = IINCHIP_read(Sn_DHAR0(s)+4);
+ 2283               	.LM269:
+ 2284 0832 C801      		movw r24,r16
+ 2285 0834 0A96      		adiw r24,10
+ 2286 0836 0E94 0000 		call IINCHIP_read
+ 2287 083a 8C83      		std Y+4,r24
+ 792:../freeRTOS750/lib_iinchip/w5100.c **** 	addr[5] = IINCHIP_read(Sn_DHAR0(s)+5);
+ 2289               	.LM270:
+ 2290 083c C801      		movw r24,r16
+ 2291 083e 0B96      		adiw r24,11
+ 2292 0840 0E94 0000 		call IINCHIP_read
+ 2293 0844 8D83      		std Y+5,r24
+ 2294               	/* epilogue start */
+ 793:../freeRTOS750/lib_iinchip/w5100.c **** }
+ 2296               	.LM271:
+ 2297 0846 DF91      		pop r29
+ 2298 0848 CF91      		pop r28
+ 2299 084a 1F91      		pop r17
+ 2300 084c 0F91      		pop r16
+ 2301 084e 0895      		ret
+ 2303               	.Lscope31:
+ 2305               		.stabd	78,0,0
+ 2309               	.global	setSn_DHAR
+ 2311               	setSn_DHAR:
+ 2312               		.stabd	46,0,0
+ 794:../freeRTOS750/lib_iinchip/w5100.c **** void setSn_DHAR(SOCKET s, uint8_t * addr)
+ 795:../freeRTOS750/lib_iinchip/w5100.c **** {
+ 2314               	.LM272:
+ 2315               	.LFBB32:
+ 2316 0850 0F93      		push r16
+ 2317 0852 1F93      		push r17
+ 2318 0854 CF93      		push r28
+ 2319 0856 DF93      		push r29
+ 2320               	/* prologue: function */
+ 2321               	/* frame size = 0 */
+ 2322               	/* stack size = 4 */
+ 2323               	.L__stack_usage = 4
+ 2324 0858 8B01      		movw r16,r22
+ 796:../freeRTOS750/lib_iinchip/w5100.c **** 	IINCHIP_write((Sn_DHAR0(s) + 0),addr[0]);
+ 2326               	.LM273:
+ 2327 085a C82F      		mov r28,r24
+ 2328 085c D0E0      		ldi r29,0
+ 2329 085e 2496      		adiw r28,4
+ 2330 0860 DC2F      		mov r29,r28
+ 2331 0862 CC27      		clr r28
+ 2332 0864 FB01      		movw r30,r22
+ 2333 0866 6081      		ld r22,Z
+ 2334 0868 CE01      		movw r24,r28
+ 2335 086a 0696      		adiw r24,6
+ 2336 086c 0E94 0000 		call IINCHIP_write
+ 797:../freeRTOS750/lib_iinchip/w5100.c **** 	IINCHIP_write((Sn_DHAR0(s) + 1),addr[1]);
+ 2338               	.LM274:
+ 2339 0870 F801      		movw r30,r16
+ 2340 0872 6181      		ldd r22,Z+1
+ 2341 0874 CE01      		movw r24,r28
+ 2342 0876 0796      		adiw r24,7
+ 2343 0878 0E94 0000 		call IINCHIP_write
+ 798:../freeRTOS750/lib_iinchip/w5100.c **** 	IINCHIP_write((Sn_DHAR0(s) + 2),addr[2]);
+ 2345               	.LM275:
+ 2346 087c F801      		movw r30,r16
+ 2347 087e 6281      		ldd r22,Z+2
+ 2348 0880 CE01      		movw r24,r28
+ 2349 0882 0896      		adiw r24,8
+ 2350 0884 0E94 0000 		call IINCHIP_write
+ 799:../freeRTOS750/lib_iinchip/w5100.c **** 	IINCHIP_write((Sn_DHAR0(s) + 3),addr[3]);
+ 2352               	.LM276:
+ 2353 0888 F801      		movw r30,r16
+ 2354 088a 6381      		ldd r22,Z+3
+ 2355 088c CE01      		movw r24,r28
+ 2356 088e 0996      		adiw r24,9
+ 2357 0890 0E94 0000 		call IINCHIP_write
+ 800:../freeRTOS750/lib_iinchip/w5100.c **** 	IINCHIP_write((Sn_DHAR0(s) + 4),addr[4]);
+ 2359               	.LM277:
+ 2360 0894 F801      		movw r30,r16
+ 2361 0896 6481      		ldd r22,Z+4
+ 2362 0898 CE01      		movw r24,r28
+ 2363 089a 0A96      		adiw r24,10
+ 2364 089c 0E94 0000 		call IINCHIP_write
+ 801:../freeRTOS750/lib_iinchip/w5100.c **** 	IINCHIP_write((Sn_DHAR0(s) + 5),addr[5]);
+ 2366               	.LM278:
+ 2367 08a0 F801      		movw r30,r16
+ 2368 08a2 6581      		ldd r22,Z+5
+ 2369 08a4 CE01      		movw r24,r28
+ 2370 08a6 0B96      		adiw r24,11
+ 2371               	/* epilogue start */
+ 802:../freeRTOS750/lib_iinchip/w5100.c **** }
+ 2373               	.LM279:
+ 2374 08a8 DF91      		pop r29
+ 2375 08aa CF91      		pop r28
+ 2376 08ac 1F91      		pop r17
+ 2377 08ae 0F91      		pop r16
+ 801:../freeRTOS750/lib_iinchip/w5100.c **** 	IINCHIP_write((Sn_DHAR0(s) + 5),addr[5]);
+ 2379               	.LM280:
+ 2380 08b0 0C94 0000 		jmp IINCHIP_write
+ 2382               	.Lscope32:
+ 2384               		.stabd	78,0,0
+ 2388               	.global	getSn_DIPR
+ 2390               	getSn_DIPR:
+ 2391               		.stabd	46,0,0
+ 803:../freeRTOS750/lib_iinchip/w5100.c **** void getSn_DIPR(SOCKET s, uint8_t * addr)
+ 804:../freeRTOS750/lib_iinchip/w5100.c **** {
+ 2393               	.LM281:
+ 2394               	.LFBB33:
+ 2395 08b4 0F93      		push r16
+ 2396 08b6 1F93      		push r17
+ 2397 08b8 CF93      		push r28
+ 2398 08ba DF93      		push r29
+ 2399               	/* prologue: function */
+ 2400               	/* frame size = 0 */
+ 2401               	/* stack size = 4 */
+ 2402               	.L__stack_usage = 4
+ 2403 08bc EB01      		movw r28,r22
+ 805:../freeRTOS750/lib_iinchip/w5100.c **** 	addr[0] = IINCHIP_read(Sn_DIPR0(s));
+ 2405               	.LM282:
+ 2406 08be 082F      		mov r16,r24
+ 2407 08c0 10E0      		ldi r17,0
+ 2408 08c2 0C5F      		subi r16,-4
+ 2409 08c4 1F4F      		sbci r17,-1
+ 2410 08c6 102F      		mov r17,r16
+ 2411 08c8 0027      		clr r16
+ 2412 08ca C801      		movw r24,r16
+ 2413 08cc 0C96      		adiw r24,12
+ 2414 08ce 0E94 0000 		call IINCHIP_read
+ 2415 08d2 8883      		st Y,r24
+ 806:../freeRTOS750/lib_iinchip/w5100.c **** 	addr[1] = IINCHIP_read(Sn_DIPR0(s)+1);
+ 2417               	.LM283:
+ 2418 08d4 C801      		movw r24,r16
+ 2419 08d6 0D96      		adiw r24,13
+ 2420 08d8 0E94 0000 		call IINCHIP_read
+ 2421 08dc 8983      		std Y+1,r24
+ 807:../freeRTOS750/lib_iinchip/w5100.c **** 	addr[2] = IINCHIP_read(Sn_DIPR0(s)+2);
+ 2423               	.LM284:
+ 2424 08de C801      		movw r24,r16
+ 2425 08e0 0E96      		adiw r24,14
+ 2426 08e2 0E94 0000 		call IINCHIP_read
+ 2427 08e6 8A83      		std Y+2,r24
+ 808:../freeRTOS750/lib_iinchip/w5100.c **** 	addr[3] = IINCHIP_read(Sn_DIPR0(s)+3);
+ 2429               	.LM285:
+ 2430 08e8 C801      		movw r24,r16
+ 2431 08ea 0F96      		adiw r24,15
+ 2432 08ec 0E94 0000 		call IINCHIP_read
+ 2433 08f0 8B83      		std Y+3,r24
+ 2434               	/* epilogue start */
+ 809:../freeRTOS750/lib_iinchip/w5100.c **** }
+ 2436               	.LM286:
+ 2437 08f2 DF91      		pop r29
+ 2438 08f4 CF91      		pop r28
+ 2439 08f6 1F91      		pop r17
+ 2440 08f8 0F91      		pop r16
+ 2441 08fa 0895      		ret
+ 2443               	.Lscope33:
+ 2445               		.stabd	78,0,0
+ 2449               	.global	setSn_DIPR
+ 2451               	setSn_DIPR:
+ 2452               		.stabd	46,0,0
+ 810:../freeRTOS750/lib_iinchip/w5100.c **** void setSn_DIPR(SOCKET s, uint8_t * addr)
+ 811:../freeRTOS750/lib_iinchip/w5100.c **** {
+ 2454               	.LM287:
+ 2455               	.LFBB34:
+ 2456 08fc 0F93      		push r16
+ 2457 08fe 1F93      		push r17
+ 2458 0900 CF93      		push r28
+ 2459 0902 DF93      		push r29
+ 2460               	/* prologue: function */
+ 2461               	/* frame size = 0 */
+ 2462               	/* stack size = 4 */
+ 2463               	.L__stack_usage = 4
+ 2464 0904 8B01      		movw r16,r22
+ 812:../freeRTOS750/lib_iinchip/w5100.c **** 	IINCHIP_write((Sn_DIPR0(s) + 0),addr[0]);
+ 2466               	.LM288:
+ 2467 0906 C82F      		mov r28,r24
+ 2468 0908 D0E0      		ldi r29,0
+ 2469 090a 2496      		adiw r28,4
+ 2470 090c DC2F      		mov r29,r28
+ 2471 090e CC27      		clr r28
+ 2472 0910 FB01      		movw r30,r22
+ 2473 0912 6081      		ld r22,Z
+ 2474 0914 CE01      		movw r24,r28
+ 2475 0916 0C96      		adiw r24,12
+ 2476 0918 0E94 0000 		call IINCHIP_write
+ 813:../freeRTOS750/lib_iinchip/w5100.c **** 	IINCHIP_write((Sn_DIPR0(s) + 1),addr[1]);
+ 2478               	.LM289:
+ 2479 091c F801      		movw r30,r16
+ 2480 091e 6181      		ldd r22,Z+1
+ 2481 0920 CE01      		movw r24,r28
+ 2482 0922 0D96      		adiw r24,13
+ 2483 0924 0E94 0000 		call IINCHIP_write
+ 814:../freeRTOS750/lib_iinchip/w5100.c **** 	IINCHIP_write((Sn_DIPR0(s) + 2),addr[2]);
+ 2485               	.LM290:
+ 2486 0928 F801      		movw r30,r16
+ 2487 092a 6281      		ldd r22,Z+2
+ 2488 092c CE01      		movw r24,r28
+ 2489 092e 0E96      		adiw r24,14
+ 2490 0930 0E94 0000 		call IINCHIP_write
+ 815:../freeRTOS750/lib_iinchip/w5100.c **** 	IINCHIP_write((Sn_DIPR0(s) + 3),addr[3]);
+ 2492               	.LM291:
+ 2493 0934 F801      		movw r30,r16
+ 2494 0936 6381      		ldd r22,Z+3
+ 2495 0938 CE01      		movw r24,r28
+ 2496 093a 0F96      		adiw r24,15
+ 2497               	/* epilogue start */
+ 816:../freeRTOS750/lib_iinchip/w5100.c **** }
+ 2499               	.LM292:
+ 2500 093c DF91      		pop r29
+ 2501 093e CF91      		pop r28
+ 2502 0940 1F91      		pop r17
+ 2503 0942 0F91      		pop r16
+ 815:../freeRTOS750/lib_iinchip/w5100.c **** 	IINCHIP_write((Sn_DIPR0(s) + 3),addr[3]);
+ 2505               	.LM293:
+ 2506 0944 0C94 0000 		jmp IINCHIP_write
+ 2508               	.Lscope34:
+ 2510               		.stabd	78,0,0
+ 2514               	.global	getSn_DPORT
+ 2516               	getSn_DPORT:
+ 2517               		.stabd	46,0,0
+ 817:../freeRTOS750/lib_iinchip/w5100.c **** void getSn_DPORT(SOCKET s, uint8_t * addr)
+ 818:../freeRTOS750/lib_iinchip/w5100.c **** {
+ 2519               	.LM294:
+ 2520               	.LFBB35:
+ 2521 0948 0F93      		push r16
+ 2522 094a 1F93      		push r17
+ 2523 094c CF93      		push r28
+ 2524 094e DF93      		push r29
+ 2525               	/* prologue: function */
+ 2526               	/* frame size = 0 */
+ 2527               	/* stack size = 4 */
+ 2528               	.L__stack_usage = 4
+ 2529 0950 EB01      		movw r28,r22
+ 819:../freeRTOS750/lib_iinchip/w5100.c **** 	addr[0] = IINCHIP_read(Sn_DPORT0(s));
+ 2531               	.LM295:
+ 2532 0952 90E0      		ldi r25,0
+ 2533 0954 0496      		adiw r24,4
+ 2534 0956 182F      		mov r17,r24
+ 2535 0958 0027      		clr r16
+ 2536 095a C801      		movw r24,r16
+ 2537 095c 4096      		adiw r24,16
+ 2538 095e 0E94 0000 		call IINCHIP_read
+ 2539 0962 8883      		st Y,r24
+ 820:../freeRTOS750/lib_iinchip/w5100.c **** 	addr[1] = IINCHIP_read(Sn_DPORT1(s));
+ 2541               	.LM296:
+ 2542 0964 C801      		movw r24,r16
+ 2543 0966 4196      		adiw r24,17
+ 2544 0968 0E94 0000 		call IINCHIP_read
+ 2545 096c 8983      		std Y+1,r24
+ 2546               	/* epilogue start */
+ 821:../freeRTOS750/lib_iinchip/w5100.c **** }
+ 2548               	.LM297:
+ 2549 096e DF91      		pop r29
+ 2550 0970 CF91      		pop r28
+ 2551 0972 1F91      		pop r17
+ 2552 0974 0F91      		pop r16
+ 2553 0976 0895      		ret
+ 2555               	.Lscope35:
+ 2557               		.stabd	78,0,0
+ 2561               	.global	setSn_DPORT
+ 2563               	setSn_DPORT:
+ 2564               		.stabd	46,0,0
+ 822:../freeRTOS750/lib_iinchip/w5100.c **** void setSn_DPORT(SOCKET s, uint8_t * addr)
+ 823:../freeRTOS750/lib_iinchip/w5100.c **** {
+ 2566               	.LM298:
+ 2567               	.LFBB36:
+ 2568 0978 0F93      		push r16
+ 2569 097a 1F93      		push r17
+ 2570 097c CF93      		push r28
+ 2571 097e DF93      		push r29
+ 2572               	/* prologue: function */
+ 2573               	/* frame size = 0 */
+ 2574               	/* stack size = 4 */
+ 2575               	.L__stack_usage = 4
+ 2576 0980 EB01      		movw r28,r22
+ 824:../freeRTOS750/lib_iinchip/w5100.c **** 	IINCHIP_write(Sn_DPORT0(s), addr[0]);
+ 2578               	.LM299:
+ 2579 0982 90E0      		ldi r25,0
+ 2580 0984 0496      		adiw r24,4
+ 2581 0986 182F      		mov r17,r24
+ 2582 0988 0027      		clr r16
+ 2583 098a 6881      		ld r22,Y
+ 2584 098c C801      		movw r24,r16
+ 2585 098e 4096      		adiw r24,16
+ 2586 0990 0E94 0000 		call IINCHIP_write
+ 825:../freeRTOS750/lib_iinchip/w5100.c **** 	IINCHIP_write(Sn_DPORT1(s), addr[1]);
+ 2588               	.LM300:
+ 2589 0994 6981      		ldd r22,Y+1
+ 2590 0996 C801      		movw r24,r16
+ 2591 0998 4196      		adiw r24,17
+ 2592               	/* epilogue start */
+ 826:../freeRTOS750/lib_iinchip/w5100.c **** }
+ 2594               	.LM301:
+ 2595 099a DF91      		pop r29
+ 2596 099c CF91      		pop r28
+ 2597 099e 1F91      		pop r17
+ 2598 09a0 0F91      		pop r16
+ 825:../freeRTOS750/lib_iinchip/w5100.c **** 	IINCHIP_write(Sn_DPORT1(s), addr[1]);
+ 2600               	.LM302:
+ 2601 09a2 0C94 0000 		jmp IINCHIP_write
+ 2603               	.Lscope36:
+ 2605               		.stabd	78,0,0
+ 2608               	.global	setSn_MSS
+ 2610               	setSn_MSS:
+ 2611               		.stabd	46,0,0
+ 827:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 828:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 829:../freeRTOS750/lib_iinchip/w5100.c **** /**
+ 830:../freeRTOS750/lib_iinchip/w5100.c **** @brief	This sets the maximum segment size of TCP in Active Mode), while in Passive Mode this is set
+ 831:../freeRTOS750/lib_iinchip/w5100.c **** */
+ 832:../freeRTOS750/lib_iinchip/w5100.c **** void setSn_MSS(SOCKET s, uint16_t mssr)
+ 833:../freeRTOS750/lib_iinchip/w5100.c **** {
+ 2613               	.LM303:
+ 2614               	.LFBB37:
+ 2615 09a6 1F93      		push r17
+ 2616 09a8 CF93      		push r28
+ 2617 09aa DF93      		push r29
+ 2618               	/* prologue: function */
+ 2619               	/* frame size = 0 */
+ 2620               	/* stack size = 3 */
+ 2621               	.L__stack_usage = 3
+ 2622 09ac 162F      		mov r17,r22
+ 2623 09ae 672F      		mov r22,r23
+ 834:../freeRTOS750/lib_iinchip/w5100.c **** 	IINCHIP_write(Sn_MSSR0(s),(uint8_t)((mssr & 0xff00) >> 8));
+ 2625               	.LM304:
+ 2626 09b0 90E0      		ldi r25,0
+ 2627 09b2 0496      		adiw r24,4
+ 2628 09b4 D82F      		mov r29,r24
+ 2629 09b6 CC27      		clr r28
+ 2630 09b8 CE01      		movw r24,r28
+ 2631 09ba 4296      		adiw r24,18
+ 2632 09bc 0E94 0000 		call IINCHIP_write
+ 835:../freeRTOS750/lib_iinchip/w5100.c **** 	IINCHIP_write(Sn_MSSR1(s),(uint8_t)(mssr & 0x00ff));
+ 2634               	.LM305:
+ 2635 09c0 612F      		mov r22,r17
+ 2636 09c2 CE01      		movw r24,r28
+ 2637 09c4 4396      		adiw r24,19
+ 2638               	/* epilogue start */
+ 836:../freeRTOS750/lib_iinchip/w5100.c **** }
+ 2640               	.LM306:
+ 2641 09c6 DF91      		pop r29
+ 2642 09c8 CF91      		pop r28
+ 2643 09ca 1F91      		pop r17
+ 835:../freeRTOS750/lib_iinchip/w5100.c **** 	IINCHIP_write(Sn_MSSR1(s),(uint8_t)(mssr & 0x00ff));
+ 2645               	.LM307:
+ 2646 09cc 0C94 0000 		jmp IINCHIP_write
+ 2648               	.Lscope37:
+ 2650               		.stabd	78,0,0
+ 2654               	.global	setSn_TTL
+ 2656               	setSn_TTL:
+ 2657               		.stabd	46,0,0
+ 837:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 838:../freeRTOS750/lib_iinchip/w5100.c **** void setSn_TTL(SOCKET s, uint8_t ttl)
+ 839:../freeRTOS750/lib_iinchip/w5100.c **** {
+ 2659               	.LM308:
+ 2660               	.LFBB38:
+ 2661               	/* prologue: function */
+ 2662               	/* frame size = 0 */
+ 2663               	/* stack size = 0 */
+ 2664               	.L__stack_usage = 0
+ 840:../freeRTOS750/lib_iinchip/w5100.c ****    IINCHIP_write(Sn_TTL(s), ttl);
+ 2666               	.LM309:
+ 2667 09d0 382F      		mov r19,r24
+ 2668 09d2 20E0      		ldi r18,0
+ 2669 09d4 C901      		movw r24,r18
+ 2670 09d6 8A5E      		subi r24,-22
+ 2671 09d8 9B4F      		sbci r25,-5
+ 2672 09da 0C94 0000 		jmp IINCHIP_write
+ 2674               	.Lscope38:
+ 2676               		.stabd	78,0,0
+ 2680               	.global	setSn_PROTO
+ 2682               	setSn_PROTO:
+ 2683               		.stabd	46,0,0
+ 841:../freeRTOS750/lib_iinchip/w5100.c **** }
+ 842:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 843:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 844:../freeRTOS750/lib_iinchip/w5100.c **** /**
+ 845:../freeRTOS750/lib_iinchip/w5100.c **** @brief	These below function is used to setup the Protocol Field of IP Header when
+ 846:../freeRTOS750/lib_iinchip/w5100.c **** 		executing the IP Layer RAW mode.
+ 847:../freeRTOS750/lib_iinchip/w5100.c **** */
+ 848:../freeRTOS750/lib_iinchip/w5100.c **** void setSn_PROTO(SOCKET s, uint8_t proto)
+ 849:../freeRTOS750/lib_iinchip/w5100.c **** {
+ 2685               	.LM310:
+ 2686               	.LFBB39:
+ 2687               	/* prologue: function */
+ 2688               	/* frame size = 0 */
+ 2689               	/* stack size = 0 */
+ 2690               	.L__stack_usage = 0
+ 850:../freeRTOS750/lib_iinchip/w5100.c **** 	IINCHIP_write(Sn_PROTO(s),proto);
+ 2692               	.LM311:
+ 2693 09de 382F      		mov r19,r24
+ 2694 09e0 20E0      		ldi r18,0
+ 2695 09e2 C901      		movw r24,r18
+ 2696 09e4 8C5E      		subi r24,-20
+ 2697 09e6 9B4F      		sbci r25,-5
+ 2698 09e8 0C94 0000 		jmp IINCHIP_write
+ 2700               	.Lscope39:
+ 2702               		.stabd	78,0,0
+ 2705               	.global	getSn_IR
+ 2707               	getSn_IR:
+ 2708               		.stabd	46,0,0
+ 851:../freeRTOS750/lib_iinchip/w5100.c **** }
+ 852:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 853:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 854:../freeRTOS750/lib_iinchip/w5100.c **** /**
+ 855:../freeRTOS750/lib_iinchip/w5100.c **** @brief	get socket interrupt status
+ 856:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 857:../freeRTOS750/lib_iinchip/w5100.c **** These below functions are used to read the Interrupt & Socket Status register
+ 858:../freeRTOS750/lib_iinchip/w5100.c **** */
+ 859:../freeRTOS750/lib_iinchip/w5100.c **** uint8_t getSn_IR(SOCKET s)
+ 860:../freeRTOS750/lib_iinchip/w5100.c **** {
+ 2710               	.LM312:
+ 2711               	.LFBB40:
+ 2712               	/* prologue: function */
+ 2713               	/* frame size = 0 */
+ 2714               	/* stack size = 0 */
+ 2715               	.L__stack_usage = 0
+ 861:../freeRTOS750/lib_iinchip/w5100.c ****    return IINCHIP_read(Sn_IR(s));
+ 2717               	.LM313:
+ 2718 09ec 382F      		mov r19,r24
+ 2719 09ee 20E0      		ldi r18,0
+ 2720 09f0 C901      		movw r24,r18
+ 2721 09f2 8E5F      		subi r24,-2
+ 2722 09f4 9B4F      		sbci r25,-5
+ 2723 09f6 0C94 0000 		jmp IINCHIP_read
+ 2725               	.Lscope40:
+ 2727               		.stabd	78,0,0
+ 2730               	.global	getSn_SR
+ 2732               	getSn_SR:
+ 2733               		.stabd	46,0,0
+ 862:../freeRTOS750/lib_iinchip/w5100.c **** }
+ 863:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 864:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 865:../freeRTOS750/lib_iinchip/w5100.c **** /**
+ 866:../freeRTOS750/lib_iinchip/w5100.c **** @brief	 get socket status
+ 867:../freeRTOS750/lib_iinchip/w5100.c **** */
+ 868:../freeRTOS750/lib_iinchip/w5100.c **** uint8_t getSn_SR(SOCKET s)
+ 869:../freeRTOS750/lib_iinchip/w5100.c **** {
+ 2735               	.LM314:
+ 2736               	.LFBB41:
+ 2737               	/* prologue: function */
+ 2738               	/* frame size = 0 */
+ 2739               	/* stack size = 0 */
+ 2740               	.L__stack_usage = 0
+ 870:../freeRTOS750/lib_iinchip/w5100.c ****    return IINCHIP_read(Sn_SR(s));
+ 2742               	.LM315:
+ 2743 09fa 382F      		mov r19,r24
+ 2744 09fc 20E0      		ldi r18,0
+ 2745 09fe C901      		movw r24,r18
+ 2746 0a00 8D5F      		subi r24,-3
+ 2747 0a02 9B4F      		sbci r25,-5
+ 2748 0a04 0C94 0000 		jmp IINCHIP_read
+ 2750               	.Lscope41:
+ 2752               		.stabd	78,0,0
+ 2755               	.global	getSn_TX_FSR
+ 2757               	getSn_TX_FSR:
+ 2758               		.stabd	46,0,0
+ 871:../freeRTOS750/lib_iinchip/w5100.c **** }
+ 872:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 873:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 874:../freeRTOS750/lib_iinchip/w5100.c **** /**
+ 875:../freeRTOS750/lib_iinchip/w5100.c **** @brief	get socket TX transmit free buffer size
+ 876:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 877:../freeRTOS750/lib_iinchip/w5100.c **** This gives free buffer size of transmit buffer. This is the data size that user can transmit.
+ 878:../freeRTOS750/lib_iinchip/w5100.c **** User should check this value first and control the size of transmitted data.
+ 879:../freeRTOS750/lib_iinchip/w5100.c **** */
+ 880:../freeRTOS750/lib_iinchip/w5100.c **** uint16_t getSn_TX_FSR(SOCKET s)
+ 881:../freeRTOS750/lib_iinchip/w5100.c **** {
+ 2760               	.LM316:
+ 2761               	.LFBB42:
+ 2762 0a08 8F92      		push r8
+ 2763 0a0a 9F92      		push r9
+ 2764 0a0c AF92      		push r10
+ 2765 0a0e BF92      		push r11
+ 2766 0a10 CF92      		push r12
+ 2767 0a12 DF92      		push r13
+ 2768 0a14 EF92      		push r14
+ 2769 0a16 FF92      		push r15
+ 2770 0a18 0F93      		push r16
+ 2771 0a1a 1F93      		push r17
+ 2772 0a1c CF93      		push r28
+ 2773 0a1e DF93      		push r29
+ 2774               	/* prologue: function */
+ 2775               	/* frame size = 0 */
+ 2776               	/* stack size = 12 */
+ 2777               	.L__stack_usage = 12
+ 882:../freeRTOS750/lib_iinchip/w5100.c **** 	uint16_t val  = 0;
+ 883:../freeRTOS750/lib_iinchip/w5100.c **** 	uint16_t val1 = 0;
+ 884:../freeRTOS750/lib_iinchip/w5100.c **** 	do
+ 885:../freeRTOS750/lib_iinchip/w5100.c **** 	{
+ 886:../freeRTOS750/lib_iinchip/w5100.c **** 		val1 = IINCHIP_read(Sn_TX_FSR0(s));
+ 2779               	.LM317:
+ 2780 0a20 90E0      		ldi r25,0
+ 2781 0a22 0496      		adiw r24,4
+ 2782 0a24 D82E      		mov r13,r24
+ 2783 0a26 CC24      		clr r12
+ 2784 0a28 8601      		movw r16,r12
+ 2785 0a2a 005E      		subi r16,-32
+ 2786 0a2c 1F4F      		sbci r17,-1
+ 887:../freeRTOS750/lib_iinchip/w5100.c **** 		val1 = ((val1 & 0x00ff) << 8) + IINCHIP_read(Sn_TX_FSR1(s));
+ 2788               	.LM318:
+ 2789 0a2e 81E2      		ldi r24,33
+ 2790 0a30 C80E      		add r12,r24
+ 2791 0a32 D11C      		adc r13,__zero_reg__
+ 882:../freeRTOS750/lib_iinchip/w5100.c **** 	uint16_t val  = 0;
+ 2793               	.LM319:
+ 2794 0a34 C0E0      		ldi r28,0
+ 2795 0a36 D0E0      		ldi r29,0
+ 2796               	.L133:
+ 886:../freeRTOS750/lib_iinchip/w5100.c **** 		val1 = IINCHIP_read(Sn_TX_FSR0(s));
+ 2798               	.LM320:
+ 2799 0a38 C801      		movw r24,r16
+ 2800 0a3a 0E94 0000 		call IINCHIP_read
+ 2802               	.LM321:
+ 2803 0a3e F82E      		mov r15,r24
+ 2804 0a40 E12C      		mov r14,__zero_reg__
+ 2805 0a42 C601      		movw r24,r12
+ 2806 0a44 0E94 0000 		call IINCHIP_read
+ 2807 0a48 4701      		movw r8,r14
+ 2808 0a4a 880E      		add r8,r24
+ 2809 0a4c 911C      		adc r9,__zero_reg__
+ 888:../freeRTOS750/lib_iinchip/w5100.c **** 		if (val1 != 0)
+ 2811               	.LM322:
+ 2812 0a4e 8114      		cp r8,__zero_reg__
+ 2813 0a50 9104      		cpc r9,__zero_reg__
+ 2814 0a52 01F0      		breq .L132
+ 889:../freeRTOS750/lib_iinchip/w5100.c **** 		{
+ 890:../freeRTOS750/lib_iinchip/w5100.c **** 			val = IINCHIP_read(Sn_TX_FSR0(s));
+ 2816               	.LM323:
+ 2817 0a54 C801      		movw r24,r16
+ 2818 0a56 0E94 0000 		call IINCHIP_read
+ 891:../freeRTOS750/lib_iinchip/w5100.c **** 			val = ((val & 0x00ff) << 8) + IINCHIP_read(Sn_TX_FSR1(s));
+ 2820               	.LM324:
+ 2821 0a5a B82E      		mov r11,r24
+ 2822 0a5c A12C      		mov r10,__zero_reg__
+ 2823 0a5e C601      		movw r24,r12
+ 2824 0a60 0E94 0000 		call IINCHIP_read
+ 2825 0a64 E501      		movw r28,r10
+ 2826 0a66 C80F      		add r28,r24
+ 2827 0a68 D11D      		adc r29,__zero_reg__
+ 2828               	.L132:
+ 892:../freeRTOS750/lib_iinchip/w5100.c **** 		}
+ 893:../freeRTOS750/lib_iinchip/w5100.c **** 	} while (val != val1);
+ 2830               	.LM325:
+ 2831 0a6a C815      		cp r28,r8
+ 2832 0a6c D905      		cpc r29,r9
+ 2833 0a6e 01F4      		brne .L133
+ 894:../freeRTOS750/lib_iinchip/w5100.c **** 	return val;
+ 895:../freeRTOS750/lib_iinchip/w5100.c **** }
+ 2835               	.LM326:
+ 2836 0a70 CE01      		movw r24,r28
+ 2837               	/* epilogue start */
+ 2838 0a72 DF91      		pop r29
+ 2839 0a74 CF91      		pop r28
+ 2840 0a76 1F91      		pop r17
+ 2841 0a78 0F91      		pop r16
+ 2842 0a7a FF90      		pop r15
+ 2843 0a7c EF90      		pop r14
+ 2844 0a7e DF90      		pop r13
+ 2845 0a80 CF90      		pop r12
+ 2846 0a82 BF90      		pop r11
+ 2847 0a84 AF90      		pop r10
+ 2848 0a86 9F90      		pop r9
+ 2849 0a88 8F90      		pop r8
+ 2850 0a8a 0895      		ret
+ 2852               	.Lscope42:
+ 2854               		.stabd	78,0,0
+ 2857               	.global	getSn_RX_RSR
+ 2859               	getSn_RX_RSR:
+ 2860               		.stabd	46,0,0
+ 896:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 897:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 898:../freeRTOS750/lib_iinchip/w5100.c **** /**
+ 899:../freeRTOS750/lib_iinchip/w5100.c **** @brief	 get socket RX received buffer size
+ 900:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 901:../freeRTOS750/lib_iinchip/w5100.c **** This gives size of received data in receive buffer.
+ 902:../freeRTOS750/lib_iinchip/w5100.c **** */
+ 903:../freeRTOS750/lib_iinchip/w5100.c **** uint16_t getSn_RX_RSR(SOCKET s)
+ 904:../freeRTOS750/lib_iinchip/w5100.c **** {
+ 2862               	.LM327:
+ 2863               	.LFBB43:
+ 2864 0a8c 8F92      		push r8
+ 2865 0a8e 9F92      		push r9
+ 2866 0a90 AF92      		push r10
+ 2867 0a92 BF92      		push r11
+ 2868 0a94 CF92      		push r12
+ 2869 0a96 DF92      		push r13
+ 2870 0a98 EF92      		push r14
+ 2871 0a9a FF92      		push r15
+ 2872 0a9c 0F93      		push r16
+ 2873 0a9e 1F93      		push r17
+ 2874 0aa0 CF93      		push r28
+ 2875 0aa2 DF93      		push r29
+ 2876               	/* prologue: function */
+ 2877               	/* frame size = 0 */
+ 2878               	/* stack size = 12 */
+ 2879               	.L__stack_usage = 12
+ 905:../freeRTOS750/lib_iinchip/w5100.c **** 	uint16_t val  = 0;
+ 906:../freeRTOS750/lib_iinchip/w5100.c **** 	uint16_t val1 = 0;
+ 907:../freeRTOS750/lib_iinchip/w5100.c **** 	do
+ 908:../freeRTOS750/lib_iinchip/w5100.c **** 	{
+ 909:../freeRTOS750/lib_iinchip/w5100.c **** 		val1 = IINCHIP_read(Sn_RX_RSR0(s));
+ 2881               	.LM328:
+ 2882 0aa4 90E0      		ldi r25,0
+ 2883 0aa6 0496      		adiw r24,4
+ 2884 0aa8 D82E      		mov r13,r24
+ 2885 0aaa CC24      		clr r12
+ 2886 0aac 8601      		movw r16,r12
+ 2887 0aae 0A5D      		subi r16,-38
+ 2888 0ab0 1F4F      		sbci r17,-1
+ 910:../freeRTOS750/lib_iinchip/w5100.c **** 		val1 = ((val1 & 0x00ff) << 8) + IINCHIP_read(Sn_RX_RSR1(s));
+ 2890               	.LM329:
+ 2891 0ab2 87E2      		ldi r24,39
+ 2892 0ab4 C80E      		add r12,r24
+ 2893 0ab6 D11C      		adc r13,__zero_reg__
+ 905:../freeRTOS750/lib_iinchip/w5100.c **** 	uint16_t val  = 0;
+ 2895               	.LM330:
+ 2896 0ab8 C0E0      		ldi r28,0
+ 2897 0aba D0E0      		ldi r29,0
+ 2898               	.L140:
+ 909:../freeRTOS750/lib_iinchip/w5100.c **** 		val1 = IINCHIP_read(Sn_RX_RSR0(s));
+ 2900               	.LM331:
+ 2901 0abc C801      		movw r24,r16
+ 2902 0abe 0E94 0000 		call IINCHIP_read
+ 2904               	.LM332:
+ 2905 0ac2 F82E      		mov r15,r24
+ 2906 0ac4 E12C      		mov r14,__zero_reg__
+ 2907 0ac6 C601      		movw r24,r12
+ 2908 0ac8 0E94 0000 		call IINCHIP_read
+ 2909 0acc 4701      		movw r8,r14
+ 2910 0ace 880E      		add r8,r24
+ 2911 0ad0 911C      		adc r9,__zero_reg__
+ 911:../freeRTOS750/lib_iinchip/w5100.c **** 		if(val1 != 0)
+ 2913               	.LM333:
+ 2914 0ad2 8114      		cp r8,__zero_reg__
+ 2915 0ad4 9104      		cpc r9,__zero_reg__
+ 2916 0ad6 01F0      		breq .L139
+ 912:../freeRTOS750/lib_iinchip/w5100.c **** 		{
+ 913:../freeRTOS750/lib_iinchip/w5100.c **** 			val = IINCHIP_read(Sn_RX_RSR0(s));
+ 2918               	.LM334:
+ 2919 0ad8 C801      		movw r24,r16
+ 2920 0ada 0E94 0000 		call IINCHIP_read
+ 914:../freeRTOS750/lib_iinchip/w5100.c **** 			val = ((val & 0x00ff) << 8) + IINCHIP_read(Sn_RX_RSR1(s));
+ 2922               	.LM335:
+ 2923 0ade B82E      		mov r11,r24
+ 2924 0ae0 A12C      		mov r10,__zero_reg__
+ 2925 0ae2 C601      		movw r24,r12
+ 2926 0ae4 0E94 0000 		call IINCHIP_read
+ 2927 0ae8 E501      		movw r28,r10
+ 2928 0aea C80F      		add r28,r24
+ 2929 0aec D11D      		adc r29,__zero_reg__
+ 2930               	.L139:
+ 915:../freeRTOS750/lib_iinchip/w5100.c **** 		}
+ 916:../freeRTOS750/lib_iinchip/w5100.c **** 	} while (val != val1);
+ 2932               	.LM336:
+ 2933 0aee C815      		cp r28,r8
+ 2934 0af0 D905      		cpc r29,r9
+ 2935 0af2 01F4      		brne .L140
+ 917:../freeRTOS750/lib_iinchip/w5100.c **** 	return val;
+ 918:../freeRTOS750/lib_iinchip/w5100.c **** }
+ 2937               	.LM337:
+ 2938 0af4 CE01      		movw r24,r28
+ 2939               	/* epilogue start */
+ 2940 0af6 DF91      		pop r29
+ 2941 0af8 CF91      		pop r28
+ 2942 0afa 1F91      		pop r17
+ 2943 0afc 0F91      		pop r16
+ 2944 0afe FF90      		pop r15
+ 2945 0b00 EF90      		pop r14
+ 2946 0b02 DF90      		pop r13
+ 2947 0b04 CF90      		pop r12
+ 2948 0b06 BF90      		pop r11
+ 2949 0b08 AF90      		pop r10
+ 2950 0b0a 9F90      		pop r9
+ 2951 0b0c 8F90      		pop r8
+ 2952 0b0e 0895      		ret
+ 2954               	.Lscope43:
+ 2956               		.stabd	78,0,0
+ 2962               	.global	write_data
+ 2964               	write_data:
+ 2965               		.stabd	46,0,0
+ 919:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 920:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 921:../freeRTOS750/lib_iinchip/w5100.c **** /**
+ 922:../freeRTOS750/lib_iinchip/w5100.c **** @brief	 This function is being called by TCP send() and UDP & IP_RAW sendto() function.
+ 923:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 924:../freeRTOS750/lib_iinchip/w5100.c **** This function reads the Tx write pointer register and after copy the data in buffer update the Tx w
+ 925:../freeRTOS750/lib_iinchip/w5100.c **** register. User should read upper byte first and lower byte later to get proper value.
+ 926:../freeRTOS750/lib_iinchip/w5100.c **** */
+ 927:../freeRTOS750/lib_iinchip/w5100.c **** void send_data_processing(SOCKET s, uint8_t *data, uint16_t len)
+ 928:../freeRTOS750/lib_iinchip/w5100.c **** {
+ 929:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 930:../freeRTOS750/lib_iinchip/w5100.c **** 	uint16_t ptr;
+ 931:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 932:../freeRTOS750/lib_iinchip/w5100.c **** 	// As long as the Tx read pointer and the Tx write pointer are not equal, W5100 is busy.
+ 933:../freeRTOS750/lib_iinchip/w5100.c **** /*	while( !( (((uint16_t)((IINCHIP_read(Sn_TX_RD0(s))) & 0x00ff) << 8) + IINCHIP_read(Sn_TX_RD1(s))
+ 934:../freeRTOS750/lib_iinchip/w5100.c **** 		_delay_us(40); // So, wait! -> Phillip 3.4.2012 // */
+ 935:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 936:../freeRTOS750/lib_iinchip/w5100.c **** 	ptr = IINCHIP_read(Sn_TX_WR0(s)); // xxx Wrap this up in above test. Save a few read cycles.
+ 937:../freeRTOS750/lib_iinchip/w5100.c **** 	ptr = ((ptr & 0x00ff) << 8) + IINCHIP_read(Sn_TX_WR1(s));
+ 938:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 939:../freeRTOS750/lib_iinchip/w5100.c **** #ifdef __DEF_IINCHIP_DBG__
+ 940:../freeRTOS750/lib_iinchip/w5100.c **** 	xSerialPrintf_P(PSTR("ISR_TX: tx_ptr: %.4x tx_len: %.4x\r\n"), ptr, len);
+ 941:../freeRTOS750/lib_iinchip/w5100.c **** #endif
+ 942:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 943:../freeRTOS750/lib_iinchip/w5100.c **** 	write_data(s, data, (uint8_t *)(ptr), len);
+ 944:../freeRTOS750/lib_iinchip/w5100.c **** 	ptr += len;
+ 945:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 946:../freeRTOS750/lib_iinchip/w5100.c **** 	IINCHIP_write(Sn_TX_WR0(s), (uint8_t)((ptr & 0xff00) >> 8));
+ 947:../freeRTOS750/lib_iinchip/w5100.c **** 	IINCHIP_write(Sn_TX_WR1(s), (uint8_t)(ptr & 0x00ff));
+ 948:../freeRTOS750/lib_iinchip/w5100.c **** }
+ 949:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 950:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 951:../freeRTOS750/lib_iinchip/w5100.c **** /**
+ 952:../freeRTOS750/lib_iinchip/w5100.c **** @brief	This function is being called by TCP recv().
+ 953:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 954:../freeRTOS750/lib_iinchip/w5100.c **** This function read the Rx read pointer register
+ 955:../freeRTOS750/lib_iinchip/w5100.c **** and after copy the data from receive buffer update the Rx write pointer register.
+ 956:../freeRTOS750/lib_iinchip/w5100.c **** User should read upper byte first and lower byte later to get proper value.
+ 957:../freeRTOS750/lib_iinchip/w5100.c **** */
+ 958:../freeRTOS750/lib_iinchip/w5100.c **** void recv_data_processing(SOCKET s, uint8_t *data, uint16_t len)
+ 959:../freeRTOS750/lib_iinchip/w5100.c **** {
+ 960:../freeRTOS750/lib_iinchip/w5100.c **** 	uint16_t ptr;
+ 961:../freeRTOS750/lib_iinchip/w5100.c **** 	ptr = IINCHIP_read(Sn_RX_RD0(s));
+ 962:../freeRTOS750/lib_iinchip/w5100.c **** 	ptr = ((ptr & 0x00ff) << 8) + IINCHIP_read(Sn_RX_RD1(s));
+ 963:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 964:../freeRTOS750/lib_iinchip/w5100.c **** 	#ifdef __DEF_IINCHIP_DBG__
+ 965:../freeRTOS750/lib_iinchip/w5100.c **** 	xSerialPrintf_P(PSTR("ISR_RX: rd_ptr: %.4x rd_len: %.4x\r\n"), ptr, len);
+ 966:../freeRTOS750/lib_iinchip/w5100.c **** #endif
+ 967:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 968:../freeRTOS750/lib_iinchip/w5100.c **** 	read_data(s, (uint8_t *)ptr, data, len); // read data
+ 969:../freeRTOS750/lib_iinchip/w5100.c **** 	ptr += len;
+ 970:../freeRTOS750/lib_iinchip/w5100.c **** 	IINCHIP_write(Sn_RX_RD0(s), (uint8_t)((ptr & 0xff00) >> 8));
+ 971:../freeRTOS750/lib_iinchip/w5100.c **** 	IINCHIP_write(Sn_RX_RD1(s), (uint8_t)(ptr & 0x00ff));
+ 972:../freeRTOS750/lib_iinchip/w5100.c **** }
+ 973:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 974:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 975:../freeRTOS750/lib_iinchip/w5100.c **** /**
+ 976:../freeRTOS750/lib_iinchip/w5100.c **** @brief	for copy the data from application buffer to Transmit buffer of the chip.
+ 977:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 978:../freeRTOS750/lib_iinchip/w5100.c **** This function is being used for copy the data from application buffer to Transmit
+ 979:../freeRTOS750/lib_iinchip/w5100.c **** buffer of the chip. It calculates the actual physical address where one has to write
+ 980:../freeRTOS750/lib_iinchip/w5100.c **** the data in transmit buffer. Here also takes care of the condition that it exceeds
+ 981:../freeRTOS750/lib_iinchip/w5100.c **** the Tx memory upper-bound of socket.
+ 982:../freeRTOS750/lib_iinchip/w5100.c **** */
+ 983:../freeRTOS750/lib_iinchip/w5100.c **** void write_data(SOCKET s, volatile uint8_t * src, volatile uint8_t * dst, uint16_t len)
+ 984:../freeRTOS750/lib_iinchip/w5100.c **** {
+ 2967               	.LM338:
+ 2968               	.LFBB44:
+ 2969 0b10 CF92      		push r12
+ 2970 0b12 DF92      		push r13
+ 2971 0b14 EF92      		push r14
+ 2972 0b16 FF92      		push r15
+ 2973 0b18 0F93      		push r16
+ 2974 0b1a 1F93      		push r17
+ 2975 0b1c CF93      		push r28
+ 2976 0b1e DF93      		push r29
+ 2977               	/* prologue: function */
+ 2978               	/* frame size = 0 */
+ 2979               	/* stack size = 8 */
+ 2980               	.L__stack_usage = 8
+ 2981 0b20 EB01      		movw r28,r22
+ 2982 0b22 8901      		movw r16,r18
+ 2983               	.LBB47:
+ 2984               	.LBB48:
+ 103:../freeRTOS750/lib_iinchip/w5100.c ****    return SMASK[s];
+ 2986               	.LM339:
+ 2987 0b24 A82F      		mov r26,r24
+ 2988 0b26 B0E0      		ldi r27,0
+ 2989 0b28 AA0F      		lsl r26
+ 2990 0b2a BB1F      		rol r27
+ 2991 0b2c FD01      		movw r30,r26
+ 2992 0b2e E050      		subi r30,lo8(-(SMASK))
+ 2993 0b30 F040      		sbci r31,hi8(-(SMASK))
+ 2994               	.LBE48:
+ 2995               	.LBE47:
+ 985:../freeRTOS750/lib_iinchip/w5100.c **** 	uint16_t size;
+ 986:../freeRTOS750/lib_iinchip/w5100.c **** 	uint16_t dst_mask;
+ 987:../freeRTOS750/lib_iinchip/w5100.c **** 	uint8_t * dst_ptr;
+ 988:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 989:../freeRTOS750/lib_iinchip/w5100.c **** 	dst_mask = (uint16_t)dst & getIINCHIP_TxMASK(s);
+ 2997               	.LM340:
+ 2998 0b32 8081      		ld r24,Z
+ 2999 0b34 9181      		ldd r25,Z+1
+ 3000 0b36 4823      		and r20,r24
+ 3001 0b38 5923      		and r21,r25
+ 3002               	.LBB49:
+ 3003               	.LBB50:
+ 111:../freeRTOS750/lib_iinchip/w5100.c ****    return SBUFBASEADDRESS[s];
+ 3005               	.LM341:
+ 3006 0b3a 90E0      		ldi r25,lo8(SBUFBASEADDRESS)
+ 3007 0b3c E92E      		mov r14,r25
+ 3008 0b3e 90E0      		ldi r25,hi8(SBUFBASEADDRESS)
+ 3009 0b40 F92E      		mov r15,r25
+ 3010 0b42 EA0E      		add r14,r26
+ 3011 0b44 FB1E      		adc r15,r27
+ 3012               	.LBE50:
+ 3013               	.LBE49:
+ 990:../freeRTOS750/lib_iinchip/w5100.c **** 	dst_ptr = (uint8_t *)(getIINCHIP_TxBASE(s) + dst_mask);
+ 3015               	.LM342:
+ 3016 0b46 F701      		movw r30,r14
+ 3017 0b48 8081      		ld r24,Z
+ 3018 0b4a 9181      		ldd r25,Z+1
+ 3019 0b4c 840F      		add r24,r20
+ 3020 0b4e 951F      		adc r25,r21
+ 3021               	.LBB51:
+ 3022               	.LBB52:
+  95:../freeRTOS750/lib_iinchip/w5100.c ****    return SSIZE[s];
+ 3024               	.LM343:
+ 3025 0b50 A050      		subi r26,lo8(-(SSIZE))
+ 3026 0b52 B040      		sbci r27,hi8(-(SSIZE))
+ 3027 0b54 CD90      		ld r12,X+
+ 3028 0b56 DC90      		ld r13,X
+ 3029               	.LBE52:
+ 3030               	.LBE51:
+ 991:../freeRTOS750/lib_iinchip/w5100.c **** 
+ 992:../freeRTOS750/lib_iinchip/w5100.c **** 	if (dst_mask + len > getIINCHIP_TxMAX(s))
+ 3032               	.LM344:
+ 3033 0b58 9A01      		movw r18,r20
+ 3034 0b5a 200F      		add r18,r16
+ 3035 0b5c 311F      		adc r19,r17
+ 3036 0b5e C216      		cp r12,r18
+ 3037 0b60 D306      		cpc r13,r19
+ 3038 0b62 00F4      		brsh .L146
+ 993:../freeRTOS750/lib_iinchip/w5100.c **** 	{
+ 994:../freeRTOS750/lib_iinchip/w5100.c **** 		size = getIINCHIP_TxMAX(s) - dst_mask;
+ 3040               	.LM345:
+ 3041 0b64 C41A      		sub r12,r20
+ 3042 0b66 D50A      		sbc r13,r21
+ 995:../freeRTOS750/lib_iinchip/w5100.c **** 		IINCHIP_write_buf((uint16_t)dst_ptr, (uint8_t *)src, size);
+ 3044               	.LM346:
+ 3045 0b68 A601      		movw r20,r12
+ 3046 0b6a 0E94 0000 		call IINCHIP_write_buf
+ 996:../freeRTOS750/lib_iinchip/w5100.c **** 		src += size;
+ 997:../freeRTOS750/lib_iinchip/w5100.c **** 		size = len - size;
+ 3048               	.LM347:
+ 3049 0b6e A801      		movw r20,r16
+ 3050 0b70 4C19      		sub r20,r12
+ 3051 0b72 5D09      		sbc r21,r13
+ 996:../freeRTOS750/lib_iinchip/w5100.c **** 		src += size;
+ 3053               	.LM348:
+ 3054 0b74 BE01      		movw r22,r28
+ 3055 0b76 6C0D      		add r22,r12
+ 3056 0b78 7D1D      		adc r23,r13
+ 998:../freeRTOS750/lib_iinchip/w5100.c **** 		dst_ptr = (uint8_t *)(getIINCHIP_TxBASE(s));
+ 999:../freeRTOS750/lib_iinchip/w5100.c **** 		IINCHIP_write_buf((uint16_t)dst_ptr, (uint8_t *)src, size);
+ 3058               	.LM349:
+ 3059 0b7a F701      		movw r30,r14
+ 3060 0b7c 8081      		ld r24,Z
+ 3061 0b7e 9181      		ldd r25,Z+1
+ 3062 0b80 00C0      		rjmp .L147
+ 3063               	.L146:
+1000:../freeRTOS750/lib_iinchip/w5100.c **** 	}
+1001:../freeRTOS750/lib_iinchip/w5100.c **** 	else
+1002:../freeRTOS750/lib_iinchip/w5100.c **** 	{
+1003:../freeRTOS750/lib_iinchip/w5100.c **** 		IINCHIP_write_buf((uint16_t)dst_ptr, (uint8_t *)src, len);
+ 3065               	.LM350:
+ 3066 0b82 A801      		movw r20,r16
+ 3067               	.L147:
+ 3068               	/* epilogue start */
+1004:../freeRTOS750/lib_iinchip/w5100.c **** 	}
+1005:../freeRTOS750/lib_iinchip/w5100.c **** }
+ 3070               	.LM351:
+ 3071 0b84 DF91      		pop r29
+ 3072 0b86 CF91      		pop r28
+ 3073 0b88 1F91      		pop r17
+ 3074 0b8a 0F91      		pop r16
+ 3075 0b8c FF90      		pop r15
+ 3076 0b8e EF90      		pop r14
+ 3077 0b90 DF90      		pop r13
+ 3078 0b92 CF90      		pop r12
+1003:../freeRTOS750/lib_iinchip/w5100.c **** 		IINCHIP_write_buf((uint16_t)dst_ptr, (uint8_t *)src, len);
+ 3080               	.LM352:
+ 3081 0b94 0C94 0000 		jmp IINCHIP_write_buf
+ 3086               	.Lscope44:
+ 3088               		.stabd	78,0,0
+ 3093               	.global	send_data_processing
+ 3095               	send_data_processing:
+ 3096               		.stabd	46,0,0
+ 928:../freeRTOS750/lib_iinchip/w5100.c **** {
+ 3098               	.LM353:
+ 3099               	.LFBB45:
+ 3100 0b98 9F92      		push r9
+ 3101 0b9a AF92      		push r10
+ 3102 0b9c BF92      		push r11
+ 3103 0b9e CF92      		push r12
+ 3104 0ba0 DF92      		push r13
+ 3105 0ba2 EF92      		push r14
+ 3106 0ba4 FF92      		push r15
+ 3107 0ba6 0F93      		push r16
+ 3108 0ba8 1F93      		push r17
+ 3109 0baa CF93      		push r28
+ 3110 0bac DF93      		push r29
+ 3111               	/* prologue: function */
+ 3112               	/* frame size = 0 */
+ 3113               	/* stack size = 11 */
+ 3114               	.L__stack_usage = 11
+ 3115 0bae 982E      		mov r9,r24
+ 3116 0bb0 5B01      		movw r10,r22
+ 3117 0bb2 8A01      		movw r16,r20
+ 936:../freeRTOS750/lib_iinchip/w5100.c **** 	ptr = IINCHIP_read(Sn_TX_WR0(s)); // xxx Wrap this up in above test. Save a few read cycles.
+ 3119               	.LM354:
+ 3120 0bb4 E82F      		mov r30,r24
+ 3121 0bb6 F0E0      		ldi r31,0
+ 3122 0bb8 3496      		adiw r30,4
+ 3123 0bba FE2E      		mov r15,r30
+ 3124 0bbc EE24      		clr r14
+ 3125 0bbe 6701      		movw r12,r14
+ 3126 0bc0 84E2      		ldi r24,36
+ 3127 0bc2 C80E      		add r12,r24
+ 3128 0bc4 D11C      		adc r13,__zero_reg__
+ 3129 0bc6 C601      		movw r24,r12
+ 3130 0bc8 0E94 0000 		call IINCHIP_read
+ 937:../freeRTOS750/lib_iinchip/w5100.c **** 	ptr = ((ptr & 0x00ff) << 8) + IINCHIP_read(Sn_TX_WR1(s));
+ 3132               	.LM355:
+ 3133 0bcc D82F      		mov r29,r24
+ 3134 0bce 80E0      		ldi r24,0
+ 3135 0bd0 C82F      		mov r28,r24
+ 3136 0bd2 85E2      		ldi r24,37
+ 3137 0bd4 E80E      		add r14,r24
+ 3138 0bd6 F11C      		adc r15,__zero_reg__
+ 3139 0bd8 C701      		movw r24,r14
+ 3140 0bda 0E94 0000 		call IINCHIP_read
+ 3141 0bde C80F      		add r28,r24
+ 3142 0be0 D11D      		adc r29,__zero_reg__
+ 943:../freeRTOS750/lib_iinchip/w5100.c **** 	write_data(s, data, (uint8_t *)(ptr), len);
+ 3144               	.LM356:
+ 3145 0be2 9801      		movw r18,r16
+ 3146 0be4 AE01      		movw r20,r28
+ 3147 0be6 B501      		movw r22,r10
+ 3148 0be8 892D      		mov r24,r9
+ 3149 0bea 0E94 0000 		call write_data
+ 944:../freeRTOS750/lib_iinchip/w5100.c **** 	ptr += len;
+ 3151               	.LM357:
+ 3152 0bee C00F      		add r28,r16
+ 3153 0bf0 D11F      		adc r29,r17
+ 946:../freeRTOS750/lib_iinchip/w5100.c **** 	IINCHIP_write(Sn_TX_WR0(s), (uint8_t)((ptr & 0xff00) >> 8));
+ 3155               	.LM358:
+ 3156 0bf2 6D2F      		mov r22,r29
+ 3157 0bf4 C601      		movw r24,r12
+ 3158 0bf6 0E94 0000 		call IINCHIP_write
+ 947:../freeRTOS750/lib_iinchip/w5100.c **** 	IINCHIP_write(Sn_TX_WR1(s), (uint8_t)(ptr & 0x00ff));
+ 3160               	.LM359:
+ 3161 0bfa 6C2F      		mov r22,r28
+ 3162 0bfc C701      		movw r24,r14
+ 3163               	/* epilogue start */
+ 948:../freeRTOS750/lib_iinchip/w5100.c **** }
+ 3165               	.LM360:
+ 3166 0bfe DF91      		pop r29
+ 3167 0c00 CF91      		pop r28
+ 3168 0c02 1F91      		pop r17
+ 3169 0c04 0F91      		pop r16
+ 3170 0c06 FF90      		pop r15
+ 3171 0c08 EF90      		pop r14
+ 3172 0c0a DF90      		pop r13
+ 3173 0c0c CF90      		pop r12
+ 3174 0c0e BF90      		pop r11
+ 3175 0c10 AF90      		pop r10
+ 3176 0c12 9F90      		pop r9
+ 947:../freeRTOS750/lib_iinchip/w5100.c **** 	IINCHIP_write(Sn_TX_WR1(s), (uint8_t)(ptr & 0x00ff));
+ 3178               	.LM361:
+ 3179 0c14 0C94 0000 		jmp IINCHIP_write
+ 3181               	.Lscope45:
+ 3183               		.stabd	78,0,0
+ 3189               	.global	read_data
+ 3191               	read_data:
+ 3192               		.stabd	46,0,0
+1006:../freeRTOS750/lib_iinchip/w5100.c **** 
+1007:../freeRTOS750/lib_iinchip/w5100.c **** 
+1008:../freeRTOS750/lib_iinchip/w5100.c **** /**
+1009:../freeRTOS750/lib_iinchip/w5100.c **** @brief	This function is being used for copy the data from Receive buffer of the chip to application
+1010:../freeRTOS750/lib_iinchip/w5100.c **** 
+1011:../freeRTOS750/lib_iinchip/w5100.c **** It calculate the actual physical address where one has to read
+1012:../freeRTOS750/lib_iinchip/w5100.c **** the data from Receive buffer. Here also take care of the condition that it exceeds
+1013:../freeRTOS750/lib_iinchip/w5100.c **** the Rx memory upper-bound of socket.
+1014:../freeRTOS750/lib_iinchip/w5100.c **** */
+1015:../freeRTOS750/lib_iinchip/w5100.c **** void read_data(SOCKET s, volatile uint8_t * src, volatile uint8_t * dst, uint16_t len)
+1016:../freeRTOS750/lib_iinchip/w5100.c **** {
+ 3194               	.LM362:
+ 3195               	.LFBB46:
+ 3196 0c18 CF92      		push r12
+ 3197 0c1a DF92      		push r13
+ 3198 0c1c EF92      		push r14
+ 3199 0c1e FF92      		push r15
+ 3200 0c20 0F93      		push r16
+ 3201 0c22 1F93      		push r17
+ 3202 0c24 CF93      		push r28
+ 3203 0c26 DF93      		push r29
+ 3204               	/* prologue: function */
+ 3205               	/* frame size = 0 */
+ 3206               	/* stack size = 8 */
+ 3207               	.L__stack_usage = 8
+ 3208 0c28 EA01      		movw r28,r20
+ 3209 0c2a 8901      		movw r16,r18
+ 3210               	.LBB53:
+ 3211               	.LBB54:
+  99:../freeRTOS750/lib_iinchip/w5100.c ****    return RMASK[s];
+ 3213               	.LM363:
+ 3214 0c2c A82F      		mov r26,r24
+ 3215 0c2e B0E0      		ldi r27,0
+ 3216 0c30 AA0F      		lsl r26
+ 3217 0c32 BB1F      		rol r27
+ 3218 0c34 FD01      		movw r30,r26
+ 3219 0c36 E050      		subi r30,lo8(-(RMASK))
+ 3220 0c38 F040      		sbci r31,hi8(-(RMASK))
+ 3221               	.LBE54:
+ 3222               	.LBE53:
+1017:../freeRTOS750/lib_iinchip/w5100.c **** 	uint16_t size;
+1018:../freeRTOS750/lib_iinchip/w5100.c **** 	uint16_t src_mask;
+1019:../freeRTOS750/lib_iinchip/w5100.c **** 	uint8_t * src_ptr;
+1020:../freeRTOS750/lib_iinchip/w5100.c **** 
+1021:../freeRTOS750/lib_iinchip/w5100.c **** 	src_mask = (uint16_t)src & getIINCHIP_RxMASK(s);
+ 3224               	.LM364:
+ 3225 0c3a 8081      		ld r24,Z
+ 3226 0c3c 9181      		ldd r25,Z+1
+ 3227 0c3e 6823      		and r22,r24
+ 3228 0c40 7923      		and r23,r25
+ 3229               	.LBB55:
+ 3230               	.LBB56:
+ 107:../freeRTOS750/lib_iinchip/w5100.c ****    return RBUFBASEADDRESS[s];
+ 3232               	.LM365:
+ 3233 0c42 40E0      		ldi r20,lo8(RBUFBASEADDRESS)
+ 3234 0c44 E42E      		mov r14,r20
+ 3235 0c46 40E0      		ldi r20,hi8(RBUFBASEADDRESS)
+ 3236 0c48 F42E      		mov r15,r20
+ 3237 0c4a EA0E      		add r14,r26
+ 3238 0c4c FB1E      		adc r15,r27
+ 3239               	.LBE56:
+ 3240               	.LBE55:
+1022:../freeRTOS750/lib_iinchip/w5100.c **** 	src_ptr = (uint8_t *)(getIINCHIP_RxBASE(s) + src_mask);
+ 3242               	.LM366:
+ 3243 0c4e F701      		movw r30,r14
+ 3244 0c50 8081      		ld r24,Z
+ 3245 0c52 9181      		ldd r25,Z+1
+ 3246 0c54 860F      		add r24,r22
+ 3247 0c56 971F      		adc r25,r23
+ 3248               	.LBB57:
+ 3249               	.LBB58:
+  91:../freeRTOS750/lib_iinchip/w5100.c ****    return RSIZE[s];
+ 3251               	.LM367:
+ 3252 0c58 A050      		subi r26,lo8(-(RSIZE))
+ 3253 0c5a B040      		sbci r27,hi8(-(RSIZE))
+ 3254 0c5c CD90      		ld r12,X+
+ 3255 0c5e DC90      		ld r13,X
+ 3256               	.LBE58:
+ 3257               	.LBE57:
+1023:../freeRTOS750/lib_iinchip/w5100.c **** 
+1024:../freeRTOS750/lib_iinchip/w5100.c **** 	if( (src_mask + len) > getIINCHIP_RxMAX(s) )
+ 3259               	.LM368:
+ 3260 0c60 9801      		movw r18,r16
+ 3261 0c62 260F      		add r18,r22
+ 3262 0c64 371F      		adc r19,r23
+ 3263 0c66 C216      		cp r12,r18
+ 3264 0c68 D306      		cpc r13,r19
+ 3265 0c6a 00F4      		brsh .L150
+1025:../freeRTOS750/lib_iinchip/w5100.c **** 	{
+1026:../freeRTOS750/lib_iinchip/w5100.c **** 		size = getIINCHIP_RxMAX(s) - src_mask;
+ 3267               	.LM369:
+ 3268 0c6c C61A      		sub r12,r22
+ 3269 0c6e D70A      		sbc r13,r23
+1027:../freeRTOS750/lib_iinchip/w5100.c **** 		IINCHIP_read_buf((uint16_t)src_ptr, (uint8_t *)dst, size);
+ 3271               	.LM370:
+ 3272 0c70 A601      		movw r20,r12
+ 3273 0c72 BE01      		movw r22,r28
+ 3274 0c74 0E94 0000 		call IINCHIP_read_buf
+1028:../freeRTOS750/lib_iinchip/w5100.c **** 		dst += size;
+1029:../freeRTOS750/lib_iinchip/w5100.c **** 		size = len - size;
+ 3276               	.LM371:
+ 3277 0c78 A801      		movw r20,r16
+ 3278 0c7a 4C19      		sub r20,r12
+ 3279 0c7c 5D09      		sbc r21,r13
+1028:../freeRTOS750/lib_iinchip/w5100.c **** 		dst += size;
+ 3281               	.LM372:
+ 3282 0c7e BE01      		movw r22,r28
+ 3283 0c80 6C0D      		add r22,r12
+ 3284 0c82 7D1D      		adc r23,r13
+1030:../freeRTOS750/lib_iinchip/w5100.c **** 		src_ptr = (uint8_t *)(getIINCHIP_RxBASE(s));
+1031:../freeRTOS750/lib_iinchip/w5100.c **** 		IINCHIP_read_buf((uint16_t)src_ptr, (uint8_t *)dst, size);
+ 3286               	.LM373:
+ 3287 0c84 F701      		movw r30,r14
+ 3288 0c86 8081      		ld r24,Z
+ 3289 0c88 9181      		ldd r25,Z+1
+ 3290 0c8a 00C0      		rjmp .L151
+ 3291               	.L150:
+1032:../freeRTOS750/lib_iinchip/w5100.c **** 	}
+1033:../freeRTOS750/lib_iinchip/w5100.c **** 	else
+1034:../freeRTOS750/lib_iinchip/w5100.c **** 	{
+1035:../freeRTOS750/lib_iinchip/w5100.c **** 		IINCHIP_read_buf((uint16_t)src_ptr, (uint8_t *)dst, len);
+ 3293               	.LM374:
+ 3294 0c8c A801      		movw r20,r16
+ 3295 0c8e BE01      		movw r22,r28
+ 3296               	.L151:
+ 3297               	/* epilogue start */
+1036:../freeRTOS750/lib_iinchip/w5100.c **** 	}
+1037:../freeRTOS750/lib_iinchip/w5100.c **** }
+ 3299               	.LM375:
+ 3300 0c90 DF91      		pop r29
+ 3301 0c92 CF91      		pop r28
+ 3302 0c94 1F91      		pop r17
+ 3303 0c96 0F91      		pop r16
+ 3304 0c98 FF90      		pop r15
+ 3305 0c9a EF90      		pop r14
+ 3306 0c9c DF90      		pop r13
+ 3307 0c9e CF90      		pop r12
+1035:../freeRTOS750/lib_iinchip/w5100.c **** 		IINCHIP_read_buf((uint16_t)src_ptr, (uint8_t *)dst, len);
+ 3309               	.LM376:
+ 3310 0ca0 0C94 0000 		jmp IINCHIP_read_buf
+ 3315               	.Lscope46:
+ 3317               		.stabd	78,0,0
+ 3322               	.global	recv_data_processing
+ 3324               	recv_data_processing:
+ 3325               		.stabd	46,0,0
+ 959:../freeRTOS750/lib_iinchip/w5100.c **** {
+ 3327               	.LM377:
+ 3328               	.LFBB47:
+ 3329 0ca4 9F92      		push r9
+ 3330 0ca6 AF92      		push r10
+ 3331 0ca8 BF92      		push r11
+ 3332 0caa CF92      		push r12
+ 3333 0cac DF92      		push r13
+ 3334 0cae EF92      		push r14
+ 3335 0cb0 FF92      		push r15
+ 3336 0cb2 0F93      		push r16
+ 3337 0cb4 1F93      		push r17
+ 3338 0cb6 CF93      		push r28
+ 3339 0cb8 DF93      		push r29
+ 3340               	/* prologue: function */
+ 3341               	/* frame size = 0 */
+ 3342               	/* stack size = 11 */
+ 3343               	.L__stack_usage = 11
+ 3344 0cba 982E      		mov r9,r24
+ 3345 0cbc 5B01      		movw r10,r22
+ 3346 0cbe 8A01      		movw r16,r20
+ 961:../freeRTOS750/lib_iinchip/w5100.c **** 	ptr = IINCHIP_read(Sn_RX_RD0(s));
+ 3348               	.LM378:
+ 3349 0cc0 E82F      		mov r30,r24
+ 3350 0cc2 F0E0      		ldi r31,0
+ 3351 0cc4 3496      		adiw r30,4
+ 3352 0cc6 FE2E      		mov r15,r30
+ 3353 0cc8 EE24      		clr r14
+ 3354 0cca 6701      		movw r12,r14
+ 3355 0ccc 88E2      		ldi r24,40
+ 3356 0cce C80E      		add r12,r24
+ 3357 0cd0 D11C      		adc r13,__zero_reg__
+ 3358 0cd2 C601      		movw r24,r12
+ 3359 0cd4 0E94 0000 		call IINCHIP_read
+ 962:../freeRTOS750/lib_iinchip/w5100.c **** 	ptr = ((ptr & 0x00ff) << 8) + IINCHIP_read(Sn_RX_RD1(s));
+ 3361               	.LM379:
+ 3362 0cd8 D82F      		mov r29,r24
+ 3363 0cda 80E0      		ldi r24,0
+ 3364 0cdc C82F      		mov r28,r24
+ 3365 0cde 89E2      		ldi r24,41
+ 3366 0ce0 E80E      		add r14,r24
+ 3367 0ce2 F11C      		adc r15,__zero_reg__
+ 3368 0ce4 C701      		movw r24,r14
+ 3369 0ce6 0E94 0000 		call IINCHIP_read
+ 3370 0cea C80F      		add r28,r24
+ 3371 0cec D11D      		adc r29,__zero_reg__
+ 968:../freeRTOS750/lib_iinchip/w5100.c **** 	read_data(s, (uint8_t *)ptr, data, len); // read data
+ 3373               	.LM380:
+ 3374 0cee 9801      		movw r18,r16
+ 3375 0cf0 A501      		movw r20,r10
+ 3376 0cf2 BE01      		movw r22,r28
+ 3377 0cf4 892D      		mov r24,r9
+ 3378 0cf6 0E94 0000 		call read_data
+ 969:../freeRTOS750/lib_iinchip/w5100.c **** 	ptr += len;
+ 3380               	.LM381:
+ 3381 0cfa C00F      		add r28,r16
+ 3382 0cfc D11F      		adc r29,r17
+ 970:../freeRTOS750/lib_iinchip/w5100.c **** 	IINCHIP_write(Sn_RX_RD0(s), (uint8_t)((ptr & 0xff00) >> 8));
+ 3384               	.LM382:
+ 3385 0cfe 6D2F      		mov r22,r29
+ 3386 0d00 C601      		movw r24,r12
+ 3387 0d02 0E94 0000 		call IINCHIP_write
+ 971:../freeRTOS750/lib_iinchip/w5100.c **** 	IINCHIP_write(Sn_RX_RD1(s), (uint8_t)(ptr & 0x00ff));
+ 3389               	.LM383:
+ 3390 0d06 6C2F      		mov r22,r28
+ 3391 0d08 C701      		movw r24,r14
+ 3392               	/* epilogue start */
+ 972:../freeRTOS750/lib_iinchip/w5100.c **** }
+ 3394               	.LM384:
+ 3395 0d0a DF91      		pop r29
+ 3396 0d0c CF91      		pop r28
+ 3397 0d0e 1F91      		pop r17
+ 3398 0d10 0F91      		pop r16
+ 3399 0d12 FF90      		pop r15
+ 3400 0d14 EF90      		pop r14
+ 3401 0d16 DF90      		pop r13
+ 3402 0d18 CF90      		pop r12
+ 3403 0d1a BF90      		pop r11
+ 3404 0d1c AF90      		pop r10
+ 3405 0d1e 9F90      		pop r9
+ 971:../freeRTOS750/lib_iinchip/w5100.c **** 	IINCHIP_write(Sn_RX_RD1(s), (uint8_t)(ptr & 0x00ff));
+ 3407               	.LM385:
+ 3408 0d20 0C94 0000 		jmp IINCHIP_write
+ 3410               	.Lscope47:
+ 3412               		.stabd	78,0,0
+ 3413               		.local	I_STATUS
+ 3414               		.comm	I_STATUS,4,1
+ 3415               		.local	RSIZE
+ 3416               		.comm	RSIZE,8,1
+ 3417               		.local	SSIZE
+ 3418               		.comm	SSIZE,8,1
+ 3419               		.local	RMASK
+ 3420               		.comm	RMASK,8,1
+ 3421               		.local	SMASK
+ 3422               		.comm	SMASK,8,1
+ 3423               		.local	RBUFBASEADDRESS
+ 3424               		.comm	RBUFBASEADDRESS,8,1
+ 3425               		.local	SBUFBASEADDRESS
+ 3426               		.comm	SBUFBASEADDRESS,8,1
+ 3427               		.local	SUBN_VAR
+ 3428               		.comm	SUBN_VAR,4,1
+ 3438               	.Letext0:
+ 3439               		.ident	"GCC: (GNU) 4.7.2"
+ 3440               	.global __do_clear_bss
+DEFINED SYMBOLS
+                            *ABS*:00000000 w5100.c
+     /tmp/ccgijn9g.s:2      *ABS*:0000003e __SP_H__
+     /tmp/ccgijn9g.s:3      *ABS*:0000003d __SP_L__
+     /tmp/ccgijn9g.s:4      *ABS*:0000003f __SREG__
+     /tmp/ccgijn9g.s:5      *ABS*:00000000 __tmp_reg__
+     /tmp/ccgijn9g.s:6      *ABS*:00000001 __zero_reg__
+     /tmp/ccgijn9g.s:158    .text:00000000 IINCHIP_getISR
+                             .bss:00000000 I_STATUS
+     /tmp/ccgijn9g.s:186    .text:0000000c IINCHIP_putISR
+     /tmp/ccgijn9g.s:211    .text:00000018 getIINCHIP_RxMAX
+     /tmp/ccgijn9g.s:3414   .bss:00000004 RSIZE
+     /tmp/ccgijn9g.s:241    .text:0000002a getIINCHIP_TxMAX
+     /tmp/ccgijn9g.s:3416   .bss:0000000c SSIZE
+     /tmp/ccgijn9g.s:271    .text:0000003c getIINCHIP_RxMASK
+     /tmp/ccgijn9g.s:3418   .bss:00000014 RMASK
+     /tmp/ccgijn9g.s:301    .text:0000004e getIINCHIP_TxMASK
+     /tmp/ccgijn9g.s:3420   .bss:0000001c SMASK
+     /tmp/ccgijn9g.s:331    .text:00000060 getIINCHIP_RxBASE
+     /tmp/ccgijn9g.s:3422   .bss:00000024 RBUFBASEADDRESS
+     /tmp/ccgijn9g.s:361    .text:00000072 getIINCHIP_TxBASE
+     /tmp/ccgijn9g.s:3424   .bss:0000002c SBUFBASEADDRESS
+     /tmp/ccgijn9g.s:391    .text:00000084 IINCHIP_write
+     /tmp/ccgijn9g.s:534    .text:00000108 IINCHIP_read
+     /tmp/ccgijn9g.s:683    .text:0000018a IINCHIP_write_buf
+     /tmp/ccgijn9g.s:882    .text:0000024a IINCHIP_read_buf
+     /tmp/ccgijn9g.s:1077   .text:00000306 __vector_1
+     /tmp/ccgijn9g.s:1108   .text:0000031a IINCHIP_sysinit
+     /tmp/ccgijn9g.s:1554   .text:00000580 setMR
+     /tmp/ccgijn9g.s:1576   .text:0000058a IINCHIP_init
+     /tmp/ccgijn9g.s:1640   .text:000005bc setGAR
+     /tmp/ccgijn9g.s:1693   .text:000005ee getGWIP
+     /tmp/ccgijn9g.s:1743   .text:00000622 saveSUBR
+     /tmp/ccgijn9g.s:3426   .bss:00000034 SUBN_VAR
+     /tmp/ccgijn9g.s:1777   .text:0000063e setSUBR
+     /tmp/ccgijn9g.s:1817   .text:0000066e clearSUBR
+     /tmp/ccgijn9g.s:1858   .text:00000696 setSHAR
+     /tmp/ccgijn9g.s:1921   .text:000006dc setSIPR
+     /tmp/ccgijn9g.s:1971   .text:0000070e getIR
+     /tmp/ccgijn9g.s:1992   .text:00000716 setRTR
+     /tmp/ccgijn9g.s:2029   .text:00000730 setRCR
+     /tmp/ccgijn9g.s:2052   .text:0000073a setIMR
+     /tmp/ccgijn9g.s:2075   .text:00000744 getGAR
+     /tmp/ccgijn9g.s:2125   .text:00000778 getSHAR
+     /tmp/ccgijn9g.s:2187   .text:000007c0 getSIPR
+     /tmp/ccgijn9g.s:2238   .text:000007f4 getSn_DHAR
+     /tmp/ccgijn9g.s:2311   .text:00000850 setSn_DHAR
+     /tmp/ccgijn9g.s:2390   .text:000008b4 getSn_DIPR
+     /tmp/ccgijn9g.s:2451   .text:000008fc setSn_DIPR
+     /tmp/ccgijn9g.s:2516   .text:00000948 getSn_DPORT
+     /tmp/ccgijn9g.s:2563   .text:00000978 setSn_DPORT
+     /tmp/ccgijn9g.s:2610   .text:000009a6 setSn_MSS
+     /tmp/ccgijn9g.s:2656   .text:000009d0 setSn_TTL
+     /tmp/ccgijn9g.s:2682   .text:000009de setSn_PROTO
+     /tmp/ccgijn9g.s:2707   .text:000009ec getSn_IR
+     /tmp/ccgijn9g.s:2732   .text:000009fa getSn_SR
+     /tmp/ccgijn9g.s:2757   .text:00000a08 getSn_TX_FSR
+     /tmp/ccgijn9g.s:2859   .text:00000a8c getSn_RX_RSR
+     /tmp/ccgijn9g.s:2964   .text:00000b10 write_data
+     /tmp/ccgijn9g.s:3095   .text:00000b98 send_data_processing
+     /tmp/ccgijn9g.s:3191   .text:00000c18 read_data
+     /tmp/ccgijn9g.s:3324   .text:00000ca4 recv_data_processing
+
+UNDEFINED SYMBOLS
+spiSelect
+spiSetDataMode
+spiSetClockDivider
+spiDeselect
+spiBegin
+__do_clear_bss

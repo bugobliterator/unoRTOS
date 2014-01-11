@@ -1,0 +1,1505 @@
+   1               		.file	"strftime.c"
+   2               	__SP_H__ = 0x3e
+   3               	__SP_L__ = 0x3d
+   4               	__SREG__ = 0x3f
+   5               	__tmp_reg__ = 0
+   6               	__zero_reg__ = 1
+   9               		.text
+  10               	.Ltext0:
+  92               	.global	pgm_copystring
+  94               	pgm_copystring:
+  95               		.stabd	46,0,0
+   1:../freeRTOS750/lib_time/strftime.c **** /*
+   2:../freeRTOS750/lib_time/strftime.c ****  * (c)2012 Michael Duane Rice All rights reserved.
+   3:../freeRTOS750/lib_time/strftime.c ****  *
+   4:../freeRTOS750/lib_time/strftime.c ****  * Redistribution and use in source and binary forms, with or without
+   5:../freeRTOS750/lib_time/strftime.c ****  * modification, are permitted provided that the following conditions are
+   6:../freeRTOS750/lib_time/strftime.c ****  * met:
+   7:../freeRTOS750/lib_time/strftime.c ****  *
+   8:../freeRTOS750/lib_time/strftime.c ****  * Redistributions of source code must retain the above copyright notice, this
+   9:../freeRTOS750/lib_time/strftime.c ****  * list of conditions and the following disclaimer. Redistributions in binary
+  10:../freeRTOS750/lib_time/strftime.c ****  * form must reproduce the above copyright notice, this list of conditions
+  11:../freeRTOS750/lib_time/strftime.c ****  * and the following disclaimer in the documentation and/or other materials
+  12:../freeRTOS750/lib_time/strftime.c ****  * provided with the distribution. Neither the name of the copyright holders
+  13:../freeRTOS750/lib_time/strftime.c ****  * nor the names of contributors may be used to endorse or promote products
+  14:../freeRTOS750/lib_time/strftime.c ****  * derived from this software without specific prior written permission.
+  15:../freeRTOS750/lib_time/strftime.c ****  *
+  16:../freeRTOS750/lib_time/strftime.c ****  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  17:../freeRTOS750/lib_time/strftime.c ****  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  18:../freeRTOS750/lib_time/strftime.c ****  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  19:../freeRTOS750/lib_time/strftime.c ****  * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+  20:../freeRTOS750/lib_time/strftime.c ****  * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+  21:../freeRTOS750/lib_time/strftime.c ****  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+  22:../freeRTOS750/lib_time/strftime.c ****  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+  23:../freeRTOS750/lib_time/strftime.c ****  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+  24:../freeRTOS750/lib_time/strftime.c ****  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+  25:../freeRTOS750/lib_time/strftime.c ****  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+  26:../freeRTOS750/lib_time/strftime.c ****  * POSSIBILITY OF SUCH DAMAGE.
+  27:../freeRTOS750/lib_time/strftime.c ****  */
+  28:../freeRTOS750/lib_time/strftime.c **** 
+  29:../freeRTOS750/lib_time/strftime.c **** /* $Id$ */
+  30:../freeRTOS750/lib_time/strftime.c **** 
+  31:../freeRTOS750/lib_time/strftime.c **** /*
+  32:../freeRTOS750/lib_time/strftime.c ****     Standard strftime(). This is a memory hungry monster.
+  33:../freeRTOS750/lib_time/strftime.c **** */
+  34:../freeRTOS750/lib_time/strftime.c **** 
+  35:../freeRTOS750/lib_time/strftime.c **** #include <stdlib.h>
+  36:../freeRTOS750/lib_time/strftime.c **** #include <stdio.h>
+  37:../freeRTOS750/lib_time/strftime.c **** #include <time.h>
+  38:../freeRTOS750/lib_time/strftime.c **** 
+  39:../freeRTOS750/lib_time/strftime.c **** extern long     __utc_offset;
+  40:../freeRTOS750/lib_time/strftime.c **** 
+  41:../freeRTOS750/lib_time/strftime.c **** #ifdef __MEMX
+  42:../freeRTOS750/lib_time/strftime.c **** 
+  43:../freeRTOS750/lib_time/strftime.c **** const __memx char strfwkdays[] = "Sunday Monday Tuesday Wednesday Thursday Friday Saturday ";
+  44:../freeRTOS750/lib_time/strftime.c **** const __memx char strfmonths[] = "January February March April May June July August September Octob
+  45:../freeRTOS750/lib_time/strftime.c **** 
+  46:../freeRTOS750/lib_time/strftime.c **** #else
+  47:../freeRTOS750/lib_time/strftime.c **** 
+  48:../freeRTOS750/lib_time/strftime.c **** const char      strfwkdays[] = "Sunday Monday Tuesday Wednesday Thursday Friday Saturday ";
+  49:../freeRTOS750/lib_time/strftime.c **** const char      strfmonths[] = "January February March April May June July August September October
+  50:../freeRTOS750/lib_time/strftime.c **** 
+  51:../freeRTOS750/lib_time/strftime.c **** #endif
+  52:../freeRTOS750/lib_time/strftime.c **** 
+  53:../freeRTOS750/lib_time/strftime.c **** #ifdef __MEMX
+  54:../freeRTOS750/lib_time/strftime.c **** 
+  55:../freeRTOS750/lib_time/strftime.c **** unsigned char
+  56:../freeRTOS750/lib_time/strftime.c **** pgm_copystring(const char __memx * p, unsigned char i, char *b, unsigned char l)
+  57:../freeRTOS750/lib_time/strftime.c **** {
+  97               	.LM0:
+  98               	.LFBB1:
+  99 0000 CF92      		push r12
+ 100 0002 DF92      		push r13
+ 101 0004 EF92      		push r14
+ 102 0006 0F93      		push r16
+ 103 0008 CF93      		push r28
+ 104 000a DF93      		push r29
+ 105               	/* prologue: function */
+ 106               	/* frame size = 0 */
+ 107               	/* stack size = 6 */
+ 108               	.L__stack_usage = 6
+ 109 000c A82F      		mov r26,r24
+ 110 000e CB01      		movw r24,r22
+ 111 0010 E901      		movw r28,r18
+  58:../freeRTOS750/lib_time/strftime.c **** 
+  59:../freeRTOS750/lib_time/strftime.c **** #else
+  60:../freeRTOS750/lib_time/strftime.c **** 
+  61:../freeRTOS750/lib_time/strftime.c **** unsigned char
+  62:../freeRTOS750/lib_time/strftime.c **** pgm_copystring(const char *p, unsigned char i, char *b, unsigned char l)
+  63:../freeRTOS750/lib_time/strftime.c **** {
+  64:../freeRTOS750/lib_time/strftime.c **** 
+  65:../freeRTOS750/lib_time/strftime.c **** #endif
+  66:../freeRTOS750/lib_time/strftime.c **** 
+  67:../freeRTOS750/lib_time/strftime.c ****     unsigned char   ret, c;
+  68:../freeRTOS750/lib_time/strftime.c **** 
+  69:../freeRTOS750/lib_time/strftime.c ****     ret = 0;
+  70:../freeRTOS750/lib_time/strftime.c ****     while (i) {
+ 113               	.LM1:
+ 114 0012 00C0      		rjmp .L11
+ 115               	.L4:
+  71:../freeRTOS750/lib_time/strftime.c ****         c = *p++;
+ 117               	.LM2:
+ 118 0014 87FD      		sbrc r24,7
+ 119 0016 2081      		ld r18,Z
+ 120 0018 87FF      		sbrs r24,7
+ 121 001a 2491      		lpm r18,Z
+ 122 001c AE2D      		mov r26,r14
+ 123 001e C601      		movw r24,r12
+  72:../freeRTOS750/lib_time/strftime.c ****         if (c == ' ')
+ 125               	.LM3:
+ 126 0020 2032      		cpi r18,lo8(32)
+ 127 0022 01F4      		brne .L11
+  73:../freeRTOS750/lib_time/strftime.c ****             i--;
+ 129               	.LM4:
+ 130 0024 4150      		subi r20,lo8(-(-1))
+ 131               	.L11:
+ 132 0026 CC24      		clr r12
+ 133 0028 C394      		inc r12
+ 134 002a D12C      		mov r13,__zero_reg__
+ 135 002c E12C      		mov r14,__zero_reg__
+ 136 002e C80E      		add r12,r24
+ 137 0030 D91E      		adc r13,r25
+ 138 0032 EA1E      		adc r14,r26
+  71:../freeRTOS750/lib_time/strftime.c ****         c = *p++;
+ 140               	.LM5:
+ 141 0034 FC01      		movw r30,r24
+ 142 0036 8A2F      		mov r24,r26
+  70:../freeRTOS750/lib_time/strftime.c ****     while (i) {
+ 144               	.LM6:
+ 145 0038 4111      		cpse r20,__zero_reg__
+ 146 003a 00C0      		rjmp .L4
+  74:../freeRTOS750/lib_time/strftime.c ****     }
+  75:../freeRTOS750/lib_time/strftime.c **** 
+  76:../freeRTOS750/lib_time/strftime.c ****     c = *p++;
+ 148               	.LM7:
+ 149 003c A7FD      		sbrc r26,7
+ 150 003e 9081      		ld r25,Z
+ 151 0040 A7FF      		sbrs r26,7
+ 152 0042 9491      		lpm r25,Z
+  69:../freeRTOS750/lib_time/strftime.c ****     ret = 0;
+ 154               	.LM8:
+ 155 0044 80E0      		ldi r24,0
+  77:../freeRTOS750/lib_time/strftime.c ****     while (c != ' ' && l--) {
+ 157               	.LM9:
+ 158 0046 00C0      		rjmp .L5
+ 159               	.L7:
+  78:../freeRTOS750/lib_time/strftime.c ****         *b++ = c;
+ 161               	.LM10:
+ 162 0048 9993      		st Y+,r25
+  79:../freeRTOS750/lib_time/strftime.c ****         ret++;
+ 164               	.LM11:
+ 165 004a 8F5F      		subi r24,lo8(-(1))
+  80:../freeRTOS750/lib_time/strftime.c ****         c = *p++;
+ 167               	.LM12:
+ 168 004c F601      		movw r30,r12
+ 169 004e E7FC      		sbrc r14,7
+ 170 0050 9081      		ld r25,Z
+ 171 0052 E7FE      		sbrs r14,7
+ 172 0054 9491      		lpm r25,Z
+ 173 0056 2FEF      		ldi r18,-1
+ 174 0058 C21A      		sub r12,r18
+ 175 005a D20A      		sbc r13,r18
+ 176 005c E20A      		sbc r14,r18
+ 177               	.L5:
+  77:../freeRTOS750/lib_time/strftime.c ****     while (c != ' ' && l--) {
+ 179               	.LM13:
+ 180 005e 9032      		cpi r25,lo8(32)
+ 181 0060 01F4      		brne .L6
+ 182               	.L8:
+  81:../freeRTOS750/lib_time/strftime.c ****     }
+  82:../freeRTOS750/lib_time/strftime.c ****     *b = 0;
+ 184               	.LM14:
+ 185 0062 1882      		st Y,__zero_reg__
+ 186 0064 00C0      		rjmp .L12
+ 187               	.L6:
+  77:../freeRTOS750/lib_time/strftime.c ****     while (c != ' ' && l--) {
+ 189               	.LM15:
+ 190 0066 8013      		cpse r24,r16
+ 191 0068 00C0      		rjmp .L7
+ 192 006a 00C0      		rjmp .L8
+ 193               	.L12:
+ 194               	/* epilogue start */
+  83:../freeRTOS750/lib_time/strftime.c ****     return ret;
+  84:../freeRTOS750/lib_time/strftime.c **** }
+ 196               	.LM16:
+ 197 006c DF91      		pop r29
+ 198 006e CF91      		pop r28
+ 199 0070 0F91      		pop r16
+ 200 0072 EF90      		pop r14
+ 201 0074 DF90      		pop r13
+ 202 0076 CF90      		pop r12
+ 203 0078 0895      		ret
+ 209               	.Lscope1:
+ 211               		.stabd	78,0,0
+ 212               		.section	.rodata.str1.1,"aMS",@progbits,1
+ 213               	.LC0:
+ 214 0000 252E 3264 		.string	"%.2d"
+ 214      00
+ 215               	.LC1:
+ 216 0005 252E 3275 		.string	"%.2u"
+ 216      00
+ 217               	.LC2:
+ 218 000a 252E 3275 		.string	"%.2u/%.2u/%.2u"
+ 218      2F25 2E32 
+ 218      752F 252E 
+ 218      3275 00
+ 219               	.LC3:
+ 220 0019 2532 6400 		.string	"%2d"
+ 221               	.LC4:
+ 222 001d 2564 2D25 		.string	"%d-%.2d-%.2d"
+ 222      2E32 642D 
+ 222      252E 3264 
+ 222      00
+ 223               	.LC5:
+ 224 002a 252E 3464 		.string	"%.4d"
+ 224      00
+ 225               	.LC6:
+ 226 002f 252E 3375 		.string	"%.3u"
+ 226      00
+ 227               	.LC7:
+ 228 0034 2532 643A 		.string	"%2d:%.2d:%.2d AM"
+ 228      252E 3264 
+ 228      3A25 2E32 
+ 228      6420 414D 
+ 228      00
+ 229               	.LC8:
+ 230 0045 252E 3264 		.string	"%.2d:%.2d"
+ 230      3A25 2E32 
+ 230      6400 
+ 231               	.LC9:
+ 232 004f 0900      		.string	"\t"
+ 233               	.LC10:
+ 234 0051 252E 3264 		.string	"%.2d:%.2d:%.2d"
+ 234      3A25 2E32 
+ 234      643A 252E 
+ 234      3264 00
+ 235               	.LC11:
+ 236 0060 2564 00   		.string	"%d"
+ 237               	.LC12:
+ 238 0063 2575 00   		.string	"%u"
+ 239               	.LC13:
+ 240 0066 252E 3275 		.string	"%.2u:%.2u:%.2u"
+ 240      3A25 2E32 
+ 240      753A 252E 
+ 240      3275 00
+ 241               	.LC14:
+ 242 0075 252B 2E32 		.string	"%+.2d%.2d"
+ 242      6425 2E32 
+ 242      6400 
+ 243               		.text
+ 249               	.global	strftime
+ 251               	strftime:
+ 252               		.stabd	46,0,0
+  85:../freeRTOS750/lib_time/strftime.c **** 
+  86:../freeRTOS750/lib_time/strftime.c **** size_t
+  87:../freeRTOS750/lib_time/strftime.c **** strftime(char *buffer, size_t limit, const char *pattern, const struct tm * timeptr)
+  88:../freeRTOS750/lib_time/strftime.c **** {
+ 254               	.LM17:
+ 255               	.LFBB2:
+ 256 007a 2F92      		push r2
+ 257 007c 3F92      		push r3
+ 258 007e 4F92      		push r4
+ 259 0080 5F92      		push r5
+ 260 0082 6F92      		push r6
+ 261 0084 7F92      		push r7
+ 262 0086 8F92      		push r8
+ 263 0088 9F92      		push r9
+ 264 008a AF92      		push r10
+ 265 008c BF92      		push r11
+ 266 008e CF92      		push r12
+ 267 0090 DF92      		push r13
+ 268 0092 EF92      		push r14
+ 269 0094 FF92      		push r15
+ 270 0096 0F93      		push r16
+ 271 0098 1F93      		push r17
+ 272 009a CF93      		push r28
+ 273 009c DF93      		push r29
+ 274 009e CDB7      		in r28,__SP_L__
+ 275 00a0 DEB7      		in r29,__SP_H__
+ 276 00a2 A297      		sbiw r28,34
+ 277 00a4 0FB6      		in __tmp_reg__,__SREG__
+ 278 00a6 F894      		cli
+ 279 00a8 DEBF      		out __SP_H__,r29
+ 280 00aa 0FBE      		out __SREG__,__tmp_reg__
+ 281 00ac CDBF      		out __SP_L__,r28
+ 282               	/* prologue: function */
+ 283               	/* frame size = 34 */
+ 284               	/* stack size = 52 */
+ 285               	.L__stack_usage = 52
+ 286 00ae 2C01      		movw r4,r24
+ 287 00b0 7AA3      		std Y+34,r23
+ 288 00b2 69A3      		std Y+33,r22
+ 289 00b4 4A01      		movw r8,r20
+ 290 00b6 6901      		movw r12,r18
+  89:../freeRTOS750/lib_time/strftime.c ****     unsigned int    count, length;
+  90:../freeRTOS750/lib_time/strftime.c ****     int             d, w;
+  91:../freeRTOS750/lib_time/strftime.c ****     char            c;
+  92:../freeRTOS750/lib_time/strftime.c ****     char            _store[26];
+  93:../freeRTOS750/lib_time/strftime.c ****     struct week_date wd;
+  94:../freeRTOS750/lib_time/strftime.c **** 
+  95:../freeRTOS750/lib_time/strftime.c ****     count = length = 0;
+ 292               	.LM18:
+ 293 00b8 612C      		mov r6,__zero_reg__
+ 294 00ba 712C      		mov r7,__zero_reg__
+ 295 00bc EE24      		clr r14
+ 296 00be E394      		inc r14
+ 297 00c0 F12C      		mov r15,__zero_reg__
+ 298 00c2 EC0E      		add r14,r28
+ 299 00c4 FD1E      		adc r15,r29
+  96:../freeRTOS750/lib_time/strftime.c ****     while (count < limit) {
+  97:../freeRTOS750/lib_time/strftime.c ****         c = *pattern++;
+  98:../freeRTOS750/lib_time/strftime.c ****         if (c == '%') {
+  99:../freeRTOS750/lib_time/strftime.c ****             c = *pattern++;
+ 100:../freeRTOS750/lib_time/strftime.c ****             if (c == 'E' || c == 'O')
+ 101:../freeRTOS750/lib_time/strftime.c ****                 c = *pattern++;
+ 102:../freeRTOS750/lib_time/strftime.c ****             switch (c) {
+ 103:../freeRTOS750/lib_time/strftime.c ****             case ('%'):
+ 104:../freeRTOS750/lib_time/strftime.c ****                 _store[0] = c;
+ 105:../freeRTOS750/lib_time/strftime.c ****                 length = 1;
+ 106:../freeRTOS750/lib_time/strftime.c ****                 break;
+ 107:../freeRTOS750/lib_time/strftime.c **** 
+ 108:../freeRTOS750/lib_time/strftime.c ****             case ('a'):
+ 109:../freeRTOS750/lib_time/strftime.c ****                 length = pgm_copystring(strfwkdays, timeptr->tm_wday, _store, 3);
+ 110:../freeRTOS750/lib_time/strftime.c ****                 break;
+ 111:../freeRTOS750/lib_time/strftime.c **** 
+ 112:../freeRTOS750/lib_time/strftime.c ****             case ('A'):
+ 113:../freeRTOS750/lib_time/strftime.c ****                 length = pgm_copystring(strfwkdays, timeptr->tm_wday, _store, 255);
+ 114:../freeRTOS750/lib_time/strftime.c ****                 break;
+ 115:../freeRTOS750/lib_time/strftime.c **** 
+ 116:../freeRTOS750/lib_time/strftime.c ****             case ('b'):
+ 117:../freeRTOS750/lib_time/strftime.c ****             case ('h'):
+ 118:../freeRTOS750/lib_time/strftime.c ****                 length = pgm_copystring(strfmonths, timeptr->tm_mon, _store, 3);
+ 119:../freeRTOS750/lib_time/strftime.c ****                 break;
+ 120:../freeRTOS750/lib_time/strftime.c **** 
+ 121:../freeRTOS750/lib_time/strftime.c ****             case ('B'):
+ 122:../freeRTOS750/lib_time/strftime.c ****                 length = pgm_copystring(strfmonths, timeptr->tm_mon, _store, 255);
+ 123:../freeRTOS750/lib_time/strftime.c ****                 break;
+ 124:../freeRTOS750/lib_time/strftime.c **** 
+ 125:../freeRTOS750/lib_time/strftime.c ****             case ('c'):
+ 126:../freeRTOS750/lib_time/strftime.c ****                 asctime_r(timeptr, _store);
+ 127:../freeRTOS750/lib_time/strftime.c ****                 length = 0;
+ 128:../freeRTOS750/lib_time/strftime.c ****                 while (_store[length])
+ 129:../freeRTOS750/lib_time/strftime.c ****                     length++;
+ 130:../freeRTOS750/lib_time/strftime.c ****                 break;
+ 131:../freeRTOS750/lib_time/strftime.c **** 
+ 132:../freeRTOS750/lib_time/strftime.c ****             case ('C'):
+ 133:../freeRTOS750/lib_time/strftime.c ****                 d = timeptr->tm_year + 1900;
+ 134:../freeRTOS750/lib_time/strftime.c ****                 d /= 100;
+ 135:../freeRTOS750/lib_time/strftime.c ****                 length = sprintf(_store, "%.2d", d);
+ 136:../freeRTOS750/lib_time/strftime.c ****                 break;
+ 137:../freeRTOS750/lib_time/strftime.c **** 
+ 138:../freeRTOS750/lib_time/strftime.c ****             case ('d'):
+ 139:../freeRTOS750/lib_time/strftime.c ****                 length = sprintf(_store, "%.2u", timeptr->tm_mday);
+ 140:../freeRTOS750/lib_time/strftime.c ****                 break;
+ 141:../freeRTOS750/lib_time/strftime.c **** 
+ 142:../freeRTOS750/lib_time/strftime.c ****             case ('D'):
+ 143:../freeRTOS750/lib_time/strftime.c ****                 length = sprintf(_store, "%.2u/%.2u/%.2u", \
+ 144:../freeRTOS750/lib_time/strftime.c ****                          timeptr->tm_mon + 1, \
+ 145:../freeRTOS750/lib_time/strftime.c ****                          timeptr->tm_mday, \
+ 146:../freeRTOS750/lib_time/strftime.c ****                          timeptr->tm_year % 100 \
+ 147:../freeRTOS750/lib_time/strftime.c ****                     );
+ 148:../freeRTOS750/lib_time/strftime.c ****                 break;
+ 149:../freeRTOS750/lib_time/strftime.c **** 
+ 150:../freeRTOS750/lib_time/strftime.c ****             case ('e'):
+ 151:../freeRTOS750/lib_time/strftime.c ****                 length = sprintf(_store, "%2d", timeptr->tm_mday);
+ 152:../freeRTOS750/lib_time/strftime.c ****                 break;
+ 153:../freeRTOS750/lib_time/strftime.c **** 
+ 154:../freeRTOS750/lib_time/strftime.c ****             case ('F'):
+ 155:../freeRTOS750/lib_time/strftime.c ****                 length = sprintf(_store, "%d-%.2d-%.2d", \
+ 156:../freeRTOS750/lib_time/strftime.c ****                          timeptr->tm_year + 1900, \
+ 157:../freeRTOS750/lib_time/strftime.c ****                          timeptr->tm_mon + 1, \
+ 158:../freeRTOS750/lib_time/strftime.c ****                          timeptr->tm_mday \
+ 159:../freeRTOS750/lib_time/strftime.c ****                     );
+ 160:../freeRTOS750/lib_time/strftime.c ****                 break;
+ 161:../freeRTOS750/lib_time/strftime.c **** 
+ 162:../freeRTOS750/lib_time/strftime.c ****             case ('g'):
+ 163:../freeRTOS750/lib_time/strftime.c **** 			case ('G'):
+ 164:../freeRTOS750/lib_time/strftime.c **** 				iso_week_date_r(timeptr->tm_year + 1900, timeptr->tm_yday, &wd);
+ 165:../freeRTOS750/lib_time/strftime.c ****                 if (c == 'g') {
+ 166:../freeRTOS750/lib_time/strftime.c ****                     length = sprintf(_store, "%.2d", wd.year % 100);
+ 167:../freeRTOS750/lib_time/strftime.c ****                 } else {
+ 168:../freeRTOS750/lib_time/strftime.c ****                     length = sprintf(_store, "%.4d", wd.year);
+ 169:../freeRTOS750/lib_time/strftime.c ****                 }
+ 170:../freeRTOS750/lib_time/strftime.c **** 
+ 171:../freeRTOS750/lib_time/strftime.c **** 				break;
+ 172:../freeRTOS750/lib_time/strftime.c **** 
+ 173:../freeRTOS750/lib_time/strftime.c ****             case ('H'):
+ 174:../freeRTOS750/lib_time/strftime.c ****                 length = sprintf(_store, "%.2u", timeptr->tm_hour);
+ 175:../freeRTOS750/lib_time/strftime.c ****                 break;
+ 176:../freeRTOS750/lib_time/strftime.c **** 
+ 177:../freeRTOS750/lib_time/strftime.c ****             case ('I'):
+ 178:../freeRTOS750/lib_time/strftime.c ****                 d = timeptr->tm_hour % 12;
+ 179:../freeRTOS750/lib_time/strftime.c ****                 if (d == 0)
+ 180:../freeRTOS750/lib_time/strftime.c ****                     d = 12;
+ 181:../freeRTOS750/lib_time/strftime.c ****                 length = sprintf(_store, "%.2u", d);
+ 182:../freeRTOS750/lib_time/strftime.c ****                 break;
+ 183:../freeRTOS750/lib_time/strftime.c **** 
+ 184:../freeRTOS750/lib_time/strftime.c ****             case ('j'):
+ 185:../freeRTOS750/lib_time/strftime.c ****                 length = sprintf(_store, "%.3u", timeptr->tm_yday + 1);
+ 186:../freeRTOS750/lib_time/strftime.c ****                 break;
+ 187:../freeRTOS750/lib_time/strftime.c **** 
+ 188:../freeRTOS750/lib_time/strftime.c ****             case ('m'):
+ 189:../freeRTOS750/lib_time/strftime.c ****                 length = sprintf(_store, "%.2u", timeptr->tm_mon + 1);
+ 190:../freeRTOS750/lib_time/strftime.c ****                 break;
+ 191:../freeRTOS750/lib_time/strftime.c **** 
+ 192:../freeRTOS750/lib_time/strftime.c ****             case ('M'):
+ 193:../freeRTOS750/lib_time/strftime.c ****                 length = sprintf(_store, "%.2u", timeptr->tm_min);
+ 194:../freeRTOS750/lib_time/strftime.c ****                 break;
+ 195:../freeRTOS750/lib_time/strftime.c **** 
+ 196:../freeRTOS750/lib_time/strftime.c ****             case ('n'):
+ 197:../freeRTOS750/lib_time/strftime.c ****                 _store[0] = 10;
+ 198:../freeRTOS750/lib_time/strftime.c ****                 length = 1;
+ 199:../freeRTOS750/lib_time/strftime.c ****                 break;
+ 200:../freeRTOS750/lib_time/strftime.c **** 
+ 201:../freeRTOS750/lib_time/strftime.c ****             case ('p'):
+ 202:../freeRTOS750/lib_time/strftime.c ****                 length = 2;
+ 203:../freeRTOS750/lib_time/strftime.c ****                 _store[0] = 'A';
+ 204:../freeRTOS750/lib_time/strftime.c ****                 if (timeptr->tm_hour > 11)
+ 205:../freeRTOS750/lib_time/strftime.c ****                     _store[0] = 'P';
+ 206:../freeRTOS750/lib_time/strftime.c ****                 _store[1] = 'M';
+ 207:../freeRTOS750/lib_time/strftime.c ****                 _store[2] = 0;
+ 208:../freeRTOS750/lib_time/strftime.c ****                 break;
+ 209:../freeRTOS750/lib_time/strftime.c **** 
+ 210:../freeRTOS750/lib_time/strftime.c ****             case ('r'):
+ 211:../freeRTOS750/lib_time/strftime.c ****                 d = timeptr->tm_hour % 12;
+ 212:../freeRTOS750/lib_time/strftime.c ****                 if (d == 0)
+ 213:../freeRTOS750/lib_time/strftime.c ****                     d = 12;
+ 214:../freeRTOS750/lib_time/strftime.c ****                 length = sprintf(_store, "%2d:%.2d:%.2d AM", \
+ 215:../freeRTOS750/lib_time/strftime.c ****                          d, \
+ 216:../freeRTOS750/lib_time/strftime.c ****                          timeptr->tm_min, \
+ 217:../freeRTOS750/lib_time/strftime.c ****                          timeptr->tm_sec \
+ 218:../freeRTOS750/lib_time/strftime.c ****                     );
+ 219:../freeRTOS750/lib_time/strftime.c ****                 if (timeptr->tm_hour > 11)
+ 220:../freeRTOS750/lib_time/strftime.c ****                     _store[10] = 'P';
+ 221:../freeRTOS750/lib_time/strftime.c ****                 break;
+ 222:../freeRTOS750/lib_time/strftime.c **** 
+ 223:../freeRTOS750/lib_time/strftime.c ****             case ('R'):
+ 224:../freeRTOS750/lib_time/strftime.c ****                 length = sprintf(_store, "%.2d:%.2d", timeptr->tm_hour, timeptr->tm_min);
+ 225:../freeRTOS750/lib_time/strftime.c ****                 break;
+ 226:../freeRTOS750/lib_time/strftime.c **** 
+ 227:../freeRTOS750/lib_time/strftime.c ****             case ('S'):
+ 228:../freeRTOS750/lib_time/strftime.c ****                 length = sprintf(_store, "%.2u", timeptr->tm_sec);
+ 229:../freeRTOS750/lib_time/strftime.c ****                 break;
+ 230:../freeRTOS750/lib_time/strftime.c **** 
+ 231:../freeRTOS750/lib_time/strftime.c ****             case ('t'):
+ 232:../freeRTOS750/lib_time/strftime.c ****                 length = sprintf(_store, "\t");
+ 233:../freeRTOS750/lib_time/strftime.c ****                 break;
+ 234:../freeRTOS750/lib_time/strftime.c **** 
+ 235:../freeRTOS750/lib_time/strftime.c ****             case ('T'):
+ 236:../freeRTOS750/lib_time/strftime.c ****                 length = sprintf(_store, "%.2d:%.2d:%.2d", \
+ 237:../freeRTOS750/lib_time/strftime.c ****                          timeptr->tm_hour, \
+ 238:../freeRTOS750/lib_time/strftime.c ****                          timeptr->tm_min, \
+ 239:../freeRTOS750/lib_time/strftime.c ****                          timeptr->tm_sec \
+ 240:../freeRTOS750/lib_time/strftime.c ****                     );
+ 241:../freeRTOS750/lib_time/strftime.c ****                 break;
+ 242:../freeRTOS750/lib_time/strftime.c **** 
+ 243:../freeRTOS750/lib_time/strftime.c ****             case ('u'):
+ 244:../freeRTOS750/lib_time/strftime.c ****                 w = timeptr->tm_wday;
+ 245:../freeRTOS750/lib_time/strftime.c ****                 if (w == 0)
+ 246:../freeRTOS750/lib_time/strftime.c ****                     w = 7;
+ 247:../freeRTOS750/lib_time/strftime.c ****                 length = sprintf(_store, "%d", w);
+ 248:../freeRTOS750/lib_time/strftime.c ****                 break;
+ 249:../freeRTOS750/lib_time/strftime.c **** 
+ 250:../freeRTOS750/lib_time/strftime.c ****             case ('U'):
+ 251:../freeRTOS750/lib_time/strftime.c ****                 length = sprintf(_store, "%.2u", week_of_year(timeptr, 0));
+ 252:../freeRTOS750/lib_time/strftime.c ****                 break;
+ 253:../freeRTOS750/lib_time/strftime.c **** 
+ 254:../freeRTOS750/lib_time/strftime.c **** 			case ('V'):
+ 255:../freeRTOS750/lib_time/strftime.c **** 				iso_week_date_r(timeptr->tm_year + 1900, timeptr->tm_yday, &wd);
+ 256:../freeRTOS750/lib_time/strftime.c ****                 length = sprintf(_store, "%.2u", wd.week);
+ 257:../freeRTOS750/lib_time/strftime.c **** 				break;
+ 258:../freeRTOS750/lib_time/strftime.c **** 
+ 259:../freeRTOS750/lib_time/strftime.c ****             case ('w'):
+ 260:../freeRTOS750/lib_time/strftime.c ****                 length = sprintf(_store, "%u", timeptr->tm_wday);
+ 261:../freeRTOS750/lib_time/strftime.c ****                 break;
+ 262:../freeRTOS750/lib_time/strftime.c **** 
+ 263:../freeRTOS750/lib_time/strftime.c ****             case ('W'):
+ 264:../freeRTOS750/lib_time/strftime.c ****                 w = week_of_year(timeptr, 1);
+ 265:../freeRTOS750/lib_time/strftime.c ****                 length = sprintf(_store, "%.2u", w);
+ 266:../freeRTOS750/lib_time/strftime.c ****                 break;
+ 267:../freeRTOS750/lib_time/strftime.c **** 
+ 268:../freeRTOS750/lib_time/strftime.c ****             case ('x'):
+ 269:../freeRTOS750/lib_time/strftime.c ****                 length = sprintf(_store, "%.2u/%.2u/%.2u", timeptr->tm_mon + 1, timeptr->tm_mday, t
+ 270:../freeRTOS750/lib_time/strftime.c ****                 break;
+ 271:../freeRTOS750/lib_time/strftime.c **** 
+ 272:../freeRTOS750/lib_time/strftime.c ****             case ('X'):
+ 273:../freeRTOS750/lib_time/strftime.c ****                 length = sprintf(_store, "%.2u:%.2u:%.2u", timeptr->tm_hour, timeptr->tm_min, timep
+ 274:../freeRTOS750/lib_time/strftime.c ****                 break;
+ 275:../freeRTOS750/lib_time/strftime.c **** 
+ 276:../freeRTOS750/lib_time/strftime.c ****             case ('y'):
+ 277:../freeRTOS750/lib_time/strftime.c ****                 length = sprintf(_store, "%.2u", timeptr->tm_year % 100);
+ 278:../freeRTOS750/lib_time/strftime.c ****                 break;
+ 279:../freeRTOS750/lib_time/strftime.c **** 
+ 280:../freeRTOS750/lib_time/strftime.c ****             case ('Y'):
+ 281:../freeRTOS750/lib_time/strftime.c ****                 length = sprintf(_store, "%u", timeptr->tm_year + 1900);
+ 282:../freeRTOS750/lib_time/strftime.c ****                 break;
+ 283:../freeRTOS750/lib_time/strftime.c **** 
+ 284:../freeRTOS750/lib_time/strftime.c ****             case ('z'):
+ 285:../freeRTOS750/lib_time/strftime.c ****                 d = __utc_offset / 60;
+ 286:../freeRTOS750/lib_time/strftime.c ****                 w = timeptr->tm_isdst / 60;
+ 287:../freeRTOS750/lib_time/strftime.c ****                 if (w > 0)
+ 288:../freeRTOS750/lib_time/strftime.c ****                     d += w;
+ 289:../freeRTOS750/lib_time/strftime.c ****                 w = abs(d % 60);
+ 290:../freeRTOS750/lib_time/strftime.c ****                 d = d / 60;
+ 291:../freeRTOS750/lib_time/strftime.c ****                 length = sprintf(_store, "%+.2d%.2d", d, w);
+ 292:../freeRTOS750/lib_time/strftime.c ****                 break;
+ 293:../freeRTOS750/lib_time/strftime.c **** 
+ 294:../freeRTOS750/lib_time/strftime.c ****             default:
+ 295:../freeRTOS750/lib_time/strftime.c ****                 length = 1;
+ 296:../freeRTOS750/lib_time/strftime.c ****                 _store[0] = '?';
+ 301               	.LM19:
+ 302 00c6 1FE3      		ldi r17,lo8(63)
+ 277:../freeRTOS750/lib_time/strftime.c ****                 length = sprintf(_store, "%.2u", timeptr->tm_year % 100);
+ 304               	.LM20:
+ 305 00c8 44E6      		ldi r20,lo8(100)
+ 306 00ca 242E      		mov r2,r20
+ 307 00cc 312C      		mov r3,__zero_reg__
+ 308 00ce 50E0      		ldi r21,lo8(.LC1)
+ 309 00d0 A52E      		mov r10,r21
+ 310 00d2 50E0      		ldi r21,hi8(.LC1)
+ 311 00d4 B52E      		mov r11,r21
+  96:../freeRTOS750/lib_time/strftime.c ****     while (count < limit) {
+ 313               	.LM21:
+ 314 00d6 00C0      		rjmp .L14
+ 315               	.L69:
+  97:../freeRTOS750/lib_time/strftime.c ****         c = *pattern++;
+ 317               	.LM22:
+ 318 00d8 F401      		movw r30,r8
+ 319 00da 8081      		ld r24,Z
+  98:../freeRTOS750/lib_time/strftime.c ****         if (c == '%') {
+ 321               	.LM23:
+ 322 00dc 8532      		cpi r24,lo8(37)
+ 323 00de 01F0      		breq .+2
+ 324 00e0 00C0      		rjmp .L15
+  99:../freeRTOS750/lib_time/strftime.c ****             c = *pattern++;
+ 326               	.LM24:
+ 327 00e2 0181      		ldd r16,Z+1
+ 100:../freeRTOS750/lib_time/strftime.c ****             if (c == 'E' || c == 'O')
+ 329               	.LM25:
+ 330 00e4 0534      		cpi r16,lo8(69)
+ 331 00e6 01F0      		breq .L16
+ 100:../freeRTOS750/lib_time/strftime.c ****             if (c == 'E' || c == 'O')
+ 333               	.LM26:
+ 334 00e8 0F34      		cpi r16,lo8(79)
+ 335 00ea 01F0      		breq .L16
+  99:../freeRTOS750/lib_time/strftime.c ****             c = *pattern++;
+ 337               	.LM27:
+ 338 00ec F2E0      		ldi r31,2
+ 339 00ee 8F0E      		add r8,r31
+ 340 00f0 911C      		adc r9,__zero_reg__
+ 341 00f2 00C0      		rjmp .L17
+ 342               	.L16:
+ 101:../freeRTOS750/lib_time/strftime.c ****                 c = *pattern++;
+ 344               	.LM28:
+ 345 00f4 F401      		movw r30,r8
+ 346 00f6 0281      		ldd r16,Z+2
+ 347 00f8 F3E0      		ldi r31,3
+ 348 00fa 8F0E      		add r8,r31
+ 349 00fc 911C      		adc r9,__zero_reg__
+ 350               	.L17:
+ 102:../freeRTOS750/lib_time/strftime.c ****             switch (c) {
+ 352               	.LM29:
+ 353 00fe 802F      		mov r24,r16
+ 354 0100 9927      		clr r25
+ 355 0102 87FD      		sbrc r24,7
+ 356 0104 9095      		com r25
+ 357 0106 A92F      		mov r26,r25
+ 358 0108 B92F      		mov r27,r25
+ 359 010a FC01      		movw r30,r24
+ 360 010c B597      		sbiw r30,37
+ 361 010e E635      		cpi r30,86
+ 362 0110 F105      		cpc r31,__zero_reg__
+ 363 0112 00F0      		brlo .+2
+ 364 0114 00C0      		rjmp .L18
+ 365 0116 E050      		subi r30,lo8(-(gs(.L53)))
+ 366 0118 F040      		sbci r31,hi8(-(gs(.L53)))
+ 367 011a 0C94 0000 		jmp __tablejump2__
+ 368               		.section	.progmem.gcc_sw_table,"a",@progbits
+ 369               		.p2align	1
+ 370               	.L53:
+ 371 0000 0000      		.word gs(.L19)
+ 372 0002 0000      		.word gs(.L18)
+ 373 0004 0000      		.word gs(.L18)
+ 374 0006 0000      		.word gs(.L18)
+ 375 0008 0000      		.word gs(.L18)
+ 376 000a 0000      		.word gs(.L18)
+ 377 000c 0000      		.word gs(.L18)
+ 378 000e 0000      		.word gs(.L18)
+ 379 0010 0000      		.word gs(.L18)
+ 380 0012 0000      		.word gs(.L18)
+ 381 0014 0000      		.word gs(.L18)
+ 382 0016 0000      		.word gs(.L18)
+ 383 0018 0000      		.word gs(.L18)
+ 384 001a 0000      		.word gs(.L18)
+ 385 001c 0000      		.word gs(.L18)
+ 386 001e 0000      		.word gs(.L18)
+ 387 0020 0000      		.word gs(.L18)
+ 388 0022 0000      		.word gs(.L18)
+ 389 0024 0000      		.word gs(.L18)
+ 390 0026 0000      		.word gs(.L18)
+ 391 0028 0000      		.word gs(.L18)
+ 392 002a 0000      		.word gs(.L18)
+ 393 002c 0000      		.word gs(.L18)
+ 394 002e 0000      		.word gs(.L18)
+ 395 0030 0000      		.word gs(.L18)
+ 396 0032 0000      		.word gs(.L18)
+ 397 0034 0000      		.word gs(.L18)
+ 398 0036 0000      		.word gs(.L18)
+ 399 0038 0000      		.word gs(.L20)
+ 400 003a 0000      		.word gs(.L21)
+ 401 003c 0000      		.word gs(.L22)
+ 402 003e 0000      		.word gs(.L50)
+ 403 0040 0000      		.word gs(.L18)
+ 404 0042 0000      		.word gs(.L24)
+ 405 0044 0000      		.word gs(.L25)
+ 406 0046 0000      		.word gs(.L26)
+ 407 0048 0000      		.word gs(.L27)
+ 408 004a 0000      		.word gs(.L18)
+ 409 004c 0000      		.word gs(.L18)
+ 410 004e 0000      		.word gs(.L18)
+ 411 0050 0000      		.word gs(.L28)
+ 412 0052 0000      		.word gs(.L18)
+ 413 0054 0000      		.word gs(.L18)
+ 414 0056 0000      		.word gs(.L18)
+ 415 0058 0000      		.word gs(.L18)
+ 416 005a 0000      		.word gs(.L29)
+ 417 005c 0000      		.word gs(.L30)
+ 418 005e 0000      		.word gs(.L31)
+ 419 0060 0000      		.word gs(.L32)
+ 420 0062 0000      		.word gs(.L33)
+ 421 0064 0000      		.word gs(.L34)
+ 422 0066 0000      		.word gs(.L35)
+ 423 0068 0000      		.word gs(.L36)
+ 424 006a 0000      		.word gs(.L18)
+ 425 006c 0000      		.word gs(.L18)
+ 426 006e 0000      		.word gs(.L18)
+ 427 0070 0000      		.word gs(.L18)
+ 428 0072 0000      		.word gs(.L18)
+ 429 0074 0000      		.word gs(.L18)
+ 430 0076 0000      		.word gs(.L18)
+ 431 0078 0000      		.word gs(.L37)
+ 432 007a 0000      		.word gs(.L38)
+ 433 007c 0000      		.word gs(.L39)
+ 434 007e 0000      		.word gs(.L40)
+ 435 0080 0000      		.word gs(.L41)
+ 436 0082 0000      		.word gs(.L18)
+ 437 0084 0000      		.word gs(.L25)
+ 438 0086 0000      		.word gs(.L38)
+ 439 0088 0000      		.word gs(.L18)
+ 440 008a 0000      		.word gs(.L42)
+ 441 008c 0000      		.word gs(.L18)
+ 442 008e 0000      		.word gs(.L18)
+ 443 0090 0000      		.word gs(.L43)
+ 444 0092 0000      		.word gs(.L44)
+ 445 0094 0000      		.word gs(.L18)
+ 446 0096 0000      		.word gs(.L45)
+ 447 0098 0000      		.word gs(.L18)
+ 448 009a 0000      		.word gs(.L46)
+ 449 009c 0000      		.word gs(.L18)
+ 450 009e 0000      		.word gs(.L47)
+ 451 00a0 0000      		.word gs(.L48)
+ 452 00a2 0000      		.word gs(.L18)
+ 453 00a4 0000      		.word gs(.L49)
+ 454 00a6 0000      		.word gs(.L50)
+ 455 00a8 0000      		.word gs(.L51)
+ 456 00aa 0000      		.word gs(.L52)
+ 457               		.text
+ 458               	.L19:
+ 104:../freeRTOS750/lib_time/strftime.c ****                 _store[0] = c;
+ 460               	.LM30:
+ 461 011e 85E2      		ldi r24,lo8(37)
+ 462 0120 00C0      		rjmp .L96
+ 463               	.L37:
+ 109:../freeRTOS750/lib_time/strftime.c ****                 length = pgm_copystring(strfwkdays, timeptr->tm_wday, _store, 3);
+ 465               	.LM31:
+ 466 0122 03E0      		ldi r16,lo8(3)
+ 467 0124 00C0      		rjmp .L90
+ 468               	.L20:
+ 113:../freeRTOS750/lib_time/strftime.c ****                 length = pgm_copystring(strfwkdays, timeptr->tm_wday, _store, 255);
+ 470               	.LM32:
+ 471 0126 0FEF      		ldi r16,lo8(-1)
+ 472               	.L90:
+ 473 0128 9701      		movw r18,r14
+ 474 012a F601      		movw r30,r12
+ 475 012c 4481      		ldd r20,Z+4
+ 476 012e 60E0      		ldi r22,lo8(strfwkdays)
+ 477 0130 70E0      		ldi r23,hi8(strfwkdays)
+ 478 0132 80E0      		ldi r24,hlo8(strfwkdays)
+ 479 0134 00C0      		rjmp .L84
+ 480               	.L38:
+ 118:../freeRTOS750/lib_time/strftime.c ****                 length = pgm_copystring(strfmonths, timeptr->tm_mon, _store, 3);
+ 482               	.LM33:
+ 483 0136 03E0      		ldi r16,lo8(3)
+ 484 0138 00C0      		rjmp .L86
+ 485               	.L21:
+ 122:../freeRTOS750/lib_time/strftime.c ****                 length = pgm_copystring(strfmonths, timeptr->tm_mon, _store, 255);
+ 487               	.LM34:
+ 488 013a 0FEF      		ldi r16,lo8(-1)
+ 489               	.L86:
+ 490 013c 9701      		movw r18,r14
+ 491 013e F601      		movw r30,r12
+ 492 0140 4581      		ldd r20,Z+5
+ 493 0142 60E0      		ldi r22,lo8(strfmonths)
+ 494 0144 70E0      		ldi r23,hi8(strfmonths)
+ 495 0146 80E0      		ldi r24,hlo8(strfmonths)
+ 496               	.L84:
+ 497 0148 0E94 0000 		call pgm_copystring
+ 498 014c 282F      		mov r18,r24
+ 499 014e 30E0      		ldi r19,0
+ 123:../freeRTOS750/lib_time/strftime.c ****                 break;
+ 501               	.LM35:
+ 502 0150 00C0      		rjmp .L54
+ 503               	.L39:
+ 126:../freeRTOS750/lib_time/strftime.c ****                 asctime_r(timeptr, _store);
+ 505               	.LM36:
+ 506 0152 B701      		movw r22,r14
+ 507 0154 C601      		movw r24,r12
+ 508 0156 0E94 0000 		call asctime_r
+ 509 015a F701      		movw r30,r14
+ 510               	.L55:
+  87:../freeRTOS750/lib_time/strftime.c **** strftime(char *buffer, size_t limit, const char *pattern, const struct tm * timeptr)
+ 512               	.LM37:
+ 513 015c 9F01      		movw r18,r30
+ 514 015e 2E19      		sub r18,r14
+ 515 0160 3F09      		sbc r19,r15
+ 128:../freeRTOS750/lib_time/strftime.c ****                 while (_store[length])
+ 517               	.LM38:
+ 518 0162 8191      		ld r24,Z+
+ 519 0164 8111      		cpse r24,__zero_reg__
+ 520 0166 00C0      		rjmp .L55
+ 521 0168 00C0      		rjmp .L54
+ 522               	.L22:
+ 133:../freeRTOS750/lib_time/strftime.c ****                 d = timeptr->tm_year + 1900;
+ 524               	.LM39:
+ 525 016a F601      		movw r30,r12
+ 526 016c 8681      		ldd r24,Z+6
+ 527 016e 9781      		ldd r25,Z+7
+ 528 0170 8459      		subi r24,-108
+ 529 0172 984F      		sbci r25,-8
+ 134:../freeRTOS750/lib_time/strftime.c ****                 d /= 100;
+ 531               	.LM40:
+ 532 0174 B101      		movw r22,r2
+ 533 0176 0E94 0000 		call __divmodhi4
+ 135:../freeRTOS750/lib_time/strftime.c ****                 length = sprintf(_store, "%.2d", d);
+ 535               	.LM41:
+ 536 017a 7F93      		push r23
+ 537 017c 6F93      		push r22
+ 538 017e 00C0      		rjmp .L97
+ 539               	.L40:
+ 139:../freeRTOS750/lib_time/strftime.c ****                 length = sprintf(_store, "%.2u", timeptr->tm_mday);
+ 541               	.LM42:
+ 542 0180 F601      		movw r30,r12
+ 543 0182 2381      		ldd r18,Z+3
+ 544 0184 00C0      		rjmp .L99
+ 545               	.L41:
+ 151:../freeRTOS750/lib_time/strftime.c ****                 length = sprintf(_store, "%2d", timeptr->tm_mday);
+ 547               	.LM43:
+ 548 0186 F601      		movw r30,r12
+ 549 0188 2381      		ldd r18,Z+3
+ 550 018a 822F      		mov r24,r18
+ 551 018c 9927      		clr r25
+ 552 018e 87FD      		sbrc r24,7
+ 553 0190 9095      		com r25
+ 554 0192 9F93      		push r25
+ 555 0194 2F93      		push r18
+ 556 0196 80E0      		ldi r24,lo8(.LC3)
+ 557 0198 90E0      		ldi r25,hi8(.LC3)
+ 558 019a 00C0      		rjmp .L92
+ 559               	.L24:
+ 155:../freeRTOS750/lib_time/strftime.c ****                 length = sprintf(_store, "%d-%.2d-%.2d", \
+ 561               	.LM44:
+ 562 019c F601      		movw r30,r12
+ 563 019e 2381      		ldd r18,Z+3
+ 564 01a0 822F      		mov r24,r18
+ 565 01a2 9927      		clr r25
+ 566 01a4 87FD      		sbrc r24,7
+ 567 01a6 9095      		com r25
+ 568 01a8 9F93      		push r25
+ 569 01aa 2F93      		push r18
+ 570 01ac 8581      		ldd r24,Z+5
+ 571 01ae 9927      		clr r25
+ 572 01b0 87FD      		sbrc r24,7
+ 573 01b2 9095      		com r25
+ 574 01b4 0196      		adiw r24,1
+ 575 01b6 9F93      		push r25
+ 576 01b8 8F93      		push r24
+ 577 01ba 8681      		ldd r24,Z+6
+ 578 01bc 9781      		ldd r25,Z+7
+ 579 01be 8459      		subi r24,-108
+ 580 01c0 984F      		sbci r25,-8
+ 581 01c2 9F93      		push r25
+ 582 01c4 8F93      		push r24
+ 583 01c6 80E0      		ldi r24,lo8(.LC4)
+ 584 01c8 90E0      		ldi r25,hi8(.LC4)
+ 585 01ca 00C0      		rjmp .L95
+ 586               	.L25:
+ 164:../freeRTOS750/lib_time/strftime.c **** 				iso_week_date_r(timeptr->tm_year + 1900, timeptr->tm_yday, &wd);
+ 588               	.LM45:
+ 589 01cc F601      		movw r30,r12
+ 590 01ce 6085      		ldd r22,Z+8
+ 591 01d0 7185      		ldd r23,Z+9
+ 592 01d2 8681      		ldd r24,Z+6
+ 593 01d4 9781      		ldd r25,Z+7
+ 594 01d6 AE01      		movw r20,r28
+ 595 01d8 455E      		subi r20,-27
+ 596 01da 5F4F      		sbci r21,-1
+ 597 01dc 8459      		subi r24,-108
+ 598 01de 984F      		sbci r25,-8
+ 599 01e0 0E94 0000 		call iso_week_date_r
+ 165:../freeRTOS750/lib_time/strftime.c ****                 if (c == 'g') {
+ 601               	.LM46:
+ 602 01e4 0736      		cpi r16,lo8(103)
+ 603 01e6 01F4      		brne .L56
+ 166:../freeRTOS750/lib_time/strftime.c ****                     length = sprintf(_store, "%.2d", wd.year % 100);
+ 605               	.LM47:
+ 606 01e8 8B8D      		ldd r24,Y+27
+ 607 01ea 9C8D      		ldd r25,Y+28
+ 608 01ec B101      		movw r22,r2
+ 609 01ee 0E94 0000 		call __divmodhi4
+ 610 01f2 9F93      		push r25
+ 611 01f4 8F93      		push r24
+ 612               	.L97:
+ 613 01f6 80E0      		ldi r24,lo8(.LC0)
+ 614 01f8 90E0      		ldi r25,hi8(.LC0)
+ 615 01fa 00C0      		rjmp .L92
+ 616               	.L56:
+ 168:../freeRTOS750/lib_time/strftime.c ****                     length = sprintf(_store, "%.4d", wd.year);
+ 618               	.LM48:
+ 619 01fc 8C8D      		ldd r24,Y+28
+ 620 01fe 8F93      		push r24
+ 621 0200 8B8D      		ldd r24,Y+27
+ 622 0202 8F93      		push r24
+ 623 0204 80E0      		ldi r24,lo8(.LC5)
+ 624 0206 90E0      		ldi r25,hi8(.LC5)
+ 625 0208 00C0      		rjmp .L92
+ 626               	.L26:
+ 174:../freeRTOS750/lib_time/strftime.c ****                 length = sprintf(_store, "%.2u", timeptr->tm_hour);
+ 628               	.LM49:
+ 629 020a F601      		movw r30,r12
+ 630 020c 2281      		ldd r18,Z+2
+ 631 020e 00C0      		rjmp .L99
+ 632               	.L27:
+ 178:../freeRTOS750/lib_time/strftime.c ****                 d = timeptr->tm_hour % 12;
+ 634               	.LM50:
+ 635 0210 F601      		movw r30,r12
+ 636 0212 8281      		ldd r24,Z+2
+ 637 0214 6CE0      		ldi r22,lo8(12)
+ 638 0216 0E94 0000 		call __divmodqi4
+ 639 021a 892F      		mov r24,r25
+ 640 021c 9927      		clr r25
+ 641 021e 87FD      		sbrc r24,7
+ 642 0220 9095      		com r25
+ 179:../freeRTOS750/lib_time/strftime.c ****                 if (d == 0)
+ 644               	.LM51:
+ 645 0222 0097      		sbiw r24,0
+ 646 0224 01F0      		breq .+2
+ 647 0226 00C0      		rjmp .L94
+ 180:../freeRTOS750/lib_time/strftime.c ****                     d = 12;
+ 649               	.LM52:
+ 650 0228 8CE0      		ldi r24,lo8(12)
+ 651 022a 90E0      		ldi r25,0
+ 652 022c 00C0      		rjmp .L94
+ 653               	.L42:
+ 185:../freeRTOS750/lib_time/strftime.c ****                 length = sprintf(_store, "%.3u", timeptr->tm_yday + 1);
+ 655               	.LM53:
+ 656 022e F601      		movw r30,r12
+ 657 0230 8085      		ldd r24,Z+8
+ 658 0232 9185      		ldd r25,Z+9
+ 659 0234 0196      		adiw r24,1
+ 660 0236 9F93      		push r25
+ 661 0238 8F93      		push r24
+ 662 023a 80E0      		ldi r24,lo8(.LC6)
+ 663 023c 90E0      		ldi r25,hi8(.LC6)
+ 664 023e 00C0      		rjmp .L92
+ 665               	.L43:
+ 189:../freeRTOS750/lib_time/strftime.c ****                 length = sprintf(_store, "%.2u", timeptr->tm_mon + 1);
+ 667               	.LM54:
+ 668 0240 F601      		movw r30,r12
+ 669 0242 8581      		ldd r24,Z+5
+ 670 0244 9927      		clr r25
+ 671 0246 87FD      		sbrc r24,7
+ 672 0248 9095      		com r25
+ 673 024a 0196      		adiw r24,1
+ 674 024c 00C0      		rjmp .L94
+ 675               	.L28:
+ 193:../freeRTOS750/lib_time/strftime.c ****                 length = sprintf(_store, "%.2u", timeptr->tm_min);
+ 677               	.LM55:
+ 678 024e F601      		movw r30,r12
+ 679 0250 2181      		ldd r18,Z+1
+ 680               	.L99:
+ 681 0252 822F      		mov r24,r18
+ 682 0254 9927      		clr r25
+ 683 0256 87FD      		sbrc r24,7
+ 684 0258 9095      		com r25
+ 685 025a 9F93      		push r25
+ 686 025c 2F93      		push r18
+ 687 025e 00C0      		rjmp .L93
+ 688               	.L44:
+ 197:../freeRTOS750/lib_time/strftime.c ****                 _store[0] = 10;
+ 690               	.LM56:
+ 691 0260 8AE0      		ldi r24,lo8(10)
+ 692               	.L96:
+ 693 0262 8983      		std Y+1,r24
+ 694 0264 00C0      		rjmp .L83
+ 695               	.L45:
+ 203:../freeRTOS750/lib_time/strftime.c ****                 _store[0] = 'A';
+ 697               	.LM57:
+ 698 0266 81E4      		ldi r24,lo8(65)
+ 699 0268 8983      		std Y+1,r24
+ 204:../freeRTOS750/lib_time/strftime.c ****                 if (timeptr->tm_hour > 11)
+ 701               	.LM58:
+ 702 026a F601      		movw r30,r12
+ 703 026c 8281      		ldd r24,Z+2
+ 704 026e 8C30      		cpi r24,lo8(12)
+ 705 0270 04F0      		brlt .L58
+ 205:../freeRTOS750/lib_time/strftime.c ****                     _store[0] = 'P';
+ 707               	.LM59:
+ 708 0272 80E5      		ldi r24,lo8(80)
+ 709 0274 8983      		std Y+1,r24
+ 710               	.L58:
+ 206:../freeRTOS750/lib_time/strftime.c ****                 _store[1] = 'M';
+ 712               	.LM60:
+ 713 0276 8DE4      		ldi r24,lo8(77)
+ 714 0278 8A83      		std Y+2,r24
+ 207:../freeRTOS750/lib_time/strftime.c ****                 _store[2] = 0;
+ 716               	.LM61:
+ 717 027a 1B82      		std Y+3,__zero_reg__
+ 202:../freeRTOS750/lib_time/strftime.c ****                 length = 2;
+ 719               	.LM62:
+ 720 027c 22E0      		ldi r18,lo8(2)
+ 721 027e 30E0      		ldi r19,0
+ 208:../freeRTOS750/lib_time/strftime.c ****                 break;
+ 723               	.LM63:
+ 724 0280 00C0      		rjmp .L54
+ 725               	.L46:
+ 211:../freeRTOS750/lib_time/strftime.c ****                 d = timeptr->tm_hour % 12;
+ 727               	.LM64:
+ 728 0282 F601      		movw r30,r12
+ 729 0284 8281      		ldd r24,Z+2
+ 730 0286 6CE0      		ldi r22,lo8(12)
+ 731 0288 0E94 0000 		call __divmodqi4
+ 732 028c 892F      		mov r24,r25
+ 733 028e 9927      		clr r25
+ 734 0290 87FD      		sbrc r24,7
+ 735 0292 9095      		com r25
+ 212:../freeRTOS750/lib_time/strftime.c ****                 if (d == 0)
+ 737               	.LM65:
+ 738 0294 0097      		sbiw r24,0
+ 739 0296 01F4      		brne .L59
+ 213:../freeRTOS750/lib_time/strftime.c ****                     d = 12;
+ 741               	.LM66:
+ 742 0298 8CE0      		ldi r24,lo8(12)
+ 743 029a 90E0      		ldi r25,0
+ 744               	.L59:
+ 214:../freeRTOS750/lib_time/strftime.c ****                 length = sprintf(_store, "%2d:%.2d:%.2d AM", \
+ 746               	.LM67:
+ 747 029c F601      		movw r30,r12
+ 748 029e 4081      		ld r20,Z
+ 749 02a0 242F      		mov r18,r20
+ 750 02a2 3327      		clr r19
+ 751 02a4 27FD      		sbrc r18,7
+ 752 02a6 3095      		com r19
+ 753 02a8 3F93      		push r19
+ 754 02aa 4F93      		push r20
+ 755 02ac 4181      		ldd r20,Z+1
+ 756 02ae 242F      		mov r18,r20
+ 757 02b0 3327      		clr r19
+ 758 02b2 27FD      		sbrc r18,7
+ 759 02b4 3095      		com r19
+ 760 02b6 3F93      		push r19
+ 761 02b8 4F93      		push r20
+ 762 02ba 9F93      		push r25
+ 763 02bc 8F93      		push r24
+ 764 02be 80E0      		ldi r24,lo8(.LC7)
+ 765 02c0 90E0      		ldi r25,hi8(.LC7)
+ 766 02c2 9F93      		push r25
+ 767 02c4 8F93      		push r24
+ 768 02c6 FF92      		push r15
+ 769 02c8 EF92      		push r14
+ 770 02ca 0E94 0000 		call sprintf
+ 771 02ce 9C01      		movw r18,r24
+ 219:../freeRTOS750/lib_time/strftime.c ****                 if (timeptr->tm_hour > 11)
+ 773               	.LM68:
+ 774 02d0 0FB6      		in __tmp_reg__,__SREG__
+ 775 02d2 F894      		cli
+ 776 02d4 DEBF      		out __SP_H__,r29
+ 777 02d6 0FBE      		out __SREG__,__tmp_reg__
+ 778 02d8 CDBF      		out __SP_L__,r28
+ 779 02da F601      		movw r30,r12
+ 780 02dc 8281      		ldd r24,Z+2
+ 781 02de 8C30      		cpi r24,lo8(12)
+ 782 02e0 04F4      		brge .+2
+ 783 02e2 00C0      		rjmp .L54
+ 220:../freeRTOS750/lib_time/strftime.c ****                     _store[10] = 'P';
+ 785               	.LM69:
+ 786 02e4 80E5      		ldi r24,lo8(80)
+ 787 02e6 8B87      		std Y+11,r24
+ 788 02e8 00C0      		rjmp .L54
+ 789               	.L29:
+ 224:../freeRTOS750/lib_time/strftime.c ****                 length = sprintf(_store, "%.2d:%.2d", timeptr->tm_hour, timeptr->tm_min);
+ 791               	.LM70:
+ 792 02ea F601      		movw r30,r12
+ 793 02ec 2181      		ldd r18,Z+1
+ 794 02ee 822F      		mov r24,r18
+ 795 02f0 9927      		clr r25
+ 796 02f2 87FD      		sbrc r24,7
+ 797 02f4 9095      		com r25
+ 798 02f6 9F93      		push r25
+ 799 02f8 2F93      		push r18
+ 800 02fa 2281      		ldd r18,Z+2
+ 801 02fc 822F      		mov r24,r18
+ 802 02fe 9927      		clr r25
+ 803 0300 87FD      		sbrc r24,7
+ 804 0302 9095      		com r25
+ 805 0304 9F93      		push r25
+ 806 0306 2F93      		push r18
+ 807 0308 80E0      		ldi r24,lo8(.LC8)
+ 808 030a 90E0      		ldi r25,hi8(.LC8)
+ 809 030c 9F93      		push r25
+ 810 030e 8F93      		push r24
+ 811 0310 00C0      		rjmp .L100
+ 812               	.L30:
+ 228:../freeRTOS750/lib_time/strftime.c ****                 length = sprintf(_store, "%.2u", timeptr->tm_sec);
+ 814               	.LM71:
+ 815 0312 F601      		movw r30,r12
+ 816 0314 2081      		ld r18,Z
+ 817 0316 00C0      		rjmp .L99
+ 818               	.L47:
+ 232:../freeRTOS750/lib_time/strftime.c ****                 length = sprintf(_store, "\t");
+ 820               	.LM72:
+ 821 0318 60E0      		ldi r22,lo8(.LC9)
+ 822 031a 70E0      		ldi r23,hi8(.LC9)
+ 823 031c C701      		movw r24,r14
+ 824 031e 0E94 0000 		call strcpy
+ 825 0322 00C0      		rjmp .L83
+ 826               	.L31:
+ 236:../freeRTOS750/lib_time/strftime.c ****                 length = sprintf(_store, "%.2d:%.2d:%.2d", \
+ 828               	.LM73:
+ 829 0324 F601      		movw r30,r12
+ 830 0326 2081      		ld r18,Z
+ 831 0328 822F      		mov r24,r18
+ 832 032a 9927      		clr r25
+ 833 032c 87FD      		sbrc r24,7
+ 834 032e 9095      		com r25
+ 835 0330 9F93      		push r25
+ 836 0332 2F93      		push r18
+ 837 0334 2181      		ldd r18,Z+1
+ 838 0336 822F      		mov r24,r18
+ 839 0338 9927      		clr r25
+ 840 033a 87FD      		sbrc r24,7
+ 841 033c 9095      		com r25
+ 842 033e 9F93      		push r25
+ 843 0340 2F93      		push r18
+ 844 0342 2281      		ldd r18,Z+2
+ 845 0344 822F      		mov r24,r18
+ 846 0346 9927      		clr r25
+ 847 0348 87FD      		sbrc r24,7
+ 848 034a 9095      		com r25
+ 849 034c 9F93      		push r25
+ 850 034e 2F93      		push r18
+ 851 0350 80E0      		ldi r24,lo8(.LC10)
+ 852 0352 90E0      		ldi r25,hi8(.LC10)
+ 853 0354 00C0      		rjmp .L95
+ 854               	.L48:
+ 244:../freeRTOS750/lib_time/strftime.c ****                 w = timeptr->tm_wday;
+ 856               	.LM74:
+ 857 0356 F601      		movw r30,r12
+ 858 0358 8481      		ldd r24,Z+4
+ 859 035a 9927      		clr r25
+ 860 035c 87FD      		sbrc r24,7
+ 861 035e 9095      		com r25
+ 245:../freeRTOS750/lib_time/strftime.c ****                 if (w == 0)
+ 863               	.LM75:
+ 864 0360 0097      		sbiw r24,0
+ 865 0362 01F4      		brne .L60
+ 246:../freeRTOS750/lib_time/strftime.c ****                     w = 7;
+ 867               	.LM76:
+ 868 0364 87E0      		ldi r24,lo8(7)
+ 869 0366 90E0      		ldi r25,0
+ 870               	.L60:
+ 247:../freeRTOS750/lib_time/strftime.c ****                 length = sprintf(_store, "%d", w);
+ 872               	.LM77:
+ 873 0368 9F93      		push r25
+ 874 036a 8F93      		push r24
+ 875 036c 80E0      		ldi r24,lo8(.LC11)
+ 876 036e 90E0      		ldi r25,hi8(.LC11)
+ 877               	.L92:
+ 878 0370 9F93      		push r25
+ 879 0372 8F93      		push r24
+ 880 0374 00C0      		rjmp .L87
+ 881               	.L32:
+ 251:../freeRTOS750/lib_time/strftime.c ****                 length = sprintf(_store, "%.2u", week_of_year(timeptr, 0));
+ 883               	.LM78:
+ 884 0376 60E0      		ldi r22,0
+ 885 0378 00C0      		rjmp .L98
+ 886               	.L33:
+ 255:../freeRTOS750/lib_time/strftime.c **** 				iso_week_date_r(timeptr->tm_year + 1900, timeptr->tm_yday, &wd);
+ 888               	.LM79:
+ 889 037a F601      		movw r30,r12
+ 890 037c 6085      		ldd r22,Z+8
+ 891 037e 7185      		ldd r23,Z+9
+ 892 0380 8681      		ldd r24,Z+6
+ 893 0382 9781      		ldd r25,Z+7
+ 894 0384 AE01      		movw r20,r28
+ 895 0386 455E      		subi r20,-27
+ 896 0388 5F4F      		sbci r21,-1
+ 897 038a 8459      		subi r24,-108
+ 898 038c 984F      		sbci r25,-8
+ 899 038e 0E94 0000 		call iso_week_date_r
+ 256:../freeRTOS750/lib_time/strftime.c ****                 length = sprintf(_store, "%.2u", wd.week);
+ 901               	.LM80:
+ 902 0392 8E8D      		ldd r24,Y+30
+ 903 0394 8F93      		push r24
+ 904 0396 8D8D      		ldd r24,Y+29
+ 905 0398 00C0      		rjmp .L91
+ 906               	.L49:
+ 260:../freeRTOS750/lib_time/strftime.c ****                 length = sprintf(_store, "%u", timeptr->tm_wday);
+ 908               	.LM81:
+ 909 039a F601      		movw r30,r12
+ 910 039c 2481      		ldd r18,Z+4
+ 911 039e 822F      		mov r24,r18
+ 912 03a0 9927      		clr r25
+ 913 03a2 87FD      		sbrc r24,7
+ 914 03a4 9095      		com r25
+ 915 03a6 9F93      		push r25
+ 916 03a8 2F93      		push r18
+ 917 03aa 00C0      		rjmp .L88
+ 918               	.L34:
+ 264:../freeRTOS750/lib_time/strftime.c ****                 w = week_of_year(timeptr, 1);
+ 920               	.LM82:
+ 921 03ac 61E0      		ldi r22,lo8(1)
+ 922               	.L98:
+ 923 03ae C601      		movw r24,r12
+ 924 03b0 0E94 0000 		call week_of_year
+ 265:../freeRTOS750/lib_time/strftime.c ****                 length = sprintf(_store, "%.2u", w);
+ 926               	.LM83:
+ 927 03b4 1F92      		push __zero_reg__
+ 928 03b6 00C0      		rjmp .L91
+ 929               	.L50:
+ 269:../freeRTOS750/lib_time/strftime.c ****                 length = sprintf(_store, "%.2u/%.2u/%.2u", timeptr->tm_mon + 1, timeptr->tm_mday, t
+ 931               	.LM84:
+ 932 03b8 F601      		movw r30,r12
+ 933 03ba 8681      		ldd r24,Z+6
+ 934 03bc 9781      		ldd r25,Z+7
+ 935 03be B101      		movw r22,r2
+ 936 03c0 0E94 0000 		call __divmodhi4
+ 937 03c4 9F93      		push r25
+ 938 03c6 8F93      		push r24
+ 939 03c8 2381      		ldd r18,Z+3
+ 940 03ca 822F      		mov r24,r18
+ 941 03cc 9927      		clr r25
+ 942 03ce 87FD      		sbrc r24,7
+ 943 03d0 9095      		com r25
+ 944 03d2 9F93      		push r25
+ 945 03d4 2F93      		push r18
+ 946 03d6 8581      		ldd r24,Z+5
+ 947 03d8 9927      		clr r25
+ 948 03da 87FD      		sbrc r24,7
+ 949 03dc 9095      		com r25
+ 950 03de 0196      		adiw r24,1
+ 951 03e0 9F93      		push r25
+ 952 03e2 8F93      		push r24
+ 953 03e4 80E0      		ldi r24,lo8(.LC2)
+ 954 03e6 90E0      		ldi r25,hi8(.LC2)
+ 955               	.L95:
+ 956 03e8 9F93      		push r25
+ 957 03ea 8F93      		push r24
+ 958               	.L102:
+ 959 03ec FF92      		push r15
+ 960 03ee EF92      		push r14
+ 961 03f0 0E94 0000 		call sprintf
+ 962 03f4 00C0      		rjmp .L101
+ 963               	.L35:
+ 273:../freeRTOS750/lib_time/strftime.c ****                 length = sprintf(_store, "%.2u:%.2u:%.2u", timeptr->tm_hour, timeptr->tm_min, timep
+ 965               	.LM85:
+ 966 03f6 F601      		movw r30,r12
+ 967 03f8 2081      		ld r18,Z
+ 968 03fa 822F      		mov r24,r18
+ 969 03fc 9927      		clr r25
+ 970 03fe 87FD      		sbrc r24,7
+ 971 0400 9095      		com r25
+ 972 0402 9F93      		push r25
+ 973 0404 2F93      		push r18
+ 974 0406 2181      		ldd r18,Z+1
+ 975 0408 822F      		mov r24,r18
+ 976 040a 9927      		clr r25
+ 977 040c 87FD      		sbrc r24,7
+ 978 040e 9095      		com r25
+ 979 0410 9F93      		push r25
+ 980 0412 2F93      		push r18
+ 981 0414 2281      		ldd r18,Z+2
+ 982 0416 822F      		mov r24,r18
+ 983 0418 9927      		clr r25
+ 984 041a 87FD      		sbrc r24,7
+ 985 041c 9095      		com r25
+ 986 041e 9F93      		push r25
+ 987 0420 2F93      		push r18
+ 988 0422 40E0      		ldi r20,lo8(.LC13)
+ 989 0424 50E0      		ldi r21,hi8(.LC13)
+ 990 0426 5F93      		push r21
+ 991 0428 4F93      		push r20
+ 992 042a 00C0      		rjmp .L102
+ 993               	.L51:
+ 277:../freeRTOS750/lib_time/strftime.c ****                 length = sprintf(_store, "%.2u", timeptr->tm_year % 100);
+ 995               	.LM86:
+ 996 042c F601      		movw r30,r12
+ 997 042e 8681      		ldd r24,Z+6
+ 998 0430 9781      		ldd r25,Z+7
+ 999 0432 B101      		movw r22,r2
+ 1000 0434 0E94 0000 		call __divmodhi4
+ 1001               	.L94:
+ 1002 0438 9F93      		push r25
+ 1003               	.L91:
+ 1004 043a 8F93      		push r24
+ 1005               	.L93:
+ 1006 043c BF92      		push r11
+ 1007 043e AF92      		push r10
+ 1008 0440 00C0      		rjmp .L87
+ 1009               	.L36:
+ 281:../freeRTOS750/lib_time/strftime.c ****                 length = sprintf(_store, "%u", timeptr->tm_year + 1900);
+ 1011               	.LM87:
+ 1012 0442 F601      		movw r30,r12
+ 1013 0444 8681      		ldd r24,Z+6
+ 1014 0446 9781      		ldd r25,Z+7
+ 1015 0448 8459      		subi r24,-108
+ 1016 044a 984F      		sbci r25,-8
+ 1017 044c 9F93      		push r25
+ 1018 044e 8F93      		push r24
+ 1019               	.L88:
+ 1020 0450 40E0      		ldi r20,lo8(.LC12)
+ 1021 0452 50E0      		ldi r21,hi8(.LC12)
+ 1022 0454 5F93      		push r21
+ 1023 0456 4F93      		push r20
+ 1024               	.L87:
+ 1025 0458 FF92      		push r15
+ 1026 045a EF92      		push r14
+ 1027 045c 0E94 0000 		call sprintf
+ 1028 0460 9C01      		movw r18,r24
+ 282:../freeRTOS750/lib_time/strftime.c ****                 break;
+ 1030               	.LM88:
+ 1031 0462 0F90      		pop __tmp_reg__
+ 1032 0464 0F90      		pop __tmp_reg__
+ 1033 0466 0F90      		pop __tmp_reg__
+ 1034 0468 0F90      		pop __tmp_reg__
+ 1035 046a 0F90      		pop __tmp_reg__
+ 1036 046c 0F90      		pop __tmp_reg__
+ 1037 046e 00C0      		rjmp .L54
+ 1038               	.L52:
+ 285:../freeRTOS750/lib_time/strftime.c ****                 d = __utc_offset / 60;
+ 1040               	.LM89:
+ 1041 0470 6091 0000 		lds r22,__utc_offset
+ 1042 0474 7091 0000 		lds r23,__utc_offset+1
+ 1043 0478 8091 0000 		lds r24,__utc_offset+2
+ 1044 047c 9091 0000 		lds r25,__utc_offset+3
+ 1045 0480 2CE3      		ldi r18,lo8(60)
+ 1046 0482 30E0      		ldi r19,0
+ 1047 0484 40E0      		ldi r20,0
+ 1048 0486 50E0      		ldi r21,0
+ 1049 0488 0E94 0000 		call __divmodsi4
+ 286:../freeRTOS750/lib_time/strftime.c ****                 w = timeptr->tm_isdst / 60;
+ 1051               	.LM90:
+ 1052 048c F601      		movw r30,r12
+ 1053 048e 8285      		ldd r24,Z+10
+ 1054 0490 9385      		ldd r25,Z+11
+ 1055 0492 6CE3      		ldi r22,lo8(60)
+ 1056 0494 70E0      		ldi r23,0
+ 1057 0496 0E94 0000 		call __divmodhi4
+ 287:../freeRTOS750/lib_time/strftime.c ****                 if (w > 0)
+ 1059               	.LM91:
+ 1060 049a 1616      		cp __zero_reg__,r22
+ 1061 049c 1706      		cpc __zero_reg__,r23
+ 1062 049e 04F4      		brge .L61
+ 288:../freeRTOS750/lib_time/strftime.c ****                     d += w;
+ 1064               	.LM92:
+ 1065 04a0 260F      		add r18,r22
+ 1066 04a2 371F      		adc r19,r23
+ 1067               	.L61:
+ 289:../freeRTOS750/lib_time/strftime.c ****                 w = abs(d % 60);
+ 1069               	.LM93:
+ 1070 04a4 C901      		movw r24,r18
+ 1071 04a6 6CE3      		ldi r22,lo8(60)
+ 1072 04a8 70E0      		ldi r23,0
+ 1073 04aa 0E94 0000 		call __divmodhi4
+ 1074 04ae 97FF      		sbrs r25,7
+ 1075 04b0 00C0      		rjmp .L62
+ 1076 04b2 9195      		neg r25
+ 1077 04b4 8195      		neg r24
+ 1078 04b6 9109      		sbc r25,__zero_reg__
+ 1079               	.L62:
+ 291:../freeRTOS750/lib_time/strftime.c ****                 length = sprintf(_store, "%+.2d%.2d", d, w);
+ 1081               	.LM94:
+ 1082 04b8 9F93      		push r25
+ 1083 04ba 8F93      		push r24
+ 290:../freeRTOS750/lib_time/strftime.c ****                 d = d / 60;
+ 1085               	.LM95:
+ 1086 04bc C901      		movw r24,r18
+ 1087 04be 6CE3      		ldi r22,lo8(60)
+ 1088 04c0 70E0      		ldi r23,0
+ 1089 04c2 0E94 0000 		call __divmodhi4
+ 291:../freeRTOS750/lib_time/strftime.c ****                 length = sprintf(_store, "%+.2d%.2d", d, w);
+ 1091               	.LM96:
+ 1092 04c6 7F93      		push r23
+ 1093 04c8 6F93      		push r22
+ 1094 04ca 40E0      		ldi r20,lo8(.LC14)
+ 1095 04cc 50E0      		ldi r21,hi8(.LC14)
+ 1096 04ce 5F93      		push r21
+ 1097 04d0 4F93      		push r20
+ 1098               	.L100:
+ 1099 04d2 FF92      		push r15
+ 1100 04d4 EF92      		push r14
+ 1101 04d6 0E94 0000 		call sprintf
+ 1102               	.L101:
+ 1103 04da 9C01      		movw r18,r24
+ 292:../freeRTOS750/lib_time/strftime.c ****                 break;
+ 1105               	.LM97:
+ 1106 04dc 0FB6      		in __tmp_reg__,__SREG__
+ 1107 04de F894      		cli
+ 1108 04e0 DEBF      		out __SP_H__,r29
+ 1109 04e2 0FBE      		out __SREG__,__tmp_reg__
+ 1110 04e4 CDBF      		out __SP_L__,r28
+ 1111 04e6 00C0      		rjmp .L54
+ 1112               	.L18:
+ 1114               	.LM98:
+ 1115 04e8 1983      		std Y+1,r17
+ 297:../freeRTOS750/lib_time/strftime.c ****                 _store[1] = 0;
+ 1117               	.LM99:
+ 1118 04ea 1A82      		std Y+2,__zero_reg__
+ 1119               	.L83:
+ 295:../freeRTOS750/lib_time/strftime.c ****                 length = 1;
+ 1121               	.LM100:
+ 1122 04ec 21E0      		ldi r18,lo8(1)
+ 1123 04ee 30E0      		ldi r19,0
+ 1124               	.L54:
+ 298:../freeRTOS750/lib_time/strftime.c ****                 break;
+ 299:../freeRTOS750/lib_time/strftime.c ****             }
+ 300:../freeRTOS750/lib_time/strftime.c **** 
+ 301:../freeRTOS750/lib_time/strftime.c ****             if ((length + count) < limit) {
+ 1126               	.LM101:
+ 1127 04f0 C901      		movw r24,r18
+ 1128 04f2 860D      		add r24,r6
+ 1129 04f4 971D      		adc r25,r7
+ 1130 04f6 49A1      		ldd r20,Y+33
+ 1131 04f8 5AA1      		ldd r21,Y+34
+ 1132 04fa 8417      		cp r24,r20
+ 1133 04fc 9507      		cpc r25,r21
+ 1134 04fe 00F4      		brsh .L89
+ 1135 0500 F701      		movw r30,r14
+ 1136 0502 D201      		movw r26,r4
+ 1137 0504 00C0      		rjmp .L64
+ 1138               	.L65:
+ 302:../freeRTOS750/lib_time/strftime.c ****                 count += length;
+ 303:../freeRTOS750/lib_time/strftime.c ****                 for (d = 0; d < (int) length; d++) {
+ 304:../freeRTOS750/lib_time/strftime.c ****                     *buffer++ = _store[d];
+ 1140               	.LM102:
+ 1141 0506 4191      		ld r20,Z+
+ 1142 0508 4D93      		st X+,r20
+ 1143               	.L64:
+  87:../freeRTOS750/lib_time/strftime.c **** strftime(char *buffer, size_t limit, const char *pattern, const struct tm * timeptr)
+ 1145               	.LM103:
+ 1146 050a AF01      		movw r20,r30
+ 1147 050c 4E19      		sub r20,r14
+ 1148 050e 5F09      		sbc r21,r15
+ 303:../freeRTOS750/lib_time/strftime.c ****                 for (d = 0; d < (int) length; d++) {
+ 1150               	.LM104:
+ 1151 0510 4217      		cp r20,r18
+ 1152 0512 5307      		cpc r21,r19
+ 1153 0514 04F0      		brlt .L65
+  87:../freeRTOS750/lib_time/strftime.c **** strftime(char *buffer, size_t limit, const char *pattern, const struct tm * timeptr)
+ 1155               	.LM105:
+ 1156 0516 37FF      		sbrs r19,7
+ 1157 0518 00C0      		rjmp .L66
+ 1158 051a 20E0      		ldi r18,0
+ 1159 051c 30E0      		ldi r19,0
+ 1160               	.L66:
+ 1161 051e 420E      		add r4,r18
+ 1162 0520 531E      		adc r5,r19
+ 1163 0522 00C0      		rjmp .L67
+ 1164               	.L15:
+ 305:../freeRTOS750/lib_time/strftime.c ****                 }
+ 306:../freeRTOS750/lib_time/strftime.c ****             } else {
+ 307:../freeRTOS750/lib_time/strftime.c ****                 *buffer = 0;
+ 308:../freeRTOS750/lib_time/strftime.c ****                 return count;
+ 309:../freeRTOS750/lib_time/strftime.c ****             }
+ 310:../freeRTOS750/lib_time/strftime.c **** 
+ 311:../freeRTOS750/lib_time/strftime.c ****         } else {    /* copy a literal */
+ 312:../freeRTOS750/lib_time/strftime.c ****             *buffer = c;
+ 1166               	.LM106:
+ 1167 0524 F201      		movw r30,r4
+ 1168 0526 8193      		st Z+,r24
+ 1169 0528 2F01      		movw r4,r30
+ 313:../freeRTOS750/lib_time/strftime.c ****             buffer++;
+ 314:../freeRTOS750/lib_time/strftime.c ****             count++;
+ 1171               	.LM107:
+ 1172 052a FFEF      		ldi r31,-1
+ 1173 052c 6F1A      		sub r6,r31
+ 1174 052e 7F0A      		sbc r7,r31
+ 315:../freeRTOS750/lib_time/strftime.c ****             if (c == 0)
+ 1176               	.LM108:
+ 1177 0530 8823      		tst r24
+ 1178 0532 01F0      		breq .L68
+  97:../freeRTOS750/lib_time/strftime.c ****         c = *pattern++;
+ 1180               	.LM109:
+ 1181 0534 2FEF      		ldi r18,-1
+ 1182 0536 821A      		sub r8,r18
+ 1183 0538 920A      		sbc r9,r18
+ 314:../freeRTOS750/lib_time/strftime.c ****             count++;
+ 1185               	.LM110:
+ 1186 053a C301      		movw r24,r6
+ 1187               	.L67:
+ 314:../freeRTOS750/lib_time/strftime.c ****             count++;
+ 1189               	.LM111:
+ 1190 053c 3C01      		movw r6,r24
+ 1191               	.L14:
+  96:../freeRTOS750/lib_time/strftime.c ****     while (count < limit) {
+ 1193               	.LM112:
+ 1194 053e 49A1      		ldd r20,Y+33
+ 1195 0540 5AA1      		ldd r21,Y+34
+ 1196 0542 6416      		cp r6,r20
+ 1197 0544 7506      		cpc r7,r21
+ 1198 0546 00F4      		brsh .+2
+ 1199 0548 00C0      		rjmp .L69
+ 1200               	.L89:
+ 316:../freeRTOS750/lib_time/strftime.c ****                 return count;
+ 317:../freeRTOS750/lib_time/strftime.c ****         }
+ 318:../freeRTOS750/lib_time/strftime.c ****     }
+ 319:../freeRTOS750/lib_time/strftime.c **** 
+ 320:../freeRTOS750/lib_time/strftime.c ****     *buffer = 0;
+ 1202               	.LM113:
+ 1203 054a F201      		movw r30,r4
+ 1204 054c 1082      		st Z,__zero_reg__
+ 1205               	.L68:
+ 321:../freeRTOS750/lib_time/strftime.c ****     return count;
+ 322:../freeRTOS750/lib_time/strftime.c **** }
+ 1207               	.LM114:
+ 1208 054e C301      		movw r24,r6
+ 1209               	/* epilogue start */
+ 1210 0550 A296      		adiw r28,34
+ 1211 0552 0FB6      		in __tmp_reg__,__SREG__
+ 1212 0554 F894      		cli
+ 1213 0556 DEBF      		out __SP_H__,r29
+ 1214 0558 0FBE      		out __SREG__,__tmp_reg__
+ 1215 055a CDBF      		out __SP_L__,r28
+ 1216 055c DF91      		pop r29
+ 1217 055e CF91      		pop r28
+ 1218 0560 1F91      		pop r17
+ 1219 0562 0F91      		pop r16
+ 1220 0564 FF90      		pop r15
+ 1221 0566 EF90      		pop r14
+ 1222 0568 DF90      		pop r13
+ 1223 056a CF90      		pop r12
+ 1224 056c BF90      		pop r11
+ 1225 056e AF90      		pop r10
+ 1226 0570 9F90      		pop r9
+ 1227 0572 8F90      		pop r8
+ 1228 0574 7F90      		pop r7
+ 1229 0576 6F90      		pop r6
+ 1230 0578 5F90      		pop r5
+ 1231 057a 4F90      		pop r4
+ 1232 057c 3F90      		pop r3
+ 1233 057e 2F90      		pop r2
+ 1234 0580 0895      		ret
+ 1241               	.Lscope2:
+ 1243               		.stabd	78,0,0
+ 1244               	.global	strfmonths
+ 1245               		.section	.progmem.data,"a",@progbits
+ 1248               	strfmonths:
+ 1249 0000 4A61 6E75 		.string	"January February March April May June July August September October November December "
+ 1249      6172 7920 
+ 1249      4665 6272 
+ 1249      7561 7279 
+ 1249      204D 6172 
+ 1250               	.global	strfwkdays
+ 1253               	strfwkdays:
+ 1254 0057 5375 6E64 		.string	"Sunday Monday Tuesday Wednesday Thursday Friday Saturday "
+ 1254      6179 204D 
+ 1254      6F6E 6461 
+ 1254      7920 5475 
+ 1254      6573 6461 
+ 1257               		.text
+ 1259               	.Letext0:
+ 1260               		.ident	"GCC: (GNU) 4.7.2"
+ 1261               	.global __do_copy_data
+DEFINED SYMBOLS
+                            *ABS*:00000000 strftime.c
+     /tmp/ccJIyMc8.s:2      *ABS*:0000003e __SP_H__
+     /tmp/ccJIyMc8.s:3      *ABS*:0000003d __SP_L__
+     /tmp/ccJIyMc8.s:4      *ABS*:0000003f __SREG__
+     /tmp/ccJIyMc8.s:5      *ABS*:00000000 __tmp_reg__
+     /tmp/ccJIyMc8.s:6      *ABS*:00000001 __zero_reg__
+     /tmp/ccJIyMc8.s:94     .text:00000000 pgm_copystring
+     /tmp/ccJIyMc8.s:251    .text:0000007a strftime
+     /tmp/ccJIyMc8.s:1253   .progmem.data:00000057 strfwkdays
+     /tmp/ccJIyMc8.s:1248   .progmem.data:00000000 strfmonths
+
+UNDEFINED SYMBOLS
+__tablejump2__
+asctime_r
+__divmodhi4
+iso_week_date_r
+__divmodqi4
+sprintf
+strcpy
+week_of_year
+__utc_offset
+__divmodsi4
+__do_copy_data

@@ -1,0 +1,465 @@
+   1               		.file	"list.c"
+   2               	__SP_H__ = 0x3e
+   3               	__SP_L__ = 0x3d
+   4               	__SREG__ = 0x3f
+   5               	__tmp_reg__ = 0
+   6               	__zero_reg__ = 1
+   9               		.text
+  10               	.Ltext0:
+ 105               	.global	vListInitialise
+ 107               	vListInitialise:
+ 108               		.stabd	46,0,0
+   1:../freeRTOS750/list.c **** /*
+   2:../freeRTOS750/list.c ****     FreeRTOS V7.5.0 - Copyright (C) 2013 Real Time Engineers Ltd.
+   3:../freeRTOS750/list.c **** 
+   4:../freeRTOS750/list.c ****     VISIT http://www.FreeRTOS.org TO ENSURE YOU ARE USING THE LATEST VERSION.
+   5:../freeRTOS750/list.c **** 
+   6:../freeRTOS750/list.c ****     ***************************************************************************
+   7:../freeRTOS750/list.c ****      *                                                                       *
+   8:../freeRTOS750/list.c ****      *    FreeRTOS provides completely free yet professionally developed,    *
+   9:../freeRTOS750/list.c ****      *    robust, strictly quality controlled, supported, and cross          *
+  10:../freeRTOS750/list.c ****      *    platform software that has become a de facto standard.             *
+  11:../freeRTOS750/list.c ****      *                                                                       *
+  12:../freeRTOS750/list.c ****      *    Help yourself get started quickly and support the FreeRTOS         *
+  13:../freeRTOS750/list.c ****      *    project by purchasing a FreeRTOS tutorial book, reference          *
+  14:../freeRTOS750/list.c ****      *    manual, or both from: http://www.FreeRTOS.org/Documentation        *
+  15:../freeRTOS750/list.c ****      *                                                                       *
+  16:../freeRTOS750/list.c ****      *    Thank you!                                                         *
+  17:../freeRTOS750/list.c ****      *                                                                       *
+  18:../freeRTOS750/list.c ****     ***************************************************************************
+  19:../freeRTOS750/list.c **** 
+  20:../freeRTOS750/list.c ****     This file is part of the FreeRTOS distribution.
+  21:../freeRTOS750/list.c **** 
+  22:../freeRTOS750/list.c ****     FreeRTOS is free software; you can redistribute it and/or modify it under
+  23:../freeRTOS750/list.c ****     the terms of the GNU General Public License (version 2) as published by the
+  24:../freeRTOS750/list.c ****     Free Software Foundation >>!AND MODIFIED BY!<< the FreeRTOS exception.
+  25:../freeRTOS750/list.c **** 
+  26:../freeRTOS750/list.c ****     >>! NOTE: The modification to the GPL is included to allow you to distribute
+  27:../freeRTOS750/list.c ****     >>! a combined work that includes FreeRTOS without being obliged to provide
+  28:../freeRTOS750/list.c ****     >>! the source code for proprietary components outside of the FreeRTOS
+  29:../freeRTOS750/list.c ****     >>! kernel.
+  30:../freeRTOS750/list.c **** 
+  31:../freeRTOS750/list.c ****     FreeRTOS is distributed in the hope that it will be useful, but WITHOUT ANY
+  32:../freeRTOS750/list.c ****     WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+  33:../freeRTOS750/list.c ****     FOR A PARTICULAR PURPOSE.  Full license text is available from the following
+  34:../freeRTOS750/list.c ****     link: http://www.freertos.org/a00114.html
+  35:../freeRTOS750/list.c **** 
+  36:../freeRTOS750/list.c ****     1 tab == 4 spaces!
+  37:../freeRTOS750/list.c **** 
+  38:../freeRTOS750/list.c ****     ***************************************************************************
+  39:../freeRTOS750/list.c ****      *                                                                       *
+  40:../freeRTOS750/list.c ****      *    Having a problem?  Start by reading the FAQ "My application does   *
+  41:../freeRTOS750/list.c ****      *    not run, what could be wrong?"                                     *
+  42:../freeRTOS750/list.c ****      *                                                                       *
+  43:../freeRTOS750/list.c ****      *    http://www.FreeRTOS.org/FAQHelp.html                               *
+  44:../freeRTOS750/list.c ****      *                                                                       *
+  45:../freeRTOS750/list.c ****     ***************************************************************************
+  46:../freeRTOS750/list.c **** 
+  47:../freeRTOS750/list.c ****     http://www.FreeRTOS.org - Documentation, books, training, latest versions,
+  48:../freeRTOS750/list.c ****     license and Real Time Engineers Ltd. contact details.
+  49:../freeRTOS750/list.c **** 
+  50:../freeRTOS750/list.c ****     http://www.FreeRTOS.org/plus - A selection of FreeRTOS ecosystem products,
+  51:../freeRTOS750/list.c ****     including FreeRTOS+Trace - an indispensable productivity tool, a DOS
+  52:../freeRTOS750/list.c ****     compatible FAT file system, and our tiny thread aware UDP/IP stack.
+  53:../freeRTOS750/list.c **** 
+  54:../freeRTOS750/list.c ****     http://www.OpenRTOS.com - Real Time Engineers ltd license FreeRTOS to High
+  55:../freeRTOS750/list.c ****     Integrity Systems to sell under the OpenRTOS brand.  Low cost OpenRTOS
+  56:../freeRTOS750/list.c ****     licenses offer ticketed support, indemnification and middleware.
+  57:../freeRTOS750/list.c **** 
+  58:../freeRTOS750/list.c ****     http://www.SafeRTOS.com - High Integrity Systems also provide a safety
+  59:../freeRTOS750/list.c ****     engineered and independently SIL3 certified version for use in safety and
+  60:../freeRTOS750/list.c ****     mission critical applications that require provable dependability.
+  61:../freeRTOS750/list.c **** 
+  62:../freeRTOS750/list.c ****     1 tab == 4 spaces!
+  63:../freeRTOS750/list.c **** */
+  64:../freeRTOS750/list.c **** 
+  65:../freeRTOS750/list.c **** 
+  66:../freeRTOS750/list.c **** #include <stdlib.h>
+  67:../freeRTOS750/list.c **** #include "FreeRTOS.h"
+  68:../freeRTOS750/list.c **** #include "list.h"
+  69:../freeRTOS750/list.c **** 
+  70:../freeRTOS750/list.c **** /*-----------------------------------------------------------
+  71:../freeRTOS750/list.c ****  * PUBLIC LIST API documented in list.h
+  72:../freeRTOS750/list.c ****  *----------------------------------------------------------*/
+  73:../freeRTOS750/list.c **** 
+  74:../freeRTOS750/list.c **** void vListInitialise( xList * const pxList )
+  75:../freeRTOS750/list.c **** {
+ 110               	.LM0:
+ 111               	.LFBB1:
+ 112               	/* prologue: function */
+ 113               	/* frame size = 0 */
+ 114               	/* stack size = 0 */
+ 115               	.L__stack_usage = 0
+ 116 0000 FC01      		movw r30,r24
+  76:../freeRTOS750/list.c **** 	/* The list structure contains a list item which is used to mark the
+  77:../freeRTOS750/list.c **** 	end of the list.  To initialise the list the list end is inserted
+  78:../freeRTOS750/list.c **** 	as the only list entry. */
+  79:../freeRTOS750/list.c **** 	pxList->pxIndex = ( xListItem * ) &( pxList->xListEnd );			/*lint !e826 !e740 The mini list struct
+ 118               	.LM1:
+ 119 0002 0396      		adiw r24,3
+ 120 0004 9283      		std Z+2,r25
+ 121 0006 8183      		std Z+1,r24
+  80:../freeRTOS750/list.c **** 
+  81:../freeRTOS750/list.c **** 	/* The list end value is the highest possible value in the list to
+  82:../freeRTOS750/list.c **** 	ensure it remains at the end of the list. */
+  83:../freeRTOS750/list.c **** 	pxList->xListEnd.xItemValue = portMAX_DELAY;
+ 123               	.LM2:
+ 124 0008 2FEF      		ldi r18,lo8(-1)
+ 125 000a 3FEF      		ldi r19,lo8(-1)
+ 126 000c 3483      		std Z+4,r19
+ 127 000e 2383      		std Z+3,r18
+  84:../freeRTOS750/list.c **** 
+  85:../freeRTOS750/list.c **** 	/* The list end next and previous pointers point to itself so we know
+  86:../freeRTOS750/list.c **** 	when the list is empty. */
+  87:../freeRTOS750/list.c **** 	pxList->xListEnd.pxNext = ( xListItem * ) &( pxList->xListEnd );	/*lint !e826 !e740 The mini list 
+ 129               	.LM3:
+ 130 0010 9683      		std Z+6,r25
+ 131 0012 8583      		std Z+5,r24
+  88:../freeRTOS750/list.c **** 	pxList->xListEnd.pxPrevious = ( xListItem * ) &( pxList->xListEnd );/*lint !e826 !e740 The mini li
+ 133               	.LM4:
+ 134 0014 9087      		std Z+8,r25
+ 135 0016 8783      		std Z+7,r24
+  89:../freeRTOS750/list.c **** 
+  90:../freeRTOS750/list.c **** 	pxList->uxNumberOfItems = ( unsigned portBASE_TYPE ) 0U;
+ 137               	.LM5:
+ 138 0018 1082      		st Z,__zero_reg__
+ 139 001a 0895      		ret
+ 141               	.Lscope1:
+ 143               		.stabd	78,0,0
+ 146               	.global	vListInitialiseItem
+ 148               	vListInitialiseItem:
+ 149               		.stabd	46,0,0
+  91:../freeRTOS750/list.c **** }
+  92:../freeRTOS750/list.c **** /*-----------------------------------------------------------*/
+  93:../freeRTOS750/list.c **** 
+  94:../freeRTOS750/list.c **** void vListInitialiseItem( xListItem * const pxItem )
+  95:../freeRTOS750/list.c **** {
+ 151               	.LM6:
+ 152               	.LFBB2:
+ 153               	/* prologue: function */
+ 154               	/* frame size = 0 */
+ 155               	/* stack size = 0 */
+ 156               	.L__stack_usage = 0
+  96:../freeRTOS750/list.c **** 	/* Make sure the list item is not recorded as being on a list. */
+  97:../freeRTOS750/list.c **** 	pxItem->pvContainer = NULL;
+ 158               	.LM7:
+ 159 001c FC01      		movw r30,r24
+ 160 001e 1186      		std Z+9,__zero_reg__
+ 161 0020 1086      		std Z+8,__zero_reg__
+ 162 0022 0895      		ret
+ 164               	.Lscope2:
+ 166               		.stabd	78,0,0
+ 170               	.global	vListInsertEnd
+ 172               	vListInsertEnd:
+ 173               		.stabd	46,0,0
+  98:../freeRTOS750/list.c **** }
+  99:../freeRTOS750/list.c **** /*-----------------------------------------------------------*/
+ 100:../freeRTOS750/list.c **** 
+ 101:../freeRTOS750/list.c **** void vListInsertEnd( xList * const pxList, xListItem * const pxNewListItem )
+ 102:../freeRTOS750/list.c **** {
+ 175               	.LM8:
+ 176               	.LFBB3:
+ 177 0024 CF93      		push r28
+ 178 0026 DF93      		push r29
+ 179               	/* prologue: function */
+ 180               	/* frame size = 0 */
+ 181               	/* stack size = 2 */
+ 182               	.L__stack_usage = 2
+ 183 0028 9C01      		movw r18,r24
+ 184 002a FB01      		movw r30,r22
+ 103:../freeRTOS750/list.c **** xListItem * pxIndex;
+ 104:../freeRTOS750/list.c **** 
+ 105:../freeRTOS750/list.c **** 	/* Insert a new list item into pxList, but rather than sort the list,
+ 106:../freeRTOS750/list.c **** 	makes the new list item the last item to be removed by a call to
+ 107:../freeRTOS750/list.c **** 	pvListGetOwnerOfNextEntry. */
+ 108:../freeRTOS750/list.c **** 	pxIndex = pxList->pxIndex;
+ 186               	.LM9:
+ 187 002c DC01      		movw r26,r24
+ 188 002e 1196      		adiw r26,1
+ 189 0030 CD91      		ld r28,X+
+ 190 0032 DC91      		ld r29,X
+ 191 0034 1297      		sbiw r26,1+1
+ 109:../freeRTOS750/list.c **** 
+ 110:../freeRTOS750/list.c **** 	pxNewListItem->pxNext = pxIndex;
+ 193               	.LM10:
+ 194 0036 D383      		std Z+3,r29
+ 195 0038 C283      		std Z+2,r28
+ 111:../freeRTOS750/list.c **** 	pxNewListItem->pxPrevious = pxIndex->pxPrevious;
+ 197               	.LM11:
+ 198 003a 8C81      		ldd r24,Y+4
+ 199 003c 9D81      		ldd r25,Y+5
+ 200 003e 9583      		std Z+5,r25
+ 201 0040 8483      		std Z+4,r24
+ 112:../freeRTOS750/list.c **** 	pxIndex->pxPrevious->pxNext = pxNewListItem;
+ 203               	.LM12:
+ 204 0042 8C81      		ldd r24,Y+4
+ 205 0044 9D81      		ldd r25,Y+5
+ 206 0046 DC01      		movw r26,r24
+ 207 0048 1396      		adiw r26,2+1
+ 208 004a 7C93      		st X,r23
+ 209 004c 6E93      		st -X,r22
+ 210 004e 1297      		sbiw r26,2
+ 113:../freeRTOS750/list.c **** 	pxIndex->pxPrevious = pxNewListItem;
+ 212               	.LM13:
+ 213 0050 7D83      		std Y+5,r23
+ 214 0052 6C83      		std Y+4,r22
+ 114:../freeRTOS750/list.c **** 
+ 115:../freeRTOS750/list.c **** 	/* Remember which list the item is in. */
+ 116:../freeRTOS750/list.c **** 	pxNewListItem->pvContainer = ( void * ) pxList;
+ 216               	.LM14:
+ 217 0054 3187      		std Z+9,r19
+ 218 0056 2087      		std Z+8,r18
+ 117:../freeRTOS750/list.c **** 
+ 118:../freeRTOS750/list.c **** 	( pxList->uxNumberOfItems )++;
+ 220               	.LM15:
+ 221 0058 F901      		movw r30,r18
+ 222 005a 8081      		ld r24,Z
+ 223 005c 8F5F      		subi r24,lo8(-(1))
+ 224 005e 8083      		st Z,r24
+ 225               	/* epilogue start */
+ 119:../freeRTOS750/list.c **** }
+ 227               	.LM16:
+ 228 0060 DF91      		pop r29
+ 229 0062 CF91      		pop r28
+ 230 0064 0895      		ret
+ 235               	.Lscope3:
+ 237               		.stabd	78,0,0
+ 241               	.global	vListInsert
+ 243               	vListInsert:
+ 244               		.stabd	46,0,0
+ 120:../freeRTOS750/list.c **** /*-----------------------------------------------------------*/
+ 121:../freeRTOS750/list.c **** 
+ 122:../freeRTOS750/list.c **** void vListInsert( xList * const pxList, xListItem * const pxNewListItem )
+ 123:../freeRTOS750/list.c **** {
+ 246               	.LM17:
+ 247               	.LFBB4:
+ 248 0066 0F93      		push r16
+ 249 0068 1F93      		push r17
+ 250 006a CF93      		push r28
+ 251 006c DF93      		push r29
+ 252               	/* prologue: function */
+ 253               	/* frame size = 0 */
+ 254               	/* stack size = 4 */
+ 255               	.L__stack_usage = 4
+ 256 006e 8C01      		movw r16,r24
+ 257 0070 FB01      		movw r30,r22
+ 124:../freeRTOS750/list.c **** xListItem *pxIterator;
+ 125:../freeRTOS750/list.c **** portTickType xValueOfInsertion;
+ 126:../freeRTOS750/list.c **** 
+ 127:../freeRTOS750/list.c **** 	/* Insert the new list item into the list, sorted in ulListItem order. */
+ 128:../freeRTOS750/list.c **** 	xValueOfInsertion = pxNewListItem->xItemValue;
+ 259               	.LM18:
+ 260 0072 8081      		ld r24,Z
+ 261 0074 9181      		ldd r25,Z+1
+ 129:../freeRTOS750/list.c **** 
+ 130:../freeRTOS750/list.c **** 	/* If the list already contains a list item with the same item value then
+ 131:../freeRTOS750/list.c **** 	the new list item should be placed after it.  This ensures that TCB's which
+ 132:../freeRTOS750/list.c **** 	are stored in ready lists (all of which have the same ulListItem value)
+ 133:../freeRTOS750/list.c **** 	get an equal share of the CPU.  However, if the xItemValue is the same as
+ 134:../freeRTOS750/list.c **** 	the back marker the iteration loop below will not end.  This means we need
+ 135:../freeRTOS750/list.c **** 	to guard against this by checking the value first and modifying the
+ 136:../freeRTOS750/list.c **** 	algorithm slightly if necessary. */
+ 137:../freeRTOS750/list.c **** 	if( xValueOfInsertion == portMAX_DELAY )
+ 263               	.LM19:
+ 264 0076 8F3F      		cpi r24,-1
+ 265 0078 2FEF      		ldi r18,-1
+ 266 007a 9207      		cpc r25,r18
+ 267 007c 01F4      		brne .L5
+ 138:../freeRTOS750/list.c **** 	{
+ 139:../freeRTOS750/list.c **** 		pxIterator = pxList->xListEnd.pxPrevious;
+ 269               	.LM20:
+ 270 007e E801      		movw r28,r16
+ 271 0080 AF81      		ldd r26,Y+7
+ 272 0082 B885      		ldd r27,Y+8
+ 273 0084 00C0      		rjmp .L6
+ 274               	.L5:
+ 140:../freeRTOS750/list.c **** 	}
+ 141:../freeRTOS750/list.c **** 	else
+ 142:../freeRTOS750/list.c **** 	{
+ 143:../freeRTOS750/list.c **** 		/* *** NOTE ***********************************************************
+ 144:../freeRTOS750/list.c **** 		If you find your application is crashing here then likely causes are:
+ 145:../freeRTOS750/list.c **** 			1) Stack overflow -
+ 146:../freeRTOS750/list.c **** 			   see http://www.freertos.org/Stacks-and-stack-overflow-checking.html
+ 147:../freeRTOS750/list.c **** 			2) Incorrect interrupt priority assignment, especially on Cortex-M3
+ 148:../freeRTOS750/list.c **** 			   parts where numerically high priority values denote low actual
+ 149:../freeRTOS750/list.c **** 			   interrupt priories, which can seem counter intuitive.  See
+ 150:../freeRTOS750/list.c **** 			   configMAX_SYSCALL_INTERRUPT_PRIORITY on http://www.freertos.org/a00110.html
+ 151:../freeRTOS750/list.c **** 			3) Calling an API function from within a critical section or when
+ 152:../freeRTOS750/list.c **** 			   the scheduler is suspended, or calling an API function that does
+ 153:../freeRTOS750/list.c **** 			   not end in "FromISR" from an interrupt.
+ 154:../freeRTOS750/list.c **** 			4) Using a queue or semaphore before it has been initialised or
+ 155:../freeRTOS750/list.c **** 			   before the scheduler has been started (are interrupts firing
+ 156:../freeRTOS750/list.c **** 			   before vTaskStartScheduler() has been called?).
+ 157:../freeRTOS750/list.c **** 		See http://www.freertos.org/FAQHelp.html for more tips.
+ 158:../freeRTOS750/list.c **** 		**********************************************************************/
+ 159:../freeRTOS750/list.c **** 
+ 160:../freeRTOS750/list.c **** 		for( pxIterator = ( xListItem * ) &( pxList->xListEnd ); pxIterator->pxNext->xItemValue <= xValue
+ 276               	.LM21:
+ 277 0086 D801      		movw r26,r16
+ 278 0088 1396      		adiw r26,3
+ 279 008a 00C0      		rjmp .L7
+ 280               	.L8:
+ 281 008c D901      		movw r26,r18
+ 282               	.L7:
+ 284               	.LM22:
+ 285 008e 1296      		adiw r26,2
+ 286 0090 2D91      		ld r18,X+
+ 287 0092 3C91      		ld r19,X
+ 288 0094 1397      		sbiw r26,2+1
+ 289 0096 E901      		movw r28,r18
+ 290 0098 4881      		ld r20,Y
+ 291 009a 5981      		ldd r21,Y+1
+ 292 009c 8417      		cp r24,r20
+ 293 009e 9507      		cpc r25,r21
+ 294 00a0 00F4      		brsh .L8
+ 295               	.L6:
+ 161:../freeRTOS750/list.c **** 		{
+ 162:../freeRTOS750/list.c **** 			/* There is nothing to do here, we are just iterating to the
+ 163:../freeRTOS750/list.c **** 			wanted insertion position. */
+ 164:../freeRTOS750/list.c **** 		}
+ 165:../freeRTOS750/list.c **** 	}
+ 166:../freeRTOS750/list.c **** 
+ 167:../freeRTOS750/list.c **** 	pxNewListItem->pxNext = pxIterator->pxNext;
+ 297               	.LM23:
+ 298 00a2 1296      		adiw r26,2
+ 299 00a4 8D91      		ld r24,X+
+ 300 00a6 9C91      		ld r25,X
+ 301 00a8 1397      		sbiw r26,2+1
+ 302 00aa 9383      		std Z+3,r25
+ 303 00ac 8283      		std Z+2,r24
+ 168:../freeRTOS750/list.c **** 	pxNewListItem->pxNext->pxPrevious = pxNewListItem;
+ 305               	.LM24:
+ 306 00ae EC01      		movw r28,r24
+ 307 00b0 FD83      		std Y+5,r31
+ 308 00b2 EC83      		std Y+4,r30
+ 169:../freeRTOS750/list.c **** 	pxNewListItem->pxPrevious = pxIterator;
+ 310               	.LM25:
+ 311 00b4 B583      		std Z+5,r27
+ 312 00b6 A483      		std Z+4,r26
+ 170:../freeRTOS750/list.c **** 	pxIterator->pxNext = pxNewListItem;
+ 314               	.LM26:
+ 315 00b8 1396      		adiw r26,2+1
+ 316 00ba FC93      		st X,r31
+ 317 00bc EE93      		st -X,r30
+ 318 00be 1297      		sbiw r26,2
+ 171:../freeRTOS750/list.c **** 
+ 172:../freeRTOS750/list.c **** 	/* Remember which list the item is in.  This allows fast removal of the
+ 173:../freeRTOS750/list.c **** 	item later. */
+ 174:../freeRTOS750/list.c **** 	pxNewListItem->pvContainer = ( void * ) pxList;
+ 320               	.LM27:
+ 321 00c0 1187      		std Z+9,r17
+ 322 00c2 0087      		std Z+8,r16
+ 175:../freeRTOS750/list.c **** 
+ 176:../freeRTOS750/list.c **** 	( pxList->uxNumberOfItems )++;
+ 324               	.LM28:
+ 325 00c4 F801      		movw r30,r16
+ 326 00c6 8081      		ld r24,Z
+ 327 00c8 8F5F      		subi r24,lo8(-(1))
+ 328 00ca 8083      		st Z,r24
+ 329               	/* epilogue start */
+ 177:../freeRTOS750/list.c **** }
+ 331               	.LM29:
+ 332 00cc DF91      		pop r29
+ 333 00ce CF91      		pop r28
+ 334 00d0 1F91      		pop r17
+ 335 00d2 0F91      		pop r16
+ 336 00d4 0895      		ret
+ 341               	.Lscope4:
+ 343               		.stabd	78,0,0
+ 346               	.global	uxListRemove
+ 348               	uxListRemove:
+ 349               		.stabd	46,0,0
+ 178:../freeRTOS750/list.c **** /*-----------------------------------------------------------*/
+ 179:../freeRTOS750/list.c **** 
+ 180:../freeRTOS750/list.c **** unsigned portBASE_TYPE uxListRemove( xListItem * const pxItemToRemove )
+ 181:../freeRTOS750/list.c **** {
+ 351               	.LM30:
+ 352               	.LFBB5:
+ 353 00d6 CF93      		push r28
+ 354 00d8 DF93      		push r29
+ 355               	/* prologue: function */
+ 356               	/* frame size = 0 */
+ 357               	/* stack size = 2 */
+ 358               	.L__stack_usage = 2
+ 359 00da FC01      		movw r30,r24
+ 182:../freeRTOS750/list.c **** xList * pxList;
+ 183:../freeRTOS750/list.c **** 
+ 184:../freeRTOS750/list.c **** 	pxItemToRemove->pxNext->pxPrevious = pxItemToRemove->pxPrevious;
+ 361               	.LM31:
+ 362 00dc A281      		ldd r26,Z+2
+ 363 00de B381      		ldd r27,Z+3
+ 364 00e0 8481      		ldd r24,Z+4
+ 365 00e2 9581      		ldd r25,Z+5
+ 366 00e4 1596      		adiw r26,4+1
+ 367 00e6 9C93      		st X,r25
+ 368 00e8 8E93      		st -X,r24
+ 369 00ea 1497      		sbiw r26,4
+ 185:../freeRTOS750/list.c **** 	pxItemToRemove->pxPrevious->pxNext = pxItemToRemove->pxNext;
+ 371               	.LM32:
+ 372 00ec C481      		ldd r28,Z+4
+ 373 00ee D581      		ldd r29,Z+5
+ 374 00f0 BB83      		std Y+3,r27
+ 375 00f2 AA83      		std Y+2,r26
+ 186:../freeRTOS750/list.c **** 
+ 187:../freeRTOS750/list.c **** 	/* The list item knows which list it is in.  Obtain the list from the list
+ 188:../freeRTOS750/list.c **** 	item. */
+ 189:../freeRTOS750/list.c **** 	pxList = ( xList * ) pxItemToRemove->pvContainer;
+ 377               	.LM33:
+ 378 00f4 A085      		ldd r26,Z+8
+ 379 00f6 B185      		ldd r27,Z+9
+ 190:../freeRTOS750/list.c **** 
+ 191:../freeRTOS750/list.c **** 	/* Make sure the index is left pointing to a valid item. */
+ 192:../freeRTOS750/list.c **** 	if( pxList->pxIndex == pxItemToRemove )
+ 381               	.LM34:
+ 382 00f8 1196      		adiw r26,1
+ 383 00fa 8D91      		ld r24,X+
+ 384 00fc 9C91      		ld r25,X
+ 385 00fe 1297      		sbiw r26,1+1
+ 386 0100 8E17      		cp r24,r30
+ 387 0102 9F07      		cpc r25,r31
+ 388 0104 01F4      		brne .L10
+ 193:../freeRTOS750/list.c **** 	{
+ 194:../freeRTOS750/list.c **** 		pxList->pxIndex = pxItemToRemove->pxPrevious;
+ 390               	.LM35:
+ 391 0106 1296      		adiw r26,1+1
+ 392 0108 DC93      		st X,r29
+ 393 010a CE93      		st -X,r28
+ 394 010c 1197      		sbiw r26,1
+ 395               	.L10:
+ 195:../freeRTOS750/list.c **** 	}
+ 196:../freeRTOS750/list.c **** 
+ 197:../freeRTOS750/list.c **** 	pxItemToRemove->pvContainer = NULL;
+ 397               	.LM36:
+ 398 010e 1186      		std Z+9,__zero_reg__
+ 399 0110 1086      		std Z+8,__zero_reg__
+ 198:../freeRTOS750/list.c **** 	( pxList->uxNumberOfItems )--;
+ 401               	.LM37:
+ 402 0112 8C91      		ld r24,X
+ 403 0114 8150      		subi r24,lo8(-(-1))
+ 404 0116 8C93      		st X,r24
+ 405               	/* epilogue start */
+ 199:../freeRTOS750/list.c **** 
+ 200:../freeRTOS750/list.c **** 	return pxList->uxNumberOfItems;
+ 201:../freeRTOS750/list.c **** }
+ 407               	.LM38:
+ 408 0118 DF91      		pop r29
+ 409 011a CF91      		pop r28
+ 410 011c 0895      		ret
+ 415               	.Lscope5:
+ 417               		.stabd	78,0,0
+ 419               	.Letext0:
+ 420               		.ident	"GCC: (GNU) 4.7.2"
+DEFINED SYMBOLS
+                            *ABS*:00000000 list.c
+     /tmp/ccLX2B5n.s:2      *ABS*:0000003e __SP_H__
+     /tmp/ccLX2B5n.s:3      *ABS*:0000003d __SP_L__
+     /tmp/ccLX2B5n.s:4      *ABS*:0000003f __SREG__
+     /tmp/ccLX2B5n.s:5      *ABS*:00000000 __tmp_reg__
+     /tmp/ccLX2B5n.s:6      *ABS*:00000001 __zero_reg__
+     /tmp/ccLX2B5n.s:107    .text:00000000 vListInitialise
+     /tmp/ccLX2B5n.s:148    .text:0000001c vListInitialiseItem
+     /tmp/ccLX2B5n.s:172    .text:00000024 vListInsertEnd
+     /tmp/ccLX2B5n.s:243    .text:00000066 vListInsert
+     /tmp/ccLX2B5n.s:348    .text:000000d6 uxListRemove
+
+NO UNDEFINED SYMBOLS

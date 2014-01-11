@@ -1,0 +1,2288 @@
+   1               		.file	"socket.c"
+   2               	__SP_H__ = 0x3e
+   3               	__SP_L__ = 0x3d
+   4               	__SREG__ = 0x3f
+   5               	__tmp_reg__ = 0
+   6               	__zero_reg__ = 1
+   9               		.text
+  10               	.Ltext0:
+ 114               	.global	close
+ 116               	close:
+ 117               		.stabd	46,0,0
+   1:../freeRTOS750/lib_iinchip/socket.c **** /*
+   2:../freeRTOS750/lib_iinchip/socket.c **** *
+   3:../freeRTOS750/lib_iinchip/socket.c **** @file		socket.c
+   4:../freeRTOS750/lib_iinchip/socket.c **** @brief	setting chip register for socket
+   5:../freeRTOS750/lib_iinchip/socket.c **** 		last update : 2008. Jan
+   6:../freeRTOS750/lib_iinchip/socket.c **** *
+   7:../freeRTOS750/lib_iinchip/socket.c **** */
+   8:../freeRTOS750/lib_iinchip/socket.c **** 
+   9:../freeRTOS750/lib_iinchip/socket.c **** #include <avr/pgmspace.h>
+  10:../freeRTOS750/lib_iinchip/socket.c **** #include <util/delay.h>
+  11:../freeRTOS750/lib_iinchip/socket.c **** 
+  12:../freeRTOS750/lib_iinchip/socket.c **** #include <socket.h>
+  13:../freeRTOS750/lib_iinchip/socket.c **** 
+  14:../freeRTOS750/lib_iinchip/socket.c **** #ifdef __DEF_IINCHIP_DBG__
+  15:../freeRTOS750/lib_iinchip/socket.c **** /* Scheduler include files. */
+  16:../freeRTOS750/lib_iinchip/socket.c **** #include <FreeRTOS.h>
+  17:../freeRTOS750/lib_iinchip/socket.c **** #include <task.h>
+  18:../freeRTOS750/lib_iinchip/socket.c **** #include <queue.h>
+  19:../freeRTOS750/lib_iinchip/socket.c **** #include <semphr.h>
+  20:../freeRTOS750/lib_iinchip/socket.c **** 
+  21:../freeRTOS750/lib_iinchip/socket.c **** #include <lib_serial.h>
+  22:../freeRTOS750/lib_iinchip/socket.c **** #endif
+  23:../freeRTOS750/lib_iinchip/socket.c **** 
+  24:../freeRTOS750/lib_iinchip/socket.c **** 
+  25:../freeRTOS750/lib_iinchip/socket.c **** static uint16_t local_port;
+  26:../freeRTOS750/lib_iinchip/socket.c **** 
+  27:../freeRTOS750/lib_iinchip/socket.c **** /**
+  28:../freeRTOS750/lib_iinchip/socket.c **** @brief	This Socket function initialise the channel in particular mode, and set the port and wait fo
+  29:../freeRTOS750/lib_iinchip/socket.c **** @return 1 for success else 0.
+  30:../freeRTOS750/lib_iinchip/socket.c **** */
+  31:../freeRTOS750/lib_iinchip/socket.c **** uint8_t socket(
+  32:../freeRTOS750/lib_iinchip/socket.c **** 	SOCKET s, 			/**< for socket number */
+  33:../freeRTOS750/lib_iinchip/socket.c **** 	uint8_t protocol,	/**< for socket protocol */
+  34:../freeRTOS750/lib_iinchip/socket.c **** 	uint16_t port,		/**< the source port for the socket */
+  35:../freeRTOS750/lib_iinchip/socket.c **** 	uint8_t flag		/**< the option for the socket */
+  36:../freeRTOS750/lib_iinchip/socket.c **** 	)
+  37:../freeRTOS750/lib_iinchip/socket.c **** {
+  38:../freeRTOS750/lib_iinchip/socket.c **** 	uint8_t ret;
+  39:../freeRTOS750/lib_iinchip/socket.c **** #ifdef __DEF_IINCHIP_DBG__
+  40:../freeRTOS750/lib_iinchip/socket.c **** 	xSerialPrint_P(PSTR(" socket()\r\n"));
+  41:../freeRTOS750/lib_iinchip/socket.c **** #endif
+  42:../freeRTOS750/lib_iinchip/socket.c **** 	if ((protocol == Sn_MR_TCP) || (protocol == Sn_MR_UDP) || (protocol == Sn_MR_IPRAW) || (protocol =
+  43:../freeRTOS750/lib_iinchip/socket.c **** 	{
+  44:../freeRTOS750/lib_iinchip/socket.c **** 		close(s);
+  45:../freeRTOS750/lib_iinchip/socket.c **** 
+  46:../freeRTOS750/lib_iinchip/socket.c **** 		IINCHIP_write(Sn_MR(s), (protocol | flag) );
+  47:../freeRTOS750/lib_iinchip/socket.c **** 
+  48:../freeRTOS750/lib_iinchip/socket.c **** 		if (port != 0) {
+  49:../freeRTOS750/lib_iinchip/socket.c **** 			IINCHIP_write(Sn_PORT0(s),(uint8_t)((port & 0xff00) >> 8));
+  50:../freeRTOS750/lib_iinchip/socket.c **** 			IINCHIP_write(Sn_PORT1(s),(uint8_t)(port & 0x00ff));
+  51:../freeRTOS750/lib_iinchip/socket.c **** 		} else {
+  52:../freeRTOS750/lib_iinchip/socket.c **** 			local_port++; // if don't set the source port, set local_port number.
+  53:../freeRTOS750/lib_iinchip/socket.c **** 			IINCHIP_write(Sn_PORT0(s),(uint8_t)((local_port & 0xff00) >> 8));
+  54:../freeRTOS750/lib_iinchip/socket.c **** 			IINCHIP_write(Sn_PORT1(s),(uint8_t)(local_port & 0x00ff));
+  55:../freeRTOS750/lib_iinchip/socket.c **** 		}
+  56:../freeRTOS750/lib_iinchip/socket.c **** 		IINCHIP_write(Sn_CR(s), Sn_CR_OPEN);
+  57:../freeRTOS750/lib_iinchip/socket.c **** 
+  58:../freeRTOS750/lib_iinchip/socket.c **** 		/* wait to process the command... */
+  59:../freeRTOS750/lib_iinchip/socket.c **** 		while( IINCHIP_read(Sn_CR(s)) ) ;
+  60:../freeRTOS750/lib_iinchip/socket.c **** 
+  61:../freeRTOS750/lib_iinchip/socket.c **** 		switch (protocol)
+  62:../freeRTOS750/lib_iinchip/socket.c **** 		{
+  63:../freeRTOS750/lib_iinchip/socket.c **** 			case Sn_MR_TCP :
+  64:../freeRTOS750/lib_iinchip/socket.c **** 			/* wait to achieve the command... */
+  65:../freeRTOS750/lib_iinchip/socket.c **** 				while( IINCHIP_read(Sn_SR(s)) != SOCK_INIT ) ;
+  66:../freeRTOS750/lib_iinchip/socket.c **** 				break;
+  67:../freeRTOS750/lib_iinchip/socket.c **** 
+  68:../freeRTOS750/lib_iinchip/socket.c **** 			case Sn_MR_UDP :
+  69:../freeRTOS750/lib_iinchip/socket.c **** 			/* wait to achieve the command... */
+  70:../freeRTOS750/lib_iinchip/socket.c **** 				while( IINCHIP_read(Sn_SR(s)) != SOCK_UDP ) ;
+  71:../freeRTOS750/lib_iinchip/socket.c **** 				break;
+  72:../freeRTOS750/lib_iinchip/socket.c **** 
+  73:../freeRTOS750/lib_iinchip/socket.c **** 			case Sn_MR_IPRAW :
+  74:../freeRTOS750/lib_iinchip/socket.c **** 			/* wait to achieve the command... */
+  75:../freeRTOS750/lib_iinchip/socket.c **** 				while( IINCHIP_read(Sn_SR(s)) != SOCK_IPRAW ) ;
+  76:../freeRTOS750/lib_iinchip/socket.c **** 				break;
+  77:../freeRTOS750/lib_iinchip/socket.c **** 
+  78:../freeRTOS750/lib_iinchip/socket.c **** 			case Sn_MR_MACRAW :
+  79:../freeRTOS750/lib_iinchip/socket.c **** 			/* wait to achieve the command... */
+  80:../freeRTOS750/lib_iinchip/socket.c **** 				while( IINCHIP_read(Sn_SR(s)) != SOCK_MACRAW ) ;
+  81:../freeRTOS750/lib_iinchip/socket.c **** 				break;
+  82:../freeRTOS750/lib_iinchip/socket.c **** 
+  83:../freeRTOS750/lib_iinchip/socket.c **** 			case Sn_MR_PPPOE :
+  84:../freeRTOS750/lib_iinchip/socket.c **** 			/* wait to achieve the command... */
+  85:../freeRTOS750/lib_iinchip/socket.c **** 				while( IINCHIP_read(Sn_SR(s)) != SOCK_PPPOE ) ;
+  86:../freeRTOS750/lib_iinchip/socket.c **** 				break;
+  87:../freeRTOS750/lib_iinchip/socket.c **** 
+  88:../freeRTOS750/lib_iinchip/socket.c **** 			default:
+  89:../freeRTOS750/lib_iinchip/socket.c **** 				break;
+  90:../freeRTOS750/lib_iinchip/socket.c **** 		}
+  91:../freeRTOS750/lib_iinchip/socket.c **** 
+  92:../freeRTOS750/lib_iinchip/socket.c **** 		ret = 1;
+  93:../freeRTOS750/lib_iinchip/socket.c **** 	}
+  94:../freeRTOS750/lib_iinchip/socket.c **** 	else
+  95:../freeRTOS750/lib_iinchip/socket.c **** 	{
+  96:../freeRTOS750/lib_iinchip/socket.c **** #ifdef __DEF_IINCHIP_DBG__
+  97:../freeRTOS750/lib_iinchip/socket.c **** 		xSerialPrintf_P(PSTR(" Sn_SR = %.2x , Bad Protocol"), IINCHIP_read(Sn_SR(s) ));
+  98:../freeRTOS750/lib_iinchip/socket.c **** #endif
+  99:../freeRTOS750/lib_iinchip/socket.c **** 		ret = 0;
+ 100:../freeRTOS750/lib_iinchip/socket.c **** 	}
+ 101:../freeRTOS750/lib_iinchip/socket.c **** #ifdef __DEF_W5100_DBG__
+ 102:../freeRTOS750/lib_iinchip/socket.c **** 	xSerialPrintf_P(PSTR(" Sn_SR = %.2x , Protocol = %.2x\r\n"), W5100_READ(Sn_SR(s)), W5100_READ(Sn_M
+ 103:../freeRTOS750/lib_iinchip/socket.c **** #endif
+ 104:../freeRTOS750/lib_iinchip/socket.c **** 	return ret;
+ 105:../freeRTOS750/lib_iinchip/socket.c **** }
+ 106:../freeRTOS750/lib_iinchip/socket.c **** 
+ 107:../freeRTOS750/lib_iinchip/socket.c **** 
+ 108:../freeRTOS750/lib_iinchip/socket.c **** /**
+ 109:../freeRTOS750/lib_iinchip/socket.c **** @brief	This function close the socket and parameter is "s" which represent the socket number
+ 110:../freeRTOS750/lib_iinchip/socket.c **** */
+ 111:../freeRTOS750/lib_iinchip/socket.c **** void close(SOCKET s)
+ 112:../freeRTOS750/lib_iinchip/socket.c **** {
+ 119               	.LM0:
+ 120               	.LFBB1:
+ 121 0000 0F93      		push r16
+ 122 0002 1F93      		push r17
+ 123 0004 CF93      		push r28
+ 124 0006 DF93      		push r29
+ 125               	/* prologue: function */
+ 126               	/* frame size = 0 */
+ 127               	/* stack size = 4 */
+ 128               	.L__stack_usage = 4
+ 113:../freeRTOS750/lib_iinchip/socket.c **** #ifdef __DEF_IINCHIP_DBG__
+ 114:../freeRTOS750/lib_iinchip/socket.c **** 	xSerialPrint_P(PSTR(" close()\r\n"));
+ 115:../freeRTOS750/lib_iinchip/socket.c **** #endif
+ 116:../freeRTOS750/lib_iinchip/socket.c **** 
+ 117:../freeRTOS750/lib_iinchip/socket.c **** 	IINCHIP_write(Sn_CR(s), Sn_CR_CLOSE);
+ 130               	.LM1:
+ 131 0008 C82F      		mov r28,r24
+ 132 000a D0E0      		ldi r29,0
+ 133 000c 2496      		adiw r28,4
+ 134 000e DC2F      		mov r29,r28
+ 135 0010 CC27      		clr r28
+ 136 0012 8E01      		movw r16,r28
+ 137 0014 0F5F      		subi r16,-1
+ 138 0016 1F4F      		sbci r17,-1
+ 139 0018 60E1      		ldi r22,lo8(16)
+ 140 001a C801      		movw r24,r16
+ 141 001c 0E94 0000 		call IINCHIP_write
+ 142               	.L2:
+ 118:../freeRTOS750/lib_iinchip/socket.c **** 
+ 119:../freeRTOS750/lib_iinchip/socket.c **** 	/* wait to process the command... */
+ 120:../freeRTOS750/lib_iinchip/socket.c **** 	while( IINCHIP_read(Sn_CR(s)) ) ;
+ 144               	.LM2:
+ 145 0020 C801      		movw r24,r16
+ 146 0022 0E94 0000 		call IINCHIP_read
+ 147 0026 8111      		cpse r24,__zero_reg__
+ 148 0028 00C0      		rjmp .L2
+ 121:../freeRTOS750/lib_iinchip/socket.c **** 
+ 122:../freeRTOS750/lib_iinchip/socket.c **** 	/* wait to achieve the right state */
+ 123:../freeRTOS750/lib_iinchip/socket.c **** 	while( IINCHIP_read(Sn_SR(s)) != SOCK_CLOSED ) ;
+ 150               	.LM3:
+ 151 002a 8E01      		movw r16,r28
+ 152 002c 0D5F      		subi r16,-3
+ 153 002e 1F4F      		sbci r17,-1
+ 154               	.L4:
+ 155 0030 C801      		movw r24,r16
+ 156 0032 0E94 0000 		call IINCHIP_read
+ 157 0036 8111      		cpse r24,__zero_reg__
+ 158 0038 00C0      		rjmp .L4
+ 124:../freeRTOS750/lib_iinchip/socket.c **** 
+ 125:../freeRTOS750/lib_iinchip/socket.c **** 	/* clear interrupt */
+ 126:../freeRTOS750/lib_iinchip/socket.c **** 	#ifdef __DEF_IINCHIP_INT__
+ 127:../freeRTOS750/lib_iinchip/socket.c ****       /* all clear */
+ 128:../freeRTOS750/lib_iinchip/socket.c **** 	       putISR(s, 0x00);
+ 129:../freeRTOS750/lib_iinchip/socket.c **** 	#else
+ 130:../freeRTOS750/lib_iinchip/socket.c ****       /* all clear */
+ 131:../freeRTOS750/lib_iinchip/socket.c **** 		IINCHIP_write(Sn_IR(s), 0xFF);
+ 160               	.LM4:
+ 161 003a 6FEF      		ldi r22,lo8(-1)
+ 162 003c CE01      		movw r24,r28
+ 163 003e 0296      		adiw r24,2
+ 164               	/* epilogue start */
+ 132:../freeRTOS750/lib_iinchip/socket.c **** 	#endif
+ 133:../freeRTOS750/lib_iinchip/socket.c **** }
+ 166               	.LM5:
+ 167 0040 DF91      		pop r29
+ 168 0042 CF91      		pop r28
+ 169 0044 1F91      		pop r17
+ 170 0046 0F91      		pop r16
+ 131:../freeRTOS750/lib_iinchip/socket.c **** 		IINCHIP_write(Sn_IR(s), 0xFF);
+ 172               	.LM6:
+ 173 0048 0C94 0000 		jmp IINCHIP_write
+ 175               	.Lscope1:
+ 177               		.stabd	78,0,0
+ 183               	.global	socket
+ 185               	socket:
+ 186               		.stabd	46,0,0
+  37:../freeRTOS750/lib_iinchip/socket.c **** {
+ 188               	.LM7:
+ 189               	.LFBB2:
+ 190 004c CF92      		push r12
+ 191 004e DF92      		push r13
+ 192 0050 FF92      		push r15
+ 193 0052 0F93      		push r16
+ 194 0054 1F93      		push r17
+ 195 0056 CF93      		push r28
+ 196 0058 DF93      		push r29
+ 197 005a 1F92      		push __zero_reg__
+ 198 005c CDB7      		in r28,__SP_L__
+ 199 005e DEB7      		in r29,__SP_H__
+ 200               	/* prologue: function */
+ 201               	/* frame size = 1 */
+ 202               	/* stack size = 8 */
+ 203               	.L__stack_usage = 8
+ 204 0060 C82E      		mov r12,r24
+ 205 0062 F62E      		mov r15,r22
+ 206 0064 8A01      		movw r16,r20
+  42:../freeRTOS750/lib_iinchip/socket.c **** 	if ((protocol == Sn_MR_TCP) || (protocol == Sn_MR_UDP) || (protocol == Sn_MR_IPRAW) || (protocol =
+ 208               	.LM8:
+ 209 0066 862F      		mov r24,r22
+ 210 0068 8150      		subi r24,lo8(-(-1))
+ 211 006a 8530      		cpi r24,lo8(5)
+ 212 006c 00F0      		brlo .+2
+ 213 006e 00C0      		rjmp .L19
+  44:../freeRTOS750/lib_iinchip/socket.c **** 		close(s);
+ 215               	.LM9:
+ 216 0070 8C2D      		mov r24,r12
+ 217 0072 2983      		std Y+1,r18
+ 218 0074 0E94 0000 		call close
+  46:../freeRTOS750/lib_iinchip/socket.c **** 		IINCHIP_write(Sn_MR(s), (protocol | flag) );
+ 220               	.LM10:
+ 221 0078 D12C      		mov r13,__zero_reg__
+ 222 007a 84E0      		ldi r24,4
+ 223 007c C80E      		add r12,r24
+ 224 007e D11C      		adc r13,__zero_reg__
+ 225 0080 DC2C      		mov r13,r12
+ 226 0082 CC24      		clr r12
+ 227 0084 2981      		ldd r18,Y+1
+ 228 0086 622F      		mov r22,r18
+ 229 0088 6F29      		or r22,r15
+ 230 008a C601      		movw r24,r12
+ 231 008c 0E94 0000 		call IINCHIP_write
+ 232 0090 C601      		movw r24,r12
+ 233 0092 0496      		adiw r24,4
+  48:../freeRTOS750/lib_iinchip/socket.c **** 		if (port != 0) {
+ 235               	.LM11:
+ 236 0094 0115      		cp r16,__zero_reg__
+ 237 0096 1105      		cpc r17,__zero_reg__
+ 238 0098 01F0      		breq .L9
+  49:../freeRTOS750/lib_iinchip/socket.c **** 			IINCHIP_write(Sn_PORT0(s),(uint8_t)((port & 0xff00) >> 8));
+ 240               	.LM12:
+ 241 009a 612F      		mov r22,r17
+ 242 009c 0E94 0000 		call IINCHIP_write
+  50:../freeRTOS750/lib_iinchip/socket.c **** 			IINCHIP_write(Sn_PORT1(s),(uint8_t)(port & 0x00ff));
+ 244               	.LM13:
+ 245 00a0 602F      		mov r22,r16
+ 246 00a2 00C0      		rjmp .L39
+ 247               	.L9:
+  52:../freeRTOS750/lib_iinchip/socket.c **** 			local_port++; // if don't set the source port, set local_port number.
+ 249               	.LM14:
+ 250 00a4 2091 0000 		lds r18,local_port
+ 251 00a8 3091 0000 		lds r19,local_port+1
+ 252 00ac 2F5F      		subi r18,-1
+ 253 00ae 3F4F      		sbci r19,-1
+ 254 00b0 3093 0000 		sts local_port+1,r19
+ 255 00b4 2093 0000 		sts local_port,r18
+  53:../freeRTOS750/lib_iinchip/socket.c **** 			IINCHIP_write(Sn_PORT0(s),(uint8_t)((local_port & 0xff00) >> 8));
+ 257               	.LM15:
+ 258 00b8 632F      		mov r22,r19
+ 259 00ba 0E94 0000 		call IINCHIP_write
+  54:../freeRTOS750/lib_iinchip/socket.c **** 			IINCHIP_write(Sn_PORT1(s),(uint8_t)(local_port & 0x00ff));
+ 261               	.LM16:
+ 262 00be 6091 0000 		lds r22,local_port
+ 263               	.L39:
+ 264 00c2 C601      		movw r24,r12
+ 265 00c4 0596      		adiw r24,5
+ 266 00c6 0E94 0000 		call IINCHIP_write
+  56:../freeRTOS750/lib_iinchip/socket.c **** 		IINCHIP_write(Sn_CR(s), Sn_CR_OPEN);
+ 268               	.LM17:
+ 269 00ca 8601      		movw r16,r12
+ 270 00cc 0F5F      		subi r16,-1
+ 271 00ce 1F4F      		sbci r17,-1
+ 272 00d0 61E0      		ldi r22,lo8(1)
+ 273 00d2 C801      		movw r24,r16
+ 274 00d4 0E94 0000 		call IINCHIP_write
+ 275               	.L11:
+  59:../freeRTOS750/lib_iinchip/socket.c **** 		while( IINCHIP_read(Sn_CR(s)) ) ;
+ 277               	.LM18:
+ 278 00d8 C801      		movw r24,r16
+ 279 00da 0E94 0000 		call IINCHIP_read
+ 280 00de 8111      		cpse r24,__zero_reg__
+ 281 00e0 00C0      		rjmp .L11
+  61:../freeRTOS750/lib_iinchip/socket.c **** 		switch (protocol)
+ 283               	.LM19:
+ 284 00e2 E3E0      		ldi r30,lo8(3)
+ 285 00e4 FE16      		cp r15,r30
+ 286 00e6 01F0      		breq .L14
+ 287 00e8 EF15      		cp r30,r15
+ 288 00ea 00F0      		brlo .L17
+ 289 00ec F2E0      		ldi r31,lo8(2)
+ 290 00ee FF12      		cpse r15,r31
+ 291 00f0 00C0      		rjmp .L12
+ 292 00f2 00C0      		rjmp .L13
+ 293               	.L17:
+ 294 00f4 84E0      		ldi r24,lo8(4)
+ 295 00f6 F816      		cp r15,r24
+ 296 00f8 01F0      		breq .L15
+ 297 00fa E5E0      		ldi r30,lo8(5)
+ 298 00fc FE16      		cp r15,r30
+ 299 00fe 01F0      		breq .L16
+ 300               	.L12:
+  65:../freeRTOS750/lib_iinchip/socket.c **** 				while( IINCHIP_read(Sn_SR(s)) != SOCK_INIT ) ;
+ 302               	.LM20:
+ 303 0100 F3E0      		ldi r31,3
+ 304 0102 CF0E      		add r12,r31
+ 305 0104 D11C      		adc r13,__zero_reg__
+ 306               	.L31:
+ 307 0106 C601      		movw r24,r12
+ 308 0108 0E94 0000 		call IINCHIP_read
+ 309 010c 8331      		cpi r24,lo8(19)
+ 310 010e 01F4      		brne .L31
+ 311               	.L18:
+  92:../freeRTOS750/lib_iinchip/socket.c **** 		ret = 1;
+ 313               	.LM21:
+ 314 0110 81E0      		ldi r24,lo8(1)
+ 315 0112 00C0      		rjmp .L8
+ 316               	.L13:
+  70:../freeRTOS750/lib_iinchip/socket.c **** 				while( IINCHIP_read(Sn_SR(s)) != SOCK_UDP ) ;
+ 318               	.LM22:
+ 319 0114 83E0      		ldi r24,3
+ 320 0116 C80E      		add r12,r24
+ 321 0118 D11C      		adc r13,__zero_reg__
+ 322               	.L32:
+ 323 011a C601      		movw r24,r12
+ 324 011c 0E94 0000 		call IINCHIP_read
+ 325 0120 8232      		cpi r24,lo8(34)
+ 326 0122 01F4      		brne .L32
+ 327 0124 00C0      		rjmp .L18
+ 328               	.L14:
+  75:../freeRTOS750/lib_iinchip/socket.c **** 				while( IINCHIP_read(Sn_SR(s)) != SOCK_IPRAW ) ;
+ 330               	.LM23:
+ 331 0126 E3E0      		ldi r30,3
+ 332 0128 CE0E      		add r12,r30
+ 333 012a D11C      		adc r13,__zero_reg__
+ 334               	.L28:
+ 335 012c C601      		movw r24,r12
+ 336 012e 0E94 0000 		call IINCHIP_read
+ 337 0132 8233      		cpi r24,lo8(50)
+ 338 0134 01F4      		brne .L28
+ 339 0136 00C0      		rjmp .L18
+ 340               	.L15:
+  80:../freeRTOS750/lib_iinchip/socket.c **** 				while( IINCHIP_read(Sn_SR(s)) != SOCK_MACRAW ) ;
+ 342               	.LM24:
+ 343 0138 F3E0      		ldi r31,3
+ 344 013a CF0E      		add r12,r31
+ 345 013c D11C      		adc r13,__zero_reg__
+ 346               	.L29:
+ 347 013e C601      		movw r24,r12
+ 348 0140 0E94 0000 		call IINCHIP_read
+ 349 0144 8234      		cpi r24,lo8(66)
+ 350 0146 01F4      		brne .L29
+ 351 0148 00C0      		rjmp .L18
+ 352               	.L16:
+  85:../freeRTOS750/lib_iinchip/socket.c **** 				while( IINCHIP_read(Sn_SR(s)) != SOCK_PPPOE ) ;
+ 354               	.LM25:
+ 355 014a 83E0      		ldi r24,3
+ 356 014c C80E      		add r12,r24
+ 357 014e D11C      		adc r13,__zero_reg__
+ 358               	.L30:
+ 359 0150 C601      		movw r24,r12
+ 360 0152 0E94 0000 		call IINCHIP_read
+ 361 0156 8F35      		cpi r24,lo8(95)
+ 362 0158 01F4      		brne .L30
+ 363 015a 00C0      		rjmp .L18
+ 364               	.L19:
+  99:../freeRTOS750/lib_iinchip/socket.c **** 		ret = 0;
+ 366               	.LM26:
+ 367 015c 80E0      		ldi r24,0
+ 368               	.L8:
+ 369               	/* epilogue start */
+ 105:../freeRTOS750/lib_iinchip/socket.c **** }
+ 371               	.LM27:
+ 372 015e 0F90      		pop __tmp_reg__
+ 373 0160 DF91      		pop r29
+ 374 0162 CF91      		pop r28
+ 375 0164 1F91      		pop r17
+ 376 0166 0F91      		pop r16
+ 377 0168 FF90      		pop r15
+ 378 016a DF90      		pop r13
+ 379 016c CF90      		pop r12
+ 380 016e 0895      		ret
+ 385               	.Lscope2:
+ 387               		.stabd	78,0,0
+ 390               	.global	listen
+ 392               	listen:
+ 393               		.stabd	46,0,0
+ 134:../freeRTOS750/lib_iinchip/socket.c **** 
+ 135:../freeRTOS750/lib_iinchip/socket.c **** 
+ 136:../freeRTOS750/lib_iinchip/socket.c **** /**
+ 137:../freeRTOS750/lib_iinchip/socket.c **** @brief	This function establishes the connection for the channel in passive (server) mode.
+ 138:../freeRTOS750/lib_iinchip/socket.c **** 		This function waits for the request from the peer.
+ 139:../freeRTOS750/lib_iinchip/socket.c **** @return	1 for success else 0.
+ 140:../freeRTOS750/lib_iinchip/socket.c **** */
+ 141:../freeRTOS750/lib_iinchip/socket.c **** uint8_t listen(
+ 142:../freeRTOS750/lib_iinchip/socket.c **** 	SOCKET s	/**< the socket number */
+ 143:../freeRTOS750/lib_iinchip/socket.c **** 	)
+ 144:../freeRTOS750/lib_iinchip/socket.c **** {
+ 395               	.LM28:
+ 396               	.LFBB3:
+ 397 0170 0F93      		push r16
+ 398 0172 1F93      		push r17
+ 399 0174 CF93      		push r28
+ 400 0176 DF93      		push r29
+ 401               	/* prologue: function */
+ 402               	/* frame size = 0 */
+ 403               	/* stack size = 4 */
+ 404               	.L__stack_usage = 4
+ 145:../freeRTOS750/lib_iinchip/socket.c **** 	uint8_t ret;
+ 146:../freeRTOS750/lib_iinchip/socket.c **** 
+ 147:../freeRTOS750/lib_iinchip/socket.c **** #ifdef __DEF_IINCHIP_DBG__
+ 148:../freeRTOS750/lib_iinchip/socket.c **** 	xSerialPrint_P(PSTR(" listen()\r\n"));
+ 149:../freeRTOS750/lib_iinchip/socket.c **** #endif
+ 150:../freeRTOS750/lib_iinchip/socket.c **** 
+ 151:../freeRTOS750/lib_iinchip/socket.c **** 	if (IINCHIP_read(Sn_SR(s)) == SOCK_INIT)
+ 406               	.LM29:
+ 407 0178 90E0      		ldi r25,0
+ 408 017a 0496      		adiw r24,4
+ 409 017c 182F      		mov r17,r24
+ 410 017e 0027      		clr r16
+ 411 0180 E801      		movw r28,r16
+ 412 0182 2396      		adiw r28,3
+ 413 0184 CE01      		movw r24,r28
+ 414 0186 0E94 0000 		call IINCHIP_read
+ 415 018a 8331      		cpi r24,lo8(19)
+ 416 018c 01F4      		brne .L44
+ 152:../freeRTOS750/lib_iinchip/socket.c **** 	{
+ 153:../freeRTOS750/lib_iinchip/socket.c **** 		IINCHIP_write(Sn_CR(s), Sn_CR_LISTEN);
+ 418               	.LM30:
+ 419 018e 0F5F      		subi r16,-1
+ 420 0190 1F4F      		sbci r17,-1
+ 421 0192 62E0      		ldi r22,lo8(2)
+ 422 0194 C801      		movw r24,r16
+ 423 0196 0E94 0000 		call IINCHIP_write
+ 424               	.L42:
+ 154:../freeRTOS750/lib_iinchip/socket.c **** 
+ 155:../freeRTOS750/lib_iinchip/socket.c **** 		/* wait to process the command... */
+ 156:../freeRTOS750/lib_iinchip/socket.c **** 		while( IINCHIP_read(Sn_CR(s)) ) ;
+ 426               	.LM31:
+ 427 019a C801      		movw r24,r16
+ 428 019c 0E94 0000 		call IINCHIP_read
+ 429 01a0 8111      		cpse r24,__zero_reg__
+ 430 01a2 00C0      		rjmp .L42
+ 431               	.L45:
+ 157:../freeRTOS750/lib_iinchip/socket.c **** 
+ 158:../freeRTOS750/lib_iinchip/socket.c **** 		/* wait to action the command... */
+ 159:../freeRTOS750/lib_iinchip/socket.c **** 		while( IINCHIP_read(Sn_SR(s)) != SOCK_LISTEN ) ;
+ 433               	.LM32:
+ 434 01a4 CE01      		movw r24,r28
+ 435 01a6 0E94 0000 		call IINCHIP_read
+ 436 01aa 8431      		cpi r24,lo8(20)
+ 437 01ac 01F4      		brne .L45
+ 160:../freeRTOS750/lib_iinchip/socket.c **** 
+ 161:../freeRTOS750/lib_iinchip/socket.c **** 		ret = 1;
+ 439               	.LM33:
+ 440 01ae 81E0      		ldi r24,lo8(1)
+ 441 01b0 00C0      		rjmp .L41
+ 442               	.L44:
+ 162:../freeRTOS750/lib_iinchip/socket.c **** 	}
+ 163:../freeRTOS750/lib_iinchip/socket.c **** 	else
+ 164:../freeRTOS750/lib_iinchip/socket.c **** 	{
+ 165:../freeRTOS750/lib_iinchip/socket.c **** 		ret = 0;
+ 444               	.LM34:
+ 445 01b2 80E0      		ldi r24,0
+ 446               	.L41:
+ 447               	/* epilogue start */
+ 166:../freeRTOS750/lib_iinchip/socket.c **** #ifdef __DEF_IINCHIP_DBG__
+ 167:../freeRTOS750/lib_iinchip/socket.c **** 	xSerialPrint_P(PSTR(" ...fail [invalid ip, port]\r\n"));
+ 168:../freeRTOS750/lib_iinchip/socket.c **** #endif
+ 169:../freeRTOS750/lib_iinchip/socket.c **** 	}
+ 170:../freeRTOS750/lib_iinchip/socket.c **** 	return ret;
+ 171:../freeRTOS750/lib_iinchip/socket.c **** }
+ 449               	.LM35:
+ 450 01b4 DF91      		pop r29
+ 451 01b6 CF91      		pop r28
+ 452 01b8 1F91      		pop r17
+ 453 01ba 0F91      		pop r16
+ 454 01bc 0895      		ret
+ 459               	.Lscope3:
+ 461               		.stabd	78,0,0
+ 466               	.global	connect
+ 468               	connect:
+ 469               		.stabd	46,0,0
+ 172:../freeRTOS750/lib_iinchip/socket.c **** 
+ 173:../freeRTOS750/lib_iinchip/socket.c **** 
+ 174:../freeRTOS750/lib_iinchip/socket.c **** /**
+ 175:../freeRTOS750/lib_iinchip/socket.c **** @brief	This function established the connection for the channel in Active (client) mode.
+ 176:../freeRTOS750/lib_iinchip/socket.c **** 		This function waits for the until the connection is established.
+ 177:../freeRTOS750/lib_iinchip/socket.c **** 
+ 178:../freeRTOS750/lib_iinchip/socket.c **** @return	1 for success else 0.
+ 179:../freeRTOS750/lib_iinchip/socket.c **** */
+ 180:../freeRTOS750/lib_iinchip/socket.c **** uint8_t connect(SOCKET s, uint8_t * addr, uint16_t port)
+ 181:../freeRTOS750/lib_iinchip/socket.c **** {
+ 471               	.LM36:
+ 472               	.LFBB4:
+ 473 01be AF92      		push r10
+ 474 01c0 BF92      		push r11
+ 475 01c2 DF92      		push r13
+ 476 01c4 EF92      		push r14
+ 477 01c6 FF92      		push r15
+ 478 01c8 0F93      		push r16
+ 479 01ca 1F93      		push r17
+ 480 01cc CF93      		push r28
+ 481 01ce DF93      		push r29
+ 482 01d0 1F92      		push __zero_reg__
+ 483 01d2 CDB7      		in r28,__SP_L__
+ 484 01d4 DEB7      		in r29,__SP_H__
+ 485               	/* prologue: function */
+ 486               	/* frame size = 1 */
+ 487               	/* stack size = 10 */
+ 488               	.L__stack_usage = 10
+ 489 01d6 D82E      		mov r13,r24
+ 490 01d8 5B01      		movw r10,r22
+ 491 01da 7A01      		movw r14,r20
+ 182:../freeRTOS750/lib_iinchip/socket.c **** 	uint8_t ret;
+ 183:../freeRTOS750/lib_iinchip/socket.c **** #ifdef __DEF_IINCHIP_DBG__
+ 184:../freeRTOS750/lib_iinchip/socket.c **** 	xSerialPrint_P(PSTR(" connect()\r\n"));
+ 185:../freeRTOS750/lib_iinchip/socket.c **** #endif
+ 186:../freeRTOS750/lib_iinchip/socket.c **** 	if
+ 187:../freeRTOS750/lib_iinchip/socket.c **** 		(
+ 188:../freeRTOS750/lib_iinchip/socket.c **** 			((addr[0] == 0xFF) && (addr[1] == 0xFF) && (addr[2] == 0xFF) && (addr[3] == 0xFF)) ||
+ 493               	.LM37:
+ 494 01dc FB01      		movw r30,r22
+ 495 01de 6081      		ld r22,Z
+ 187:../freeRTOS750/lib_iinchip/socket.c **** 		(
+ 497               	.LM38:
+ 498 01e0 6F3F      		cpi r22,lo8(-1)
+ 499 01e2 01F4      		brne .L49
+ 501               	.LM39:
+ 502 01e4 8181      		ldd r24,Z+1
+ 503 01e6 8F3F      		cpi r24,lo8(-1)
+ 504 01e8 01F4      		brne .L50
+ 506               	.LM40:
+ 507 01ea 8281      		ldd r24,Z+2
+ 508 01ec 8F3F      		cpi r24,lo8(-1)
+ 509 01ee 01F4      		brne .L50
+ 510 01f0 8381      		ldd r24,Z+3
+ 511 01f2 8F3F      		cpi r24,lo8(-1)
+ 512 01f4 01F4      		brne .L50
+ 513 01f6 00C0      		rjmp .L60
+ 514               	.L49:
+ 516               	.LM41:
+ 517 01f8 6111      		cpse r22,__zero_reg__
+ 518 01fa 00C0      		rjmp .L50
+ 189:../freeRTOS750/lib_iinchip/socket.c **** 		 	((addr[0] == 0x00) && (addr[1] == 0x00) && (addr[2] == 0x00) && (addr[3] == 0x00)) ||
+ 520               	.LM42:
+ 521 01fc F501      		movw r30,r10
+ 522 01fe 8181      		ldd r24,Z+1
+ 523 0200 8111      		cpse r24,__zero_reg__
+ 524 0202 00C0      		rjmp .L50
+ 526               	.LM43:
+ 527 0204 8281      		ldd r24,Z+2
+ 528 0206 8111      		cpse r24,__zero_reg__
+ 529 0208 00C0      		rjmp .L50
+ 530 020a 8381      		ldd r24,Z+3
+ 531 020c 8823      		tst r24
+ 532 020e 01F4      		brne .+2
+ 533 0210 00C0      		rjmp .L60
+ 534               	.L50:
+ 536               	.LM44:
+ 537 0212 E114      		cp r14,__zero_reg__
+ 538 0214 F104      		cpc r15,__zero_reg__
+ 539 0216 01F4      		brne .+2
+ 540 0218 00C0      		rjmp .L60
+ 190:../freeRTOS750/lib_iinchip/socket.c **** 		 	(port == 0x00)
+ 191:../freeRTOS750/lib_iinchip/socket.c **** 		)
+ 192:../freeRTOS750/lib_iinchip/socket.c ****  	{
+ 193:../freeRTOS750/lib_iinchip/socket.c ****  		ret = 0;
+ 194:../freeRTOS750/lib_iinchip/socket.c **** #ifdef __DEF_IINCHIP_DBG__
+ 195:../freeRTOS750/lib_iinchip/socket.c **** 	xSerialPrint_P(PSTR(" ...fail [invalid ip, port]\r\n"));
+ 196:../freeRTOS750/lib_iinchip/socket.c **** #endif
+ 197:../freeRTOS750/lib_iinchip/socket.c **** 	}
+ 198:../freeRTOS750/lib_iinchip/socket.c **** 	else
+ 199:../freeRTOS750/lib_iinchip/socket.c **** 	{
+ 200:../freeRTOS750/lib_iinchip/socket.c **** 		ret = 1;
+ 201:../freeRTOS750/lib_iinchip/socket.c **** 		// set destination IP
+ 202:../freeRTOS750/lib_iinchip/socket.c **** 		IINCHIP_write((Sn_DIPR0(s)    ),addr[0]);
+ 542               	.LM45:
+ 543 021a 0D2D      		mov r16,r13
+ 544 021c 10E0      		ldi r17,0
+ 545 021e 0C5F      		subi r16,-4
+ 546 0220 1F4F      		sbci r17,-1
+ 547 0222 102F      		mov r17,r16
+ 548 0224 0027      		clr r16
+ 549 0226 C801      		movw r24,r16
+ 550 0228 0C96      		adiw r24,12
+ 551 022a 0E94 0000 		call IINCHIP_write
+ 203:../freeRTOS750/lib_iinchip/socket.c **** 		IINCHIP_write((Sn_DIPR0(s) + 1),addr[1]);
+ 553               	.LM46:
+ 554 022e F501      		movw r30,r10
+ 555 0230 6181      		ldd r22,Z+1
+ 556 0232 C801      		movw r24,r16
+ 557 0234 0D96      		adiw r24,13
+ 558 0236 0E94 0000 		call IINCHIP_write
+ 204:../freeRTOS750/lib_iinchip/socket.c **** 		IINCHIP_write((Sn_DIPR0(s) + 2),addr[2]);
+ 560               	.LM47:
+ 561 023a F501      		movw r30,r10
+ 562 023c 6281      		ldd r22,Z+2
+ 563 023e C801      		movw r24,r16
+ 564 0240 0E96      		adiw r24,14
+ 565 0242 0E94 0000 		call IINCHIP_write
+ 205:../freeRTOS750/lib_iinchip/socket.c **** 		IINCHIP_write((Sn_DIPR0(s) + 3),addr[3]);
+ 567               	.LM48:
+ 568 0246 F501      		movw r30,r10
+ 569 0248 6381      		ldd r22,Z+3
+ 570 024a C801      		movw r24,r16
+ 571 024c 0F96      		adiw r24,15
+ 572 024e 0E94 0000 		call IINCHIP_write
+ 206:../freeRTOS750/lib_iinchip/socket.c **** 		IINCHIP_write( Sn_DPORT0(s),(uint8_t)((port & 0xff00) >> 8));
+ 574               	.LM49:
+ 575 0252 6F2D      		mov r22,r15
+ 576 0254 C801      		movw r24,r16
+ 577 0256 4096      		adiw r24,16
+ 578 0258 0E94 0000 		call IINCHIP_write
+ 207:../freeRTOS750/lib_iinchip/socket.c **** 		IINCHIP_write( Sn_DPORT1(s),(uint8_t) (port & 0x00ff));
+ 580               	.LM50:
+ 581 025c 6E2D      		mov r22,r14
+ 582 025e C801      		movw r24,r16
+ 583 0260 4196      		adiw r24,17
+ 584 0262 0E94 0000 		call IINCHIP_write
+ 208:../freeRTOS750/lib_iinchip/socket.c **** 
+ 209:../freeRTOS750/lib_iinchip/socket.c **** 		setSUBR();	 // set the subnet mask register because of the ARP errata
+ 586               	.LM51:
+ 587 0266 0E94 0000 		call setSUBR
+ 210:../freeRTOS750/lib_iinchip/socket.c **** 
+ 211:../freeRTOS750/lib_iinchip/socket.c **** 		IINCHIP_write(Sn_CR(s), Sn_CR_CONNECT);
+ 589               	.LM52:
+ 590 026a 7801      		movw r14,r16
+ 591 026c FFEF      		ldi r31,-1
+ 592 026e EF1A      		sub r14,r31
+ 593 0270 FF0A      		sbc r15,r31
+ 594 0272 64E0      		ldi r22,lo8(4)
+ 595 0274 C701      		movw r24,r14
+ 596 0276 0E94 0000 		call IINCHIP_write
+ 597               	.L52:
+ 212:../freeRTOS750/lib_iinchip/socket.c **** 
+ 213:../freeRTOS750/lib_iinchip/socket.c ****         /* wait for completion */
+ 214:../freeRTOS750/lib_iinchip/socket.c **** 		while ( IINCHIP_read(Sn_CR(s)) ) ;
+ 599               	.LM53:
+ 600 027a C701      		movw r24,r14
+ 601 027c 0E94 0000 		call IINCHIP_read
+ 602 0280 8111      		cpse r24,__zero_reg__
+ 603 0282 00C0      		rjmp .L52
+ 604 0284 00C0      		rjmp .L67
+ 605               	.L56:
+ 215:../freeRTOS750/lib_iinchip/socket.c **** 
+ 216:../freeRTOS750/lib_iinchip/socket.c **** 		while ( IINCHIP_read(Sn_SR(s)) != SOCK_SYNSENT )
+ 217:../freeRTOS750/lib_iinchip/socket.c **** 		{
+ 218:../freeRTOS750/lib_iinchip/socket.c **** 			if(IINCHIP_read(Sn_SR(s)) == SOCK_ESTABLISHED)
+ 607               	.LM54:
+ 608 0286 C701      		movw r24,r14
+ 609 0288 0E94 0000 		call IINCHIP_read
+ 610 028c 8731      		cpi r24,lo8(23)
+ 611 028e 01F4      		brne .L54
+ 612               	.L57:
+ 200:../freeRTOS750/lib_iinchip/socket.c **** 		ret = 1;
+ 614               	.LM55:
+ 615 0290 81E0      		ldi r24,lo8(1)
+ 616 0292 00C0      		rjmp .L55
+ 617               	.L54:
+ 219:../freeRTOS750/lib_iinchip/socket.c **** 			{
+ 220:../freeRTOS750/lib_iinchip/socket.c **** 				break;
+ 221:../freeRTOS750/lib_iinchip/socket.c **** 			}
+ 222:../freeRTOS750/lib_iinchip/socket.c **** 			if (getSn_IR(s) & Sn_IR_TIMEOUT)
+ 619               	.LM56:
+ 620 0294 8D2D      		mov r24,r13
+ 621 0296 0E94 0000 		call getSn_IR
+ 622 029a 83FF      		sbrs r24,3
+ 623 029c 00C0      		rjmp .L63
+ 223:../freeRTOS750/lib_iinchip/socket.c **** 			{
+ 224:../freeRTOS750/lib_iinchip/socket.c **** 				IINCHIP_write(Sn_IR(s), (Sn_IR_TIMEOUT));  // clear TIMEOUT Interrupt
+ 625               	.LM57:
+ 626 029e 68E0      		ldi r22,lo8(8)
+ 627 02a0 C801      		movw r24,r16
+ 628 02a2 0296      		adiw r24,2
+ 629 02a4 0E94 0000 		call IINCHIP_write
+ 225:../freeRTOS750/lib_iinchip/socket.c **** 				ret = 0;
+ 631               	.LM58:
+ 632 02a8 80E0      		ldi r24,0
+ 226:../freeRTOS750/lib_iinchip/socket.c **** 				break;
+ 634               	.LM59:
+ 635 02aa 00C0      		rjmp .L55
+ 636               	.L67:
+ 216:../freeRTOS750/lib_iinchip/socket.c **** 		while ( IINCHIP_read(Sn_SR(s)) != SOCK_SYNSENT )
+ 638               	.LM60:
+ 639 02ac 7801      		movw r14,r16
+ 640 02ae 83E0      		ldi r24,3
+ 641 02b0 E80E      		add r14,r24
+ 642 02b2 F11C      		adc r15,__zero_reg__
+ 643               	.L63:
+ 644 02b4 C701      		movw r24,r14
+ 645 02b6 0E94 0000 		call IINCHIP_read
+ 646 02ba 8531      		cpi r24,lo8(21)
+ 647 02bc 01F4      		brne .L56
+ 648 02be 00C0      		rjmp .L57
+ 649               	.L55:
+ 227:../freeRTOS750/lib_iinchip/socket.c **** 			}
+ 228:../freeRTOS750/lib_iinchip/socket.c **** 		}
+ 229:../freeRTOS750/lib_iinchip/socket.c **** 		clearSUBR();	// clear the subnet mask again and keep it because of the ARP errata
+ 651               	.LM61:
+ 652 02c0 8983      		std Y+1,r24
+ 653 02c2 0E94 0000 		call clearSUBR
+ 654 02c6 8981      		ldd r24,Y+1
+ 655 02c8 00C0      		rjmp .L51
+ 656               	.L60:
+ 193:../freeRTOS750/lib_iinchip/socket.c ****  		ret = 0;
+ 658               	.LM62:
+ 659 02ca 80E0      		ldi r24,0
+ 660               	.L51:
+ 661               	/* epilogue start */
+ 230:../freeRTOS750/lib_iinchip/socket.c **** 	}
+ 231:../freeRTOS750/lib_iinchip/socket.c **** 	return ret;
+ 232:../freeRTOS750/lib_iinchip/socket.c **** }
+ 663               	.LM63:
+ 664 02cc 0F90      		pop __tmp_reg__
+ 665 02ce DF91      		pop r29
+ 666 02d0 CF91      		pop r28
+ 667 02d2 1F91      		pop r17
+ 668 02d4 0F91      		pop r16
+ 669 02d6 FF90      		pop r15
+ 670 02d8 EF90      		pop r14
+ 671 02da DF90      		pop r13
+ 672 02dc BF90      		pop r11
+ 673 02de AF90      		pop r10
+ 674 02e0 0895      		ret
+ 679               	.Lscope4:
+ 681               		.stabd	78,0,0
+ 684               	.global	disconnect
+ 686               	disconnect:
+ 687               		.stabd	46,0,0
+ 233:../freeRTOS750/lib_iinchip/socket.c **** 
+ 234:../freeRTOS750/lib_iinchip/socket.c **** 
+ 235:../freeRTOS750/lib_iinchip/socket.c **** 
+ 236:../freeRTOS750/lib_iinchip/socket.c **** /**
+ 237:../freeRTOS750/lib_iinchip/socket.c **** @brief	This function used for disconnect the socket and parameter is "s" which represent the socket
+ 238:../freeRTOS750/lib_iinchip/socket.c **** 
+ 239:../freeRTOS750/lib_iinchip/socket.c **** */
+ 240:../freeRTOS750/lib_iinchip/socket.c **** void disconnect(SOCKET s)
+ 241:../freeRTOS750/lib_iinchip/socket.c **** {
+ 689               	.LM64:
+ 690               	.LFBB5:
+ 691 02e2 0F93      		push r16
+ 692 02e4 1F93      		push r17
+ 693 02e6 CF93      		push r28
+ 694 02e8 DF93      		push r29
+ 695               	/* prologue: function */
+ 696               	/* frame size = 0 */
+ 697               	/* stack size = 4 */
+ 698               	.L__stack_usage = 4
+ 242:../freeRTOS750/lib_iinchip/socket.c **** #ifdef __DEF_IINCHIP_DBG__
+ 243:../freeRTOS750/lib_iinchip/socket.c **** 	xSerialPrint_P(PSTR(" disconnect()\r\n"));
+ 244:../freeRTOS750/lib_iinchip/socket.c **** #endif
+ 245:../freeRTOS750/lib_iinchip/socket.c **** 	IINCHIP_write(Sn_CR(s), Sn_CR_DISCON);
+ 700               	.LM65:
+ 701 02ea 90E0      		ldi r25,0
+ 702 02ec 0496      		adiw r24,4
+ 703 02ee D82F      		mov r29,r24
+ 704 02f0 CC27      		clr r28
+ 705 02f2 8E01      		movw r16,r28
+ 706 02f4 0F5F      		subi r16,-1
+ 707 02f6 1F4F      		sbci r17,-1
+ 708 02f8 68E0      		ldi r22,lo8(8)
+ 709 02fa C801      		movw r24,r16
+ 710 02fc 0E94 0000 		call IINCHIP_write
+ 711               	.L69:
+ 246:../freeRTOS750/lib_iinchip/socket.c **** 
+ 247:../freeRTOS750/lib_iinchip/socket.c **** 	/* wait to process the command... */
+ 248:../freeRTOS750/lib_iinchip/socket.c **** 	while( IINCHIP_read(Sn_CR(s)) ) ;
+ 713               	.LM66:
+ 714 0300 C801      		movw r24,r16
+ 715 0302 0E94 0000 		call IINCHIP_read
+ 716 0306 8111      		cpse r24,__zero_reg__
+ 717 0308 00C0      		rjmp .L69
+ 249:../freeRTOS750/lib_iinchip/socket.c **** 
+ 250:../freeRTOS750/lib_iinchip/socket.c **** 	/* wait to action the command... */
+ 251:../freeRTOS750/lib_iinchip/socket.c **** 	while( IINCHIP_read(Sn_SR(s)) != SOCK_CLOSED ) ;
+ 719               	.LM67:
+ 720 030a 2396      		adiw r28,3
+ 721               	.L71:
+ 722 030c CE01      		movw r24,r28
+ 723 030e 0E94 0000 		call IINCHIP_read
+ 724 0312 8111      		cpse r24,__zero_reg__
+ 725 0314 00C0      		rjmp .L71
+ 726               	/* epilogue start */
+ 252:../freeRTOS750/lib_iinchip/socket.c **** }
+ 728               	.LM68:
+ 729 0316 DF91      		pop r29
+ 730 0318 CF91      		pop r28
+ 731 031a 1F91      		pop r17
+ 732 031c 0F91      		pop r16
+ 733 031e 0895      		ret
+ 735               	.Lscope5:
+ 737               		.stabd	78,0,0
+ 742               	.global	send
+ 744               	send:
+ 745               		.stabd	46,0,0
+ 253:../freeRTOS750/lib_iinchip/socket.c **** 
+ 254:../freeRTOS750/lib_iinchip/socket.c **** 
+ 255:../freeRTOS750/lib_iinchip/socket.c **** /**
+ 256:../freeRTOS750/lib_iinchip/socket.c **** @brief	This function used to send the data in TCP mode
+ 257:../freeRTOS750/lib_iinchip/socket.c **** @return	bytes transmitted length for success else 0 for failure.
+ 258:../freeRTOS750/lib_iinchip/socket.c **** */
+ 259:../freeRTOS750/lib_iinchip/socket.c **** uint16_t send(
+ 260:../freeRTOS750/lib_iinchip/socket.c **** 	SOCKET s, 				/**< the socket index */
+ 261:../freeRTOS750/lib_iinchip/socket.c **** 	const uint8_t * buf, 	/**< a pointer to data */
+ 262:../freeRTOS750/lib_iinchip/socket.c **** 	uint16_t len			/**< the data size to be send */
+ 263:../freeRTOS750/lib_iinchip/socket.c **** 	)
+ 264:../freeRTOS750/lib_iinchip/socket.c **** {
+ 747               	.LM69:
+ 748               	.LFBB6:
+ 749 0320 7F92      		push r7
+ 750 0322 8F92      		push r8
+ 751 0324 9F92      		push r9
+ 752 0326 AF92      		push r10
+ 753 0328 BF92      		push r11
+ 754 032a CF92      		push r12
+ 755 032c DF92      		push r13
+ 756 032e EF92      		push r14
+ 757 0330 FF92      		push r15
+ 758 0332 0F93      		push r16
+ 759 0334 1F93      		push r17
+ 760 0336 CF93      		push r28
+ 761 0338 DF93      		push r29
+ 762               	/* prologue: function */
+ 763               	/* frame size = 0 */
+ 764               	/* stack size = 13 */
+ 765               	.L__stack_usage = 13
+ 766 033a 982E      		mov r9,r24
+ 767 033c 6B01      		movw r12,r22
+ 768 033e EA01      		movw r28,r20
+ 265:../freeRTOS750/lib_iinchip/socket.c **** 	uint8_t status = 0;
+ 266:../freeRTOS750/lib_iinchip/socket.c **** 	uint16_t ret = 0;
+ 267:../freeRTOS750/lib_iinchip/socket.c **** 	uint16_t freesize = 0;
+ 268:../freeRTOS750/lib_iinchip/socket.c **** 	uint16_t txrd, txrd_before_send;
+ 269:../freeRTOS750/lib_iinchip/socket.c **** #ifdef __DEF_IINCHIP_DBG__
+ 270:../freeRTOS750/lib_iinchip/socket.c **** 	xSerialPrint_P(PSTR(" send()\r\n"));
+ 271:../freeRTOS750/lib_iinchip/socket.c **** #endif
+ 272:../freeRTOS750/lib_iinchip/socket.c **** 
+ 273:../freeRTOS750/lib_iinchip/socket.c **** 	if (len > getIINCHIP_TxMAX(s))
+ 770               	.LM70:
+ 771 0340 0E94 0000 		call getIINCHIP_TxMAX
+ 772 0344 8C17      		cp r24,r28
+ 773 0346 9D07      		cpc r25,r29
+ 774 0348 00F4      		brsh .L75
+ 274:../freeRTOS750/lib_iinchip/socket.c **** 		ret = getIINCHIP_TxMAX(s); // check size not to exceed MAX size.
+ 776               	.LM71:
+ 777 034a 892D      		mov r24,r9
+ 778 034c 0E94 0000 		call getIINCHIP_TxMAX
+ 779 0350 EC01      		movw r28,r24
+ 780               	.L75:
+ 275:../freeRTOS750/lib_iinchip/socket.c **** 	else
+ 276:../freeRTOS750/lib_iinchip/socket.c **** 		ret = len;
+ 277:../freeRTOS750/lib_iinchip/socket.c **** 
+ 278:../freeRTOS750/lib_iinchip/socket.c **** 	// if free buffer is available, start.
+ 279:../freeRTOS750/lib_iinchip/socket.c **** 	do
+ 280:../freeRTOS750/lib_iinchip/socket.c **** 	{
+ 281:../freeRTOS750/lib_iinchip/socket.c **** 		freesize = getSn_TX_FSR(s);
+ 282:../freeRTOS750/lib_iinchip/socket.c **** 		status = IINCHIP_read(Sn_SR(s));
+ 782               	.LM72:
+ 783 0352 092D      		mov r16,r9
+ 784 0354 10E0      		ldi r17,0
+ 785 0356 0C5F      		subi r16,-4
+ 786 0358 1F4F      		sbci r17,-1
+ 787 035a 102F      		mov r17,r16
+ 788 035c 0027      		clr r16
+ 789 035e 7801      		movw r14,r16
+ 790 0360 83E0      		ldi r24,3
+ 791 0362 E80E      		add r14,r24
+ 792 0364 F11C      		adc r15,__zero_reg__
+ 793               	.L78:
+ 281:../freeRTOS750/lib_iinchip/socket.c **** 		freesize = getSn_TX_FSR(s);
+ 795               	.LM73:
+ 796 0366 892D      		mov r24,r9
+ 797 0368 0E94 0000 		call getSn_TX_FSR
+ 798 036c 5C01      		movw r10,r24
+ 800               	.LM74:
+ 801 036e C701      		movw r24,r14
+ 802 0370 0E94 0000 		call IINCHIP_read
+ 283:../freeRTOS750/lib_iinchip/socket.c **** 		if ((status != SOCK_ESTABLISHED) && (status != SOCK_CLOSE_WAIT))
+ 804               	.LM75:
+ 805 0374 8731      		cpi r24,lo8(23)
+ 806 0376 01F0      		breq .L76
+ 808               	.LM76:
+ 809 0378 8C31      		cpi r24,lo8(28)
+ 810 037a 01F4      		brne .L85
+ 811               	.L76:
+ 284:../freeRTOS750/lib_iinchip/socket.c **** 		{
+ 285:../freeRTOS750/lib_iinchip/socket.c **** 			ret = 0;
+ 286:../freeRTOS750/lib_iinchip/socket.c **** 			break;
+ 287:../freeRTOS750/lib_iinchip/socket.c **** 		}
+ 288:../freeRTOS750/lib_iinchip/socket.c **** #ifdef __DEF_IINCHIP_DBG__
+ 289:../freeRTOS750/lib_iinchip/socket.c **** 	xSerialPrintf_P(PSTR(" socket %d freesize(%d) empty or error\r\n"), s, freesize);
+ 290:../freeRTOS750/lib_iinchip/socket.c **** #endif
+ 291:../freeRTOS750/lib_iinchip/socket.c **** 	} while (freesize < ret);
+ 813               	.LM77:
+ 814 037c AC16      		cp r10,r28
+ 815 037e BD06      		cpc r11,r29
+ 816 0380 00F0      		brlo .L78
+ 817 0382 00C0      		rjmp .L77
+ 818               	.L85:
+ 285:../freeRTOS750/lib_iinchip/socket.c **** 			ret = 0;
+ 820               	.LM78:
+ 821 0384 C0E0      		ldi r28,0
+ 822 0386 D0E0      		ldi r29,0
+ 823               	.L77:
+ 292:../freeRTOS750/lib_iinchip/socket.c **** 
+ 293:../freeRTOS750/lib_iinchip/socket.c **** 	// copy data
+ 294:../freeRTOS750/lib_iinchip/socket.c **** 	send_data_processing(s, (uint8_t *)buf, ret);
+ 825               	.LM79:
+ 826 0388 AE01      		movw r20,r28
+ 827 038a B601      		movw r22,r12
+ 828 038c 892D      		mov r24,r9
+ 829 038e 0E94 0000 		call send_data_processing
+ 295:../freeRTOS750/lib_iinchip/socket.c **** 
+ 296:../freeRTOS750/lib_iinchip/socket.c **** 	if(ret != 0)
+ 831               	.LM80:
+ 832 0392 2097      		sbiw r28,0
+ 833 0394 01F4      		brne .+2
+ 834 0396 00C0      		rjmp .L79
+ 297:../freeRTOS750/lib_iinchip/socket.c **** 	{
+ 298:../freeRTOS750/lib_iinchip/socket.c **** 		txrd_before_send = IINCHIP_read(Sn_TX_RD0(s));
+ 836               	.LM81:
+ 837 0398 E801      		movw r28,r16
+ 838 039a A296      		adiw r28,34
+ 839 039c CE01      		movw r24,r28
+ 840 039e 0E94 0000 		call IINCHIP_read
+ 841 03a2 782E      		mov r7,r24
+ 299:../freeRTOS750/lib_iinchip/socket.c **** 		txrd_before_send = (txrd_before_send << 8) + IINCHIP_read(Sn_TX_RD1(s));
+ 843               	.LM82:
+ 844 03a4 6801      		movw r12,r16
+ 845 03a6 83E2      		ldi r24,35
+ 846 03a8 C80E      		add r12,r24
+ 847 03aa D11C      		adc r13,__zero_reg__
+ 848 03ac C601      		movw r24,r12
+ 849 03ae 0E94 0000 		call IINCHIP_read
+ 850 03b2 882E      		mov r8,r24
+ 300:../freeRTOS750/lib_iinchip/socket.c **** 
+ 301:../freeRTOS750/lib_iinchip/socket.c **** 		IINCHIP_write(Sn_CR(s), Sn_CR_SEND);
+ 852               	.LM83:
+ 853 03b4 5801      		movw r10,r16
+ 854 03b6 8FEF      		ldi r24,-1
+ 855 03b8 A81A      		sub r10,r24
+ 856 03ba B80A      		sbc r11,r24
+ 857 03bc 60E2      		ldi r22,lo8(32)
+ 858 03be C501      		movw r24,r10
+ 859 03c0 0E94 0000 		call IINCHIP_write
+ 860               	.L80:
+ 302:../freeRTOS750/lib_iinchip/socket.c **** 
+ 303:../freeRTOS750/lib_iinchip/socket.c **** 		/* wait to process the command... */
+ 304:../freeRTOS750/lib_iinchip/socket.c **** 		while( IINCHIP_read(Sn_CR(s)) ) ;
+ 862               	.LM84:
+ 863 03c4 C501      		movw r24,r10
+ 864 03c6 0E94 0000 		call IINCHIP_read
+ 865 03ca 8111      		cpse r24,__zero_reg__
+ 866 03cc 00C0      		rjmp .L80
+ 867 03ce 00C0      		rjmp .L96
+ 868               	.L82:
+ 305:../freeRTOS750/lib_iinchip/socket.c **** 
+ 306:../freeRTOS750/lib_iinchip/socket.c **** #ifdef __DEF_IINCHIP_INT__
+ 307:../freeRTOS750/lib_iinchip/socket.c **** 		while ( (getISR(s) & Sn_IR_SEND_OK) != Sn_IR_SEND_OK )
+ 308:../freeRTOS750/lib_iinchip/socket.c **** #else
+ 309:../freeRTOS750/lib_iinchip/socket.c **** 		while ( (IINCHIP_read(Sn_IR(s)) & Sn_IR_SEND_OK) != Sn_IR_SEND_OK )
+ 310:../freeRTOS750/lib_iinchip/socket.c **** #endif
+ 311:../freeRTOS750/lib_iinchip/socket.c ****         {
+ 312:../freeRTOS750/lib_iinchip/socket.c **** 			if( IINCHIP_read(Sn_SR(s)) == SOCK_CLOSED )
+ 870               	.LM85:
+ 871 03d0 C701      		movw r24,r14
+ 872 03d2 0E94 0000 		call IINCHIP_read
+ 873 03d6 8111      		cpse r24,__zero_reg__
+ 874 03d8 00C0      		rjmp .L90
+ 313:../freeRTOS750/lib_iinchip/socket.c **** 			{
+ 314:../freeRTOS750/lib_iinchip/socket.c **** #ifdef __DEF_IINCHIP_DBG__
+ 315:../freeRTOS750/lib_iinchip/socket.c **** 				xSerialPrint_P(PSTR(" SOCK_CLOSED\r\n"));
+ 316:../freeRTOS750/lib_iinchip/socket.c **** #endif
+ 317:../freeRTOS750/lib_iinchip/socket.c **** 				close(s);
+ 876               	.LM86:
+ 877 03da 892D      		mov r24,r9
+ 878 03dc 0E94 0000 		call close
+ 318:../freeRTOS750/lib_iinchip/socket.c **** 				return 0;
+ 880               	.LM87:
+ 881 03e0 C0E0      		ldi r28,0
+ 882 03e2 D0E0      		ldi r29,0
+ 883 03e4 00C0      		rjmp .L79
+ 884               	.L96:
+ 309:../freeRTOS750/lib_iinchip/socket.c **** 		while ( (IINCHIP_read(Sn_IR(s)) & Sn_IR_SEND_OK) != Sn_IR_SEND_OK )
+ 886               	.LM88:
+ 887 03e6 0E5F      		subi r16,-2
+ 888 03e8 1F4F      		sbci r17,-1
+ 889               	.L90:
+ 890 03ea C801      		movw r24,r16
+ 891 03ec 0E94 0000 		call IINCHIP_read
+ 892 03f0 84FF      		sbrs r24,4
+ 893 03f2 00C0      		rjmp .L82
+ 299:../freeRTOS750/lib_iinchip/socket.c **** 		txrd_before_send = (txrd_before_send << 8) + IINCHIP_read(Sn_TX_RD1(s));
+ 895               	.LM89:
+ 896 03f4 372D      		mov r19,r7
+ 897 03f6 20E0      		ldi r18,0
+ 898 03f8 7901      		movw r14,r18
+ 899 03fa E80C      		add r14,r8
+ 900 03fc F11C      		adc r15,__zero_reg__
+ 319:../freeRTOS750/lib_iinchip/socket.c **** 			}
+ 320:../freeRTOS750/lib_iinchip/socket.c **** 		}
+ 321:../freeRTOS750/lib_iinchip/socket.c **** #ifdef __DEF_IINCHIP_INT__
+ 322:../freeRTOS750/lib_iinchip/socket.c ****   		putISR(s, getISR(s) & (~Sn_IR_SEND_OK));
+ 323:../freeRTOS750/lib_iinchip/socket.c **** #else
+ 324:../freeRTOS750/lib_iinchip/socket.c **** 		IINCHIP_write(Sn_IR(s), Sn_IR_SEND_OK);
+ 902               	.LM90:
+ 903 03fe 60E1      		ldi r22,lo8(16)
+ 904 0400 C801      		movw r24,r16
+ 905 0402 0E94 0000 		call IINCHIP_write
+ 325:../freeRTOS750/lib_iinchip/socket.c **** #endif
+ 326:../freeRTOS750/lib_iinchip/socket.c **** 		txrd = IINCHIP_read(Sn_TX_RD0(s));
+ 907               	.LM91:
+ 908 0406 CE01      		movw r24,r28
+ 909 0408 0E94 0000 		call IINCHIP_read
+ 327:../freeRTOS750/lib_iinchip/socket.c **** 		txrd = (txrd << 8) + IINCHIP_read(Sn_TX_RD1(s));
+ 911               	.LM92:
+ 912 040c D82F      		mov r29,r24
+ 913 040e 80E0      		ldi r24,0
+ 914 0410 C82F      		mov r28,r24
+ 915 0412 C601      		movw r24,r12
+ 916 0414 0E94 0000 		call IINCHIP_read
+ 917 0418 C80F      		add r28,r24
+ 918 041a D11D      		adc r29,__zero_reg__
+ 328:../freeRTOS750/lib_iinchip/socket.c **** 
+ 329:../freeRTOS750/lib_iinchip/socket.c **** 		if(txrd > txrd_before_send) {
+ 330:../freeRTOS750/lib_iinchip/socket.c **** 			ret = txrd - txrd_before_send;
+ 331:../freeRTOS750/lib_iinchip/socket.c **** 		} else {
+ 332:../freeRTOS750/lib_iinchip/socket.c **** 			ret = (0xffff - txrd_before_send) + txrd + 1;
+ 920               	.LM93:
+ 921 041c CE19      		sub r28,r14
+ 922 041e DF09      		sbc r29,r15
+ 923               	.L79:
+ 333:../freeRTOS750/lib_iinchip/socket.c **** 		}
+ 334:../freeRTOS750/lib_iinchip/socket.c **** 	}
+ 335:../freeRTOS750/lib_iinchip/socket.c **** 
+ 336:../freeRTOS750/lib_iinchip/socket.c **** 	return ret;
+ 337:../freeRTOS750/lib_iinchip/socket.c **** }
+ 925               	.LM94:
+ 926 0420 CE01      		movw r24,r28
+ 927               	/* epilogue start */
+ 928 0422 DF91      		pop r29
+ 929 0424 CF91      		pop r28
+ 930 0426 1F91      		pop r17
+ 931 0428 0F91      		pop r16
+ 932 042a FF90      		pop r15
+ 933 042c EF90      		pop r14
+ 934 042e DF90      		pop r13
+ 935 0430 CF90      		pop r12
+ 936 0432 BF90      		pop r11
+ 937 0434 AF90      		pop r10
+ 938 0436 9F90      		pop r9
+ 939 0438 8F90      		pop r8
+ 940 043a 7F90      		pop r7
+ 941 043c 0895      		ret
+ 948               	.Lscope6:
+ 950               		.stabd	78,0,0
+ 955               	.global	recv
+ 957               	recv:
+ 958               		.stabd	46,0,0
+ 338:../freeRTOS750/lib_iinchip/socket.c **** 
+ 339:../freeRTOS750/lib_iinchip/socket.c **** 
+ 340:../freeRTOS750/lib_iinchip/socket.c **** /**
+ 341:../freeRTOS750/lib_iinchip/socket.c **** @brief	This function is an application I/F function which is used to receive the data in TCP mode.
+ 342:../freeRTOS750/lib_iinchip/socket.c **** 		It continues to wait for data as much as the application wants to receive.
+ 343:../freeRTOS750/lib_iinchip/socket.c **** 
+ 344:../freeRTOS750/lib_iinchip/socket.c **** @return	received data size for success else 0.
+ 345:../freeRTOS750/lib_iinchip/socket.c **** */
+ 346:../freeRTOS750/lib_iinchip/socket.c **** uint16_t recv(
+ 347:../freeRTOS750/lib_iinchip/socket.c **** 	SOCKET s, 	/**< socket index */
+ 348:../freeRTOS750/lib_iinchip/socket.c **** 	uint8_t * buf, 	/**< a pointer to copy the data to be received */
+ 349:../freeRTOS750/lib_iinchip/socket.c **** 	uint16_t len	/**< the data size to be read */
+ 350:../freeRTOS750/lib_iinchip/socket.c **** 	)
+ 351:../freeRTOS750/lib_iinchip/socket.c **** {
+ 960               	.LM95:
+ 961               	.LFBB7:
+ 962 043e FF92      		push r15
+ 963 0440 0F93      		push r16
+ 964 0442 1F93      		push r17
+ 965 0444 CF93      		push r28
+ 966 0446 DF93      		push r29
+ 967               	/* prologue: function */
+ 968               	/* frame size = 0 */
+ 969               	/* stack size = 5 */
+ 970               	.L__stack_usage = 5
+ 971 0448 F82E      		mov r15,r24
+ 972 044a 8A01      		movw r16,r20
+ 352:../freeRTOS750/lib_iinchip/socket.c **** 	uint16_t ret = 0;
+ 353:../freeRTOS750/lib_iinchip/socket.c **** 
+ 354:../freeRTOS750/lib_iinchip/socket.c **** #ifdef __DEF_IINCHIP_DBG2__
+ 355:../freeRTOS750/lib_iinchip/socket.c **** 	xSerialPrint_P(PSTR(" recv()\r\n"));
+ 356:../freeRTOS750/lib_iinchip/socket.c **** #endif
+ 357:../freeRTOS750/lib_iinchip/socket.c **** 
+ 358:../freeRTOS750/lib_iinchip/socket.c **** 	if ( len > 0 )
+ 974               	.LM96:
+ 975 044c 4115      		cp r20,__zero_reg__
+ 976 044e 5105      		cpc r21,__zero_reg__
+ 977 0450 01F0      		breq .L100
+ 359:../freeRTOS750/lib_iinchip/socket.c **** 	{
+ 360:../freeRTOS750/lib_iinchip/socket.c **** 		recv_data_processing(s, buf, len);
+ 979               	.LM97:
+ 980 0452 0E94 0000 		call recv_data_processing
+ 361:../freeRTOS750/lib_iinchip/socket.c **** 		IINCHIP_write(Sn_CR(s), Sn_CR_RECV);
+ 982               	.LM98:
+ 983 0456 DF2D      		mov r29,r15
+ 984 0458 80E0      		ldi r24,0
+ 985 045a C82F      		mov r28,r24
+ 986 045c CF5F      		subi r28,-1
+ 987 045e DB4F      		sbci r29,-5
+ 988 0460 60E4      		ldi r22,lo8(64)
+ 989 0462 CE01      		movw r24,r28
+ 990 0464 0E94 0000 		call IINCHIP_write
+ 991               	.L99:
+ 362:../freeRTOS750/lib_iinchip/socket.c **** 
+ 363:../freeRTOS750/lib_iinchip/socket.c **** 		/* wait to process the command... */
+ 364:../freeRTOS750/lib_iinchip/socket.c **** 		while( IINCHIP_read(Sn_CR(s)) ) ;
+ 993               	.LM99:
+ 994 0468 CE01      		movw r24,r28
+ 995 046a 0E94 0000 		call IINCHIP_read
+ 996 046e 8111      		cpse r24,__zero_reg__
+ 997 0470 00C0      		rjmp .L99
+ 998 0472 00C0      		rjmp .L98
+ 999               	.L100:
+ 352:../freeRTOS750/lib_iinchip/socket.c **** 	uint16_t ret = 0;
+ 1001               	.LM100:
+ 1002 0474 00E0      		ldi r16,0
+ 1003 0476 10E0      		ldi r17,0
+ 1004               	.L98:
+ 365:../freeRTOS750/lib_iinchip/socket.c **** 
+ 366:../freeRTOS750/lib_iinchip/socket.c **** 		ret = len;
+ 367:../freeRTOS750/lib_iinchip/socket.c **** 	}
+ 368:../freeRTOS750/lib_iinchip/socket.c **** 	return ret;
+ 369:../freeRTOS750/lib_iinchip/socket.c **** }
+ 1006               	.LM101:
+ 1007 0478 C801      		movw r24,r16
+ 1008               	/* epilogue start */
+ 1009 047a DF91      		pop r29
+ 1010 047c CF91      		pop r28
+ 1011 047e 1F91      		pop r17
+ 1012 0480 0F91      		pop r16
+ 1013 0482 FF90      		pop r15
+ 1014 0484 0895      		ret
+ 1019               	.Lscope7:
+ 1021               		.stabd	78,0,0
+ 1028               	.global	sendto
+ 1030               	sendto:
+ 1031               		.stabd	46,0,0
+ 370:../freeRTOS750/lib_iinchip/socket.c **** 
+ 371:../freeRTOS750/lib_iinchip/socket.c **** 
+ 372:../freeRTOS750/lib_iinchip/socket.c **** /**
+ 373:../freeRTOS750/lib_iinchip/socket.c **** @brief	This function is an application I/F function which is used to send the data for other than T
+ 374:../freeRTOS750/lib_iinchip/socket.c **** 		Unlike TCP transmission, The peer's destination address and the port is needed.
+ 375:../freeRTOS750/lib_iinchip/socket.c **** 
+ 376:../freeRTOS750/lib_iinchip/socket.c **** @return	This function return send data size for success else 0.
+ 377:../freeRTOS750/lib_iinchip/socket.c **** */
+ 378:../freeRTOS750/lib_iinchip/socket.c **** uint16_t sendto(
+ 379:../freeRTOS750/lib_iinchip/socket.c **** 	SOCKET s, 				/**< socket index */
+ 380:../freeRTOS750/lib_iinchip/socket.c **** 	const uint8_t * buf, 	/**< a pointer to the data */
+ 381:../freeRTOS750/lib_iinchip/socket.c **** 	uint16_t len, 			/**< the data size to send */
+ 382:../freeRTOS750/lib_iinchip/socket.c **** 	uint8_t * addr, 		/**< the peer's Destination IP address */
+ 383:../freeRTOS750/lib_iinchip/socket.c **** 	uint16_t port			/**< the peer's destination port number */
+ 384:../freeRTOS750/lib_iinchip/socket.c **** 	)
+ 385:../freeRTOS750/lib_iinchip/socket.c **** {
+ 1033               	.LM102:
+ 1034               	.LFBB8:
+ 1035 0486 9F92      		push r9
+ 1036 0488 AF92      		push r10
+ 1037 048a BF92      		push r11
+ 1038 048c CF92      		push r12
+ 1039 048e DF92      		push r13
+ 1040 0490 EF92      		push r14
+ 1041 0492 FF92      		push r15
+ 1042 0494 0F93      		push r16
+ 1043 0496 1F93      		push r17
+ 1044 0498 CF93      		push r28
+ 1045 049a DF93      		push r29
+ 1046               	/* prologue: function */
+ 1047               	/* frame size = 0 */
+ 1048               	/* stack size = 11 */
+ 1049               	.L__stack_usage = 11
+ 1050 049c 982E      		mov r9,r24
+ 1051 049e 5B01      		movw r10,r22
+ 1052 04a0 EA01      		movw r28,r20
+ 1053 04a2 7901      		movw r14,r18
+ 1054 04a4 6801      		movw r12,r16
+ 386:../freeRTOS750/lib_iinchip/socket.c **** 	uint16_t ret = 0;
+ 387:../freeRTOS750/lib_iinchip/socket.c **** 
+ 388:../freeRTOS750/lib_iinchip/socket.c **** #ifdef __DEF_IINCHIP_DBG__
+ 389:../freeRTOS750/lib_iinchip/socket.c **** 	xSerialPrint_P(PSTR(" sendto()\r\n"));
+ 390:../freeRTOS750/lib_iinchip/socket.c **** #endif
+ 391:../freeRTOS750/lib_iinchip/socket.c **** 
+ 392:../freeRTOS750/lib_iinchip/socket.c ****    if (len > getIINCHIP_TxMAX(s))
+ 1056               	.LM103:
+ 1057 04a6 0E94 0000 		call getIINCHIP_TxMAX
+ 1058 04aa 8C17      		cp r24,r28
+ 1059 04ac 9D07      		cpc r25,r29
+ 1060 04ae 00F4      		brsh .L103
+ 393:../freeRTOS750/lib_iinchip/socket.c **** 	   ret = getIINCHIP_TxMAX(s); // check size not to exceed MAX size.
+ 1062               	.LM104:
+ 1063 04b0 892D      		mov r24,r9
+ 1064 04b2 0E94 0000 		call getIINCHIP_TxMAX
+ 1065 04b6 EC01      		movw r28,r24
+ 1066               	.L103:
+ 394:../freeRTOS750/lib_iinchip/socket.c ****    else
+ 395:../freeRTOS750/lib_iinchip/socket.c **** 	   ret = len;
+ 396:../freeRTOS750/lib_iinchip/socket.c **** 
+ 397:../freeRTOS750/lib_iinchip/socket.c **** 	if
+ 398:../freeRTOS750/lib_iinchip/socket.c **** 		(
+ 399:../freeRTOS750/lib_iinchip/socket.c **** 		 	((addr[0] == 0x00) && (addr[1] == 0x00) && (addr[2] == 0x00) && (addr[3] == 0x00)) ||
+ 1068               	.LM105:
+ 1069 04b8 F701      		movw r30,r14
+ 1070 04ba 6081      		ld r22,Z
+ 398:../freeRTOS750/lib_iinchip/socket.c **** 		(
+ 1072               	.LM106:
+ 1073 04bc 6111      		cpse r22,__zero_reg__
+ 1074 04be 00C0      		rjmp .L104
+ 1076               	.LM107:
+ 1077 04c0 8181      		ldd r24,Z+1
+ 1078 04c2 8111      		cpse r24,__zero_reg__
+ 1079 04c4 00C0      		rjmp .L104
+ 1081               	.LM108:
+ 1082 04c6 8281      		ldd r24,Z+2
+ 1083 04c8 8111      		cpse r24,__zero_reg__
+ 1084 04ca 00C0      		rjmp .L104
+ 1085 04cc 8381      		ldd r24,Z+3
+ 1086 04ce 8823      		tst r24
+ 1087 04d0 01F4      		brne .+2
+ 1088 04d2 00C0      		rjmp .L111
+ 1089               	.L104:
+ 1091               	.LM109:
+ 1092 04d4 C114      		cp r12,__zero_reg__
+ 1093 04d6 D104      		cpc r13,__zero_reg__
+ 1094 04d8 01F4      		brne .+2
+ 1095 04da 00C0      		rjmp .L111
+ 400:../freeRTOS750/lib_iinchip/socket.c **** 		 	(port == 0x00) || (ret == 0)
+ 1097               	.LM110:
+ 1098 04dc 2097      		sbiw r28,0
+ 1099 04de 01F4      		brne .+2
+ 1100 04e0 00C0      		rjmp .L105
+ 401:../freeRTOS750/lib_iinchip/socket.c **** 		)
+ 402:../freeRTOS750/lib_iinchip/socket.c ****  	{
+ 403:../freeRTOS750/lib_iinchip/socket.c **** #ifdef __DEF_IINCHIP_DBG__
+ 404:../freeRTOS750/lib_iinchip/socket.c **** 	xSerialPrintf_P(PSTR(" %d Fail [%.2x.%.2x.%.2x.%.2x, %.d, %.4x]\r\n"),s, addr[0], addr[1], addr[2]
+ 405:../freeRTOS750/lib_iinchip/socket.c **** 	xSerialPrint_P(PSTR(" Fail [invalid ip, port, len]\r\n"));
+ 406:../freeRTOS750/lib_iinchip/socket.c **** #endif
+ 407:../freeRTOS750/lib_iinchip/socket.c ****  	   /* added return value */
+ 408:../freeRTOS750/lib_iinchip/socket.c ****  	   ret = 0;
+ 409:../freeRTOS750/lib_iinchip/socket.c **** 	}
+ 410:../freeRTOS750/lib_iinchip/socket.c **** 	else
+ 411:../freeRTOS750/lib_iinchip/socket.c **** 	{
+ 412:../freeRTOS750/lib_iinchip/socket.c **** 		IINCHIP_write((Sn_DIPR0(s)    ),addr[0]);
+ 1102               	.LM111:
+ 1103 04e2 092D      		mov r16,r9
+ 1104 04e4 10E0      		ldi r17,0
+ 1105 04e6 0C5F      		subi r16,-4
+ 1106 04e8 1F4F      		sbci r17,-1
+ 1107 04ea 102F      		mov r17,r16
+ 1108 04ec 0027      		clr r16
+ 1109 04ee C801      		movw r24,r16
+ 1110 04f0 0C96      		adiw r24,12
+ 1111 04f2 0E94 0000 		call IINCHIP_write
+ 413:../freeRTOS750/lib_iinchip/socket.c **** 		IINCHIP_write((Sn_DIPR0(s) + 1),addr[1]);
+ 1113               	.LM112:
+ 1114 04f6 F701      		movw r30,r14
+ 1115 04f8 6181      		ldd r22,Z+1
+ 1116 04fa C801      		movw r24,r16
+ 1117 04fc 0D96      		adiw r24,13
+ 1118 04fe 0E94 0000 		call IINCHIP_write
+ 414:../freeRTOS750/lib_iinchip/socket.c **** 		IINCHIP_write((Sn_DIPR0(s) + 2),addr[2]);
+ 1120               	.LM113:
+ 1121 0502 F701      		movw r30,r14
+ 1122 0504 6281      		ldd r22,Z+2
+ 1123 0506 C801      		movw r24,r16
+ 1124 0508 0E96      		adiw r24,14
+ 1125 050a 0E94 0000 		call IINCHIP_write
+ 415:../freeRTOS750/lib_iinchip/socket.c **** 		IINCHIP_write((Sn_DIPR0(s) + 3),addr[3]);
+ 1127               	.LM114:
+ 1128 050e F701      		movw r30,r14
+ 1129 0510 6381      		ldd r22,Z+3
+ 1130 0512 C801      		movw r24,r16
+ 1131 0514 0F96      		adiw r24,15
+ 1132 0516 0E94 0000 		call IINCHIP_write
+ 416:../freeRTOS750/lib_iinchip/socket.c **** 		IINCHIP_write(Sn_DPORT0(s),(uint8_t)((port & 0xff00) >> 8));
+ 1134               	.LM115:
+ 1135 051a 6D2D      		mov r22,r13
+ 1136 051c C801      		movw r24,r16
+ 1137 051e 4096      		adiw r24,16
+ 1138 0520 0E94 0000 		call IINCHIP_write
+ 417:../freeRTOS750/lib_iinchip/socket.c **** 		IINCHIP_write(Sn_DPORT1(s),(uint8_t)(port & 0x00ff));
+ 1140               	.LM116:
+ 1141 0524 6C2D      		mov r22,r12
+ 1142 0526 C801      		movw r24,r16
+ 1143 0528 4196      		adiw r24,17
+ 1144 052a 0E94 0000 		call IINCHIP_write
+ 418:../freeRTOS750/lib_iinchip/socket.c **** 
+ 419:../freeRTOS750/lib_iinchip/socket.c ****   		// copy data
+ 420:../freeRTOS750/lib_iinchip/socket.c ****  		send_data_processing(s, (uint8_t *)buf, ret);
+ 1146               	.LM117:
+ 1147 052e AE01      		movw r20,r28
+ 1148 0530 B501      		movw r22,r10
+ 1149 0532 892D      		mov r24,r9
+ 1150 0534 0E94 0000 		call send_data_processing
+ 421:../freeRTOS750/lib_iinchip/socket.c **** 
+ 422:../freeRTOS750/lib_iinchip/socket.c **** 		setSUBR();    // set the subnet mask register because of the ARP errata
+ 1152               	.LM118:
+ 1153 0538 0E94 0000 		call setSUBR
+ 423:../freeRTOS750/lib_iinchip/socket.c **** 		IINCHIP_write(Sn_CR(s), Sn_CR_SEND);
+ 1155               	.LM119:
+ 1156 053c 7801      		movw r14,r16
+ 1157 053e FFEF      		ldi r31,-1
+ 1158 0540 EF1A      		sub r14,r31
+ 1159 0542 FF0A      		sbc r15,r31
+ 1160 0544 60E2      		ldi r22,lo8(32)
+ 1161 0546 C701      		movw r24,r14
+ 1162 0548 0E94 0000 		call IINCHIP_write
+ 1163               	.L106:
+ 424:../freeRTOS750/lib_iinchip/socket.c **** 
+ 425:../freeRTOS750/lib_iinchip/socket.c **** 		/* wait to process the command... */
+ 426:../freeRTOS750/lib_iinchip/socket.c **** 		while( IINCHIP_read(Sn_CR(s)) ) ;
+ 1165               	.LM120:
+ 1166 054c C701      		movw r24,r14
+ 1167 054e 0E94 0000 		call IINCHIP_read
+ 1168 0552 8111      		cpse r24,__zero_reg__
+ 1169 0554 00C0      		rjmp .L106
+ 1170 0556 00C0      		rjmp .L121
+ 1171               	.L108:
+ 427:../freeRTOS750/lib_iinchip/socket.c **** 
+ 428:../freeRTOS750/lib_iinchip/socket.c **** #ifdef __DEF_IINCHIP_INT__
+ 429:../freeRTOS750/lib_iinchip/socket.c ****    	while ( (getISR(s) & Sn_IR_SEND_OK) != Sn_IR_SEND_OK )
+ 430:../freeRTOS750/lib_iinchip/socket.c **** #else
+ 431:../freeRTOS750/lib_iinchip/socket.c **** 	   while ( (IINCHIP_read(Sn_IR(s)) & Sn_IR_SEND_OK) != Sn_IR_SEND_OK )
+ 432:../freeRTOS750/lib_iinchip/socket.c **** #endif
+ 433:../freeRTOS750/lib_iinchip/socket.c **** 		{
+ 434:../freeRTOS750/lib_iinchip/socket.c **** #ifdef __DEF_IINCHIP_INT__
+ 435:../freeRTOS750/lib_iinchip/socket.c ****       	if (getISR(s) & Sn_IR_TIMEOUT)
+ 436:../freeRTOS750/lib_iinchip/socket.c **** #else
+ 437:../freeRTOS750/lib_iinchip/socket.c **** 	      if (IINCHIP_read(Sn_IR(s)) & Sn_IR_TIMEOUT)
+ 1173               	.LM121:
+ 1174 0558 C801      		movw r24,r16
+ 1175 055a 0E94 0000 		call IINCHIP_read
+ 1176 055e 83FF      		sbrs r24,3
+ 1177 0560 00C0      		rjmp .L116
+ 438:../freeRTOS750/lib_iinchip/socket.c **** #endif
+ 439:../freeRTOS750/lib_iinchip/socket.c **** 			{
+ 440:../freeRTOS750/lib_iinchip/socket.c **** 
+ 441:../freeRTOS750/lib_iinchip/socket.c **** #ifdef __DEF_IINCHIP_DBG__
+ 442:../freeRTOS750/lib_iinchip/socket.c **** 				xSerialPrint_P(PSTR(" ...sendto() fail.\r\n"));
+ 443:../freeRTOS750/lib_iinchip/socket.c **** #endif
+ 444:../freeRTOS750/lib_iinchip/socket.c **** 			/* clear interrupt */
+ 445:../freeRTOS750/lib_iinchip/socket.c **** #ifdef __DEF_IINCHIP_INT__
+ 446:../freeRTOS750/lib_iinchip/socket.c ****          	putISR(s, getISR(s) & ~(Sn_IR_SEND_OK | Sn_IR_TIMEOUT));  /* clear SEND_OK & TIMEOUT */
+ 447:../freeRTOS750/lib_iinchip/socket.c **** #else
+ 448:../freeRTOS750/lib_iinchip/socket.c ****          	IINCHIP_write(Sn_IR(s), (Sn_IR_SEND_OK | Sn_IR_TIMEOUT)); /* clear SEND_OK & TIMEOUT */
+ 1179               	.LM122:
+ 1180 0562 68E1      		ldi r22,lo8(24)
+ 1181 0564 C801      		movw r24,r16
+ 1182 0566 0E94 0000 		call IINCHIP_write
+ 1183 056a 00C0      		rjmp .L111
+ 1184               	.L121:
+ 431:../freeRTOS750/lib_iinchip/socket.c **** 	   while ( (IINCHIP_read(Sn_IR(s)) & Sn_IR_SEND_OK) != Sn_IR_SEND_OK )
+ 1186               	.LM123:
+ 1187 056c 0E5F      		subi r16,-2
+ 1188 056e 1F4F      		sbci r17,-1
+ 1189               	.L116:
+ 1190 0570 C801      		movw r24,r16
+ 1191 0572 0E94 0000 		call IINCHIP_read
+ 1192 0576 84FF      		sbrs r24,4
+ 1193 0578 00C0      		rjmp .L108
+ 449:../freeRTOS750/lib_iinchip/socket.c **** #endif
+ 450:../freeRTOS750/lib_iinchip/socket.c **** 			return 0;
+ 451:../freeRTOS750/lib_iinchip/socket.c **** 			}
+ 452:../freeRTOS750/lib_iinchip/socket.c **** 	   }
+ 453:../freeRTOS750/lib_iinchip/socket.c **** 
+ 454:../freeRTOS750/lib_iinchip/socket.c **** 	   clearSUBR();	   // clear the subnet mask again and keep it because of the ARP errata
+ 1195               	.LM124:
+ 1196 057a 0E94 0000 		call clearSUBR
+ 455:../freeRTOS750/lib_iinchip/socket.c **** 
+ 456:../freeRTOS750/lib_iinchip/socket.c **** #ifdef __DEF_IINCHIP_INT__
+ 457:../freeRTOS750/lib_iinchip/socket.c ****      	putISR(s, getISR(s) & (~Sn_IR_SEND_OK));
+ 458:../freeRTOS750/lib_iinchip/socket.c **** #else
+ 459:../freeRTOS750/lib_iinchip/socket.c **** 	   IINCHIP_write(Sn_IR(s), Sn_IR_SEND_OK);
+ 1198               	.LM125:
+ 1199 057e 60E1      		ldi r22,lo8(16)
+ 1200 0580 C801      		movw r24,r16
+ 1201 0582 0E94 0000 		call IINCHIP_write
+ 1202 0586 00C0      		rjmp .L105
+ 1203               	.L111:
+ 408:../freeRTOS750/lib_iinchip/socket.c ****  	   ret = 0;
+ 1205               	.LM126:
+ 1206 0588 C0E0      		ldi r28,0
+ 1207 058a D0E0      		ldi r29,0
+ 1208               	.L105:
+ 460:../freeRTOS750/lib_iinchip/socket.c **** #endif
+ 461:../freeRTOS750/lib_iinchip/socket.c **** 
+ 462:../freeRTOS750/lib_iinchip/socket.c **** #ifdef __DEF_IINCHIP_DBG__
+ 463:../freeRTOS750/lib_iinchip/socket.c **** 	xSerialPrintf_P(PSTR(" %d Pass [%.2x.%.2x.%.2x.%.2x, %.d, %.4x]\r\n"),s, addr[0], addr[1], addr[2]
+ 464:../freeRTOS750/lib_iinchip/socket.c **** 	xSerialPrint_P(PSTR(" ...sendto() end\r\n"));
+ 465:../freeRTOS750/lib_iinchip/socket.c **** #endif
+ 466:../freeRTOS750/lib_iinchip/socket.c **** 	}
+ 467:../freeRTOS750/lib_iinchip/socket.c **** 	return ret;
+ 468:../freeRTOS750/lib_iinchip/socket.c **** }
+ 1210               	.LM127:
+ 1211 058c CE01      		movw r24,r28
+ 1212               	/* epilogue start */
+ 1213 058e DF91      		pop r29
+ 1214 0590 CF91      		pop r28
+ 1215 0592 1F91      		pop r17
+ 1216 0594 0F91      		pop r16
+ 1217 0596 FF90      		pop r15
+ 1218 0598 EF90      		pop r14
+ 1219 059a DF90      		pop r13
+ 1220 059c CF90      		pop r12
+ 1221 059e BF90      		pop r11
+ 1222 05a0 AF90      		pop r10
+ 1223 05a2 9F90      		pop r9
+ 1224 05a4 0895      		ret
+ 1229               	.Lscope8:
+ 1231               		.stabd	78,0,0
+ 1238               	.global	recvfrom
+ 1240               	recvfrom:
+ 1241               		.stabd	46,0,0
+ 469:../freeRTOS750/lib_iinchip/socket.c **** 
+ 470:../freeRTOS750/lib_iinchip/socket.c **** 
+ 471:../freeRTOS750/lib_iinchip/socket.c **** /**
+ 472:../freeRTOS750/lib_iinchip/socket.c **** @brief	This function is an application I/F function which is used to receive the data in other than
+ 473:../freeRTOS750/lib_iinchip/socket.c **** 	TCP mode. This function is used to receive UDP, IP_RAW and MAC_RAW mode, and handle the header as 
+ 474:../freeRTOS750/lib_iinchip/socket.c **** 
+ 475:../freeRTOS750/lib_iinchip/socket.c **** @return	This function return received data size for success else 0.
+ 476:../freeRTOS750/lib_iinchip/socket.c **** */
+ 477:../freeRTOS750/lib_iinchip/socket.c **** uint16_t recvfrom(
+ 478:../freeRTOS750/lib_iinchip/socket.c **** 	SOCKET s, 		/**< the socket number */
+ 479:../freeRTOS750/lib_iinchip/socket.c **** 	uint8_t * buf, 	/**< a pointer to copy the data to be received */
+ 480:../freeRTOS750/lib_iinchip/socket.c **** 	uint16_t len, 	/**< the data size to read */
+ 481:../freeRTOS750/lib_iinchip/socket.c **** 	uint8_t * addr, /**< a pointer to store the peer's IP address */
+ 482:../freeRTOS750/lib_iinchip/socket.c **** 	uint16_t *port	/**< a pointer to store the peer's port number. */
+ 483:../freeRTOS750/lib_iinchip/socket.c **** 	)
+ 484:../freeRTOS750/lib_iinchip/socket.c **** {
+ 1243               	.LM128:
+ 1244               	.LFBB9:
+ 1245 05a6 2F92      		push r2
+ 1246 05a8 3F92      		push r3
+ 1247 05aa 5F92      		push r5
+ 1248 05ac 6F92      		push r6
+ 1249 05ae 7F92      		push r7
+ 1250 05b0 8F92      		push r8
+ 1251 05b2 9F92      		push r9
+ 1252 05b4 AF92      		push r10
+ 1253 05b6 BF92      		push r11
+ 1254 05b8 CF92      		push r12
+ 1255 05ba DF92      		push r13
+ 1256 05bc EF92      		push r14
+ 1257 05be FF92      		push r15
+ 1258 05c0 0F93      		push r16
+ 1259 05c2 1F93      		push r17
+ 1260 05c4 CF93      		push r28
+ 1261 05c6 DF93      		push r29
+ 1262 05c8 CDB7      		in r28,__SP_L__
+ 1263 05ca DEB7      		in r29,__SP_H__
+ 1264 05cc 2897      		sbiw r28,8
+ 1265 05ce 0FB6      		in __tmp_reg__,__SREG__
+ 1266 05d0 F894      		cli
+ 1267 05d2 DEBF      		out __SP_H__,r29
+ 1268 05d4 0FBE      		out __SREG__,__tmp_reg__
+ 1269 05d6 CDBF      		out __SP_L__,r28
+ 1270               	/* prologue: function */
+ 1271               	/* frame size = 8 */
+ 1272               	/* stack size = 25 */
+ 1273               	.L__stack_usage = 25
+ 1274 05d8 582E      		mov r5,r24
+ 1275 05da 4B01      		movw r8,r22
+ 1276 05dc 3901      		movw r6,r18
+ 485:../freeRTOS750/lib_iinchip/socket.c **** 	uint8_t head[8];
+ 486:../freeRTOS750/lib_iinchip/socket.c **** 	uint16_t data_len = 0;
+ 487:../freeRTOS750/lib_iinchip/socket.c **** 	uint16_t ptr = 0;
+ 488:../freeRTOS750/lib_iinchip/socket.c **** #ifdef __DEF_IINCHIP_DBG__
+ 489:../freeRTOS750/lib_iinchip/socket.c **** 	xSerialPrint_P(PSTR(" recvfrom()\r\n"));
+ 490:../freeRTOS750/lib_iinchip/socket.c **** #endif
+ 491:../freeRTOS750/lib_iinchip/socket.c **** 
+ 492:../freeRTOS750/lib_iinchip/socket.c **** 	if ( len > 0 )
+ 1278               	.LM129:
+ 1279 05de 452B      		or r20,r21
+ 1280 05e0 01F4      		brne .+2
+ 1281 05e2 00C0      		rjmp .L129
+ 493:../freeRTOS750/lib_iinchip/socket.c **** 	{
+ 494:../freeRTOS750/lib_iinchip/socket.c ****    	ptr = IINCHIP_read(Sn_RX_RD0(s));
+ 1283               	.LM130:
+ 1284 05e4 282E      		mov r2,r24
+ 1285 05e6 312C      		mov r3,__zero_reg__
+ 1286 05e8 84E0      		ldi r24,4
+ 1287 05ea 280E      		add r2,r24
+ 1288 05ec 311C      		adc r3,__zero_reg__
+ 1289 05ee 322C      		mov r3,r2
+ 1290 05f0 2224      		clr r2
+ 1291 05f2 5101      		movw r10,r2
+ 1292 05f4 E8E2      		ldi r30,40
+ 1293 05f6 AE0E      		add r10,r30
+ 1294 05f8 B11C      		adc r11,__zero_reg__
+ 1295 05fa C501      		movw r24,r10
+ 1296 05fc 0E94 0000 		call IINCHIP_read
+ 495:../freeRTOS750/lib_iinchip/socket.c ****    	ptr = ((ptr & 0x00ff) << 8) + IINCHIP_read(Sn_RX_RD1(s));
+ 1298               	.LM131:
+ 1299 0600 F82E      		mov r15,r24
+ 1300 0602 E12C      		mov r14,__zero_reg__
+ 1301 0604 6101      		movw r12,r2
+ 1302 0606 F9E2      		ldi r31,41
+ 1303 0608 CF0E      		add r12,r31
+ 1304 060a D11C      		adc r13,__zero_reg__
+ 1305 060c C601      		movw r24,r12
+ 1306 060e 0E94 0000 		call IINCHIP_read
+ 1307 0612 E80E      		add r14,r24
+ 1308 0614 F11C      		adc r15,__zero_reg__
+ 496:../freeRTOS750/lib_iinchip/socket.c **** #ifdef __DEF_IINCHIP_DBG__
+ 497:../freeRTOS750/lib_iinchip/socket.c ****    	xSerialPrintf_P(PSTR(" rd_ptr: %.4x rd_len: %.4x\r\n"), ptr, len);
+ 498:../freeRTOS750/lib_iinchip/socket.c **** #endif
+ 499:../freeRTOS750/lib_iinchip/socket.c ****    	switch (IINCHIP_read(Sn_MR(s)) & 0x07)
+ 1310               	.LM132:
+ 1311 0616 C101      		movw r24,r2
+ 1312 0618 0E94 0000 		call IINCHIP_read
+ 1313 061c 8770      		andi r24,lo8(7)
+ 1314 061e 8330      		cpi r24,lo8(3)
+ 1315 0620 01F0      		breq .L126
+ 1316 0622 8430      		cpi r24,lo8(4)
+ 1317 0624 01F4      		brne .+2
+ 1318 0626 00C0      		rjmp .L127
+ 1319 0628 8230      		cpi r24,lo8(2)
+ 1320 062a 01F0      		breq .+2
+ 1321 062c 00C0      		rjmp .L132
+ 500:../freeRTOS750/lib_iinchip/socket.c ****    	{
+ 501:../freeRTOS750/lib_iinchip/socket.c ****    	case Sn_MR_UDP :
+ 502:../freeRTOS750/lib_iinchip/socket.c ****    			read_data(s, (uint8_t *)ptr, head, 0x08);
+ 1323               	.LM133:
+ 1324 062e 28E0      		ldi r18,lo8(8)
+ 1325 0630 30E0      		ldi r19,0
+ 1326 0632 AE01      		movw r20,r28
+ 1327 0634 4F5F      		subi r20,-1
+ 1328 0636 5F4F      		sbci r21,-1
+ 1329 0638 B701      		movw r22,r14
+ 1330 063a 852D      		mov r24,r5
+ 1331 063c 0E94 0000 		call read_data
+ 503:../freeRTOS750/lib_iinchip/socket.c ****    			ptr += 8;
+ 1333               	.LM134:
+ 1334 0640 88E0      		ldi r24,8
+ 1335 0642 E80E      		add r14,r24
+ 1336 0644 F11C      		adc r15,__zero_reg__
+ 504:../freeRTOS750/lib_iinchip/socket.c ****    			// read peer's IP address, port number.
+ 505:../freeRTOS750/lib_iinchip/socket.c ****     		addr[0] = head[0];
+ 1338               	.LM135:
+ 1339 0646 8981      		ldd r24,Y+1
+ 1340 0648 F301      		movw r30,r6
+ 1341 064a 8083      		st Z,r24
+ 506:../freeRTOS750/lib_iinchip/socket.c ****    			addr[1] = head[1];
+ 1343               	.LM136:
+ 1344 064c 8A81      		ldd r24,Y+2
+ 1345 064e 8183      		std Z+1,r24
+ 507:../freeRTOS750/lib_iinchip/socket.c ****    			addr[2] = head[2];
+ 1347               	.LM137:
+ 1348 0650 8B81      		ldd r24,Y+3
+ 1349 0652 8283      		std Z+2,r24
+ 508:../freeRTOS750/lib_iinchip/socket.c ****    			addr[3] = head[3];
+ 1351               	.LM138:
+ 1352 0654 8C81      		ldd r24,Y+4
+ 1353 0656 8383      		std Z+3,r24
+ 509:../freeRTOS750/lib_iinchip/socket.c ****    			*port = head[4];
+ 510:../freeRTOS750/lib_iinchip/socket.c ****    			*port = (*port << 8) + head[5];
+ 1355               	.LM139:
+ 1356 0658 9D81      		ldd r25,Y+5
+ 1357 065a 80E0      		ldi r24,0
+ 1358 065c 2E81      		ldd r18,Y+6
+ 1359 065e 820F      		add r24,r18
+ 1360 0660 911D      		adc r25,__zero_reg__
+ 1361 0662 F801      		movw r30,r16
+ 1362 0664 9183      		std Z+1,r25
+ 1363 0666 8083      		st Z,r24
+ 511:../freeRTOS750/lib_iinchip/socket.c ****    			data_len = head[6];
+ 512:../freeRTOS750/lib_iinchip/socket.c ****    			data_len = (data_len << 8) + head[7];
+ 1365               	.LM140:
+ 1366 0668 1F81      		ldd r17,Y+7
+ 1367 066a 00E0      		ldi r16,0
+ 1368 066c 8885      		ldd r24,Y+8
+ 1369 066e 00C0      		rjmp .L134
+ 1370               	.L126:
+ 513:../freeRTOS750/lib_iinchip/socket.c **** 
+ 514:../freeRTOS750/lib_iinchip/socket.c **** #ifdef __DEF_IINCHIP_DBG__
+ 515:../freeRTOS750/lib_iinchip/socket.c ****    			xSerialPrint_P(PSTR(" UDP msg arrived\r\n"));
+ 516:../freeRTOS750/lib_iinchip/socket.c ****    			xSerialPrintf_P(PSTR(" source Port : %d\r\n"), *port);
+ 517:../freeRTOS750/lib_iinchip/socket.c ****    			xSerialPrintf_P(PSTR(" source IP : %d.%d.%d.%d\r\n"), addr[0], addr[1], addr[2], addr[3]);
+ 518:../freeRTOS750/lib_iinchip/socket.c **** #endif
+ 519:../freeRTOS750/lib_iinchip/socket.c **** 
+ 520:../freeRTOS750/lib_iinchip/socket.c **** 			read_data(s, (uint8_t *)ptr, buf, data_len); // data copy.
+ 521:../freeRTOS750/lib_iinchip/socket.c **** 			ptr += data_len;
+ 522:../freeRTOS750/lib_iinchip/socket.c **** 
+ 523:../freeRTOS750/lib_iinchip/socket.c **** 			IINCHIP_write(Sn_RX_RD0(s),(uint8_t)((ptr & 0xff00) >> 8));
+ 524:../freeRTOS750/lib_iinchip/socket.c **** 			IINCHIP_write(Sn_RX_RD1(s),(uint8_t)(ptr & 0x00ff));
+ 525:../freeRTOS750/lib_iinchip/socket.c ****    			break;
+ 526:../freeRTOS750/lib_iinchip/socket.c **** 
+ 527:../freeRTOS750/lib_iinchip/socket.c ****    	case Sn_MR_IPRAW :
+ 528:../freeRTOS750/lib_iinchip/socket.c ****    			read_data(s, (uint8_t *)ptr, head, 0x06);
+ 1372               	.LM141:
+ 1373 0670 26E0      		ldi r18,lo8(6)
+ 1374 0672 30E0      		ldi r19,0
+ 1375 0674 AE01      		movw r20,r28
+ 1376 0676 4F5F      		subi r20,-1
+ 1377 0678 5F4F      		sbci r21,-1
+ 1378 067a B701      		movw r22,r14
+ 1379 067c 852D      		mov r24,r5
+ 1380 067e 0E94 0000 		call read_data
+ 529:../freeRTOS750/lib_iinchip/socket.c ****    			ptr += 6;
+ 1382               	.LM142:
+ 1383 0682 F6E0      		ldi r31,6
+ 1384 0684 EF0E      		add r14,r31
+ 1385 0686 F11C      		adc r15,__zero_reg__
+ 530:../freeRTOS750/lib_iinchip/socket.c **** 
+ 531:../freeRTOS750/lib_iinchip/socket.c ****    			addr[0] = head[0];
+ 1387               	.LM143:
+ 1388 0688 8981      		ldd r24,Y+1
+ 1389 068a F301      		movw r30,r6
+ 1390 068c 8083      		st Z,r24
+ 532:../freeRTOS750/lib_iinchip/socket.c ****    			addr[1] = head[1];
+ 1392               	.LM144:
+ 1393 068e 8A81      		ldd r24,Y+2
+ 1394 0690 8183      		std Z+1,r24
+ 533:../freeRTOS750/lib_iinchip/socket.c ****    			addr[2] = head[2];
+ 1396               	.LM145:
+ 1397 0692 8B81      		ldd r24,Y+3
+ 1398 0694 8283      		std Z+2,r24
+ 534:../freeRTOS750/lib_iinchip/socket.c ****    			addr[3] = head[3];
+ 1400               	.LM146:
+ 1401 0696 8C81      		ldd r24,Y+4
+ 1402 0698 8383      		std Z+3,r24
+ 535:../freeRTOS750/lib_iinchip/socket.c ****    			data_len = head[4];
+ 536:../freeRTOS750/lib_iinchip/socket.c ****    			data_len = (data_len << 8) + head[5];
+ 1404               	.LM147:
+ 1405 069a 1D81      		ldd r17,Y+5
+ 1406 069c 00E0      		ldi r16,0
+ 1407 069e 8E81      		ldd r24,Y+6
+ 1408               	.L134:
+ 1409 06a0 080F      		add r16,r24
+ 1410 06a2 111D      		adc r17,__zero_reg__
+ 1411 06a4 00C0      		rjmp .L133
+ 1412               	.L127:
+ 537:../freeRTOS750/lib_iinchip/socket.c **** 
+ 538:../freeRTOS750/lib_iinchip/socket.c **** #ifdef __DEF_IINCHIP_DBG__
+ 539:../freeRTOS750/lib_iinchip/socket.c ****    			xSerialPrint_P(PSTR(" IP RAW msg arrived\r\n"));
+ 540:../freeRTOS750/lib_iinchip/socket.c ****    			xSerialPrintf_P(PSTR(" source IP : %d.%d.%d.%d\r\n"), addr[0], addr[1], addr[2], addr[3]);
+ 541:../freeRTOS750/lib_iinchip/socket.c **** #endif
+ 542:../freeRTOS750/lib_iinchip/socket.c **** 			read_data(s, (uint8_t *)ptr, buf, data_len); // data copy.
+ 543:../freeRTOS750/lib_iinchip/socket.c **** 			ptr += data_len;
+ 544:../freeRTOS750/lib_iinchip/socket.c **** 
+ 545:../freeRTOS750/lib_iinchip/socket.c **** 			IINCHIP_write(Sn_RX_RD0(s),(uint8_t)((ptr & 0xff00) >> 8));
+ 546:../freeRTOS750/lib_iinchip/socket.c **** 			IINCHIP_write(Sn_RX_RD1(s),(uint8_t)(ptr & 0x00ff));
+ 547:../freeRTOS750/lib_iinchip/socket.c ****    			break;
+ 548:../freeRTOS750/lib_iinchip/socket.c **** 
+ 549:../freeRTOS750/lib_iinchip/socket.c ****    	case Sn_MR_MACRAW :
+ 550:../freeRTOS750/lib_iinchip/socket.c ****    			read_data(s,(uint8_t*)ptr,head,2);
+ 1414               	.LM148:
+ 1415 06a6 22E0      		ldi r18,lo8(2)
+ 1416 06a8 30E0      		ldi r19,0
+ 1417 06aa AE01      		movw r20,r28
+ 1418 06ac 4F5F      		subi r20,-1
+ 1419 06ae 5F4F      		sbci r21,-1
+ 1420 06b0 B701      		movw r22,r14
+ 1421 06b2 852D      		mov r24,r5
+ 1422 06b4 0E94 0000 		call read_data
+ 551:../freeRTOS750/lib_iinchip/socket.c ****    			ptr+=2;
+ 552:../freeRTOS750/lib_iinchip/socket.c ****    			data_len = head[0];
+ 553:../freeRTOS750/lib_iinchip/socket.c ****    			data_len = (data_len<<8) + head[1] - 2;
+ 1424               	.LM149:
+ 1425 06b8 9981      		ldd r25,Y+1
+ 1426 06ba 80E0      		ldi r24,0
+ 1427 06bc 0A81      		ldd r16,Y+2
+ 1428 06be 10E0      		ldi r17,0
+ 1429 06c0 0250      		subi r16,2
+ 1430 06c2 1109      		sbc r17,__zero_reg__
+ 1431 06c4 080F      		add r16,r24
+ 1432 06c6 191F      		adc r17,r25
+ 554:../freeRTOS750/lib_iinchip/socket.c ****    			if(data_len > 1514)
+ 1434               	.LM150:
+ 1435 06c8 0B3E      		cpi r16,-21
+ 1436 06ca F5E0      		ldi r31,5
+ 1437 06cc 1F07      		cpc r17,r31
+ 1438 06ce 00F4      		brsh .L124
+ 551:../freeRTOS750/lib_iinchip/socket.c ****    			ptr+=2;
+ 1440               	.LM151:
+ 1441 06d0 82E0      		ldi r24,2
+ 1442 06d2 E80E      		add r14,r24
+ 1443 06d4 F11C      		adc r15,__zero_reg__
+ 1444               	.L133:
+ 555:../freeRTOS750/lib_iinchip/socket.c ****    			{
+ 556:../freeRTOS750/lib_iinchip/socket.c **** #ifdef __DEF_IINCHIP_DBG__
+ 557:../freeRTOS750/lib_iinchip/socket.c ****    				xSerialPrint_P(PSTR(" ...data_len over 1514\r\n"));
+ 558:../freeRTOS750/lib_iinchip/socket.c **** #endif
+ 559:../freeRTOS750/lib_iinchip/socket.c ****    				break;
+ 560:../freeRTOS750/lib_iinchip/socket.c ****    			}
+ 561:../freeRTOS750/lib_iinchip/socket.c **** 
+ 562:../freeRTOS750/lib_iinchip/socket.c ****    			read_data(s,(uint8_t*) ptr,buf,data_len);
+ 1446               	.LM152:
+ 1447 06d6 9801      		movw r18,r16
+ 1448 06d8 A401      		movw r20,r8
+ 1449 06da B701      		movw r22,r14
+ 1450 06dc 852D      		mov r24,r5
+ 1451 06de 0E94 0000 		call read_data
+ 563:../freeRTOS750/lib_iinchip/socket.c ****    			ptr += data_len;
+ 1453               	.LM153:
+ 1454 06e2 E00E      		add r14,r16
+ 1455 06e4 F11E      		adc r15,r17
+ 564:../freeRTOS750/lib_iinchip/socket.c ****    			IINCHIP_write(Sn_RX_RD0(s),(uint8_t)((ptr & 0xff00) >> 8));
+ 1457               	.LM154:
+ 1458 06e6 6F2D      		mov r22,r15
+ 1459 06e8 C501      		movw r24,r10
+ 1460 06ea 0E94 0000 		call IINCHIP_write
+ 565:../freeRTOS750/lib_iinchip/socket.c ****    			IINCHIP_write(Sn_RX_RD1(s),(uint8_t)(ptr & 0x00ff));
+ 1462               	.LM155:
+ 1463 06ee 6E2D      		mov r22,r14
+ 1464 06f0 C601      		movw r24,r12
+ 1465 06f2 0E94 0000 		call IINCHIP_write
+ 566:../freeRTOS750/lib_iinchip/socket.c **** 
+ 567:../freeRTOS750/lib_iinchip/socket.c **** #ifdef __DEF_IINCHIP_DBG__
+ 568:../freeRTOS750/lib_iinchip/socket.c **** 			xSerialPrint_P(PSTR(" MAC RAW msg arrived\r\n"));
+ 569:../freeRTOS750/lib_iinchip/socket.c **** 			xSerialPrintf_P(PSTR(" dest mac=%.2X.%.2X.%.2X.%.2X.%.2X.%.2X\r\n"),buf[0],buf[1],buf[2],buf[3],
+ 570:../freeRTOS750/lib_iinchip/socket.c **** 			xSerialPrintf_P(PSTR(" src  mac=%.2X.%.2X.%.2X.%.2X.%.2X.%.2X\r\n"),buf[6],buf[7],buf[8],buf[9],
+ 571:../freeRTOS750/lib_iinchip/socket.c **** 			xSerialPrintf_P(PSTR(" type    =%.2X%.2X\r\n"),buf[12],buf[13]);
+ 572:../freeRTOS750/lib_iinchip/socket.c **** #endif
+ 573:../freeRTOS750/lib_iinchip/socket.c **** 			break;
+ 1467               	.LM156:
+ 1468 06f6 00C0      		rjmp .L124
+ 1469               	.L132:
+ 486:../freeRTOS750/lib_iinchip/socket.c **** 	uint16_t data_len = 0;
+ 1471               	.LM157:
+ 1472 06f8 00E0      		ldi r16,0
+ 1473 06fa 10E0      		ldi r17,0
+ 1474               	.L124:
+ 574:../freeRTOS750/lib_iinchip/socket.c **** 
+ 575:../freeRTOS750/lib_iinchip/socket.c ****    	default :
+ 576:../freeRTOS750/lib_iinchip/socket.c ****    			break;
+ 577:../freeRTOS750/lib_iinchip/socket.c ****    	}
+ 578:../freeRTOS750/lib_iinchip/socket.c **** 		IINCHIP_write(Sn_CR(s), Sn_CR_RECV);
+ 1476               	.LM158:
+ 1477 06fc EFEF      		ldi r30,-1
+ 1478 06fe 2E1A      		sub r2,r30
+ 1479 0700 3E0A      		sbc r3,r30
+ 1480 0702 60E4      		ldi r22,lo8(64)
+ 1481 0704 C101      		movw r24,r2
+ 1482 0706 0E94 0000 		call IINCHIP_write
+ 1483               	.L128:
+ 579:../freeRTOS750/lib_iinchip/socket.c **** 
+ 580:../freeRTOS750/lib_iinchip/socket.c **** 		/* wait to process the command... */
+ 581:../freeRTOS750/lib_iinchip/socket.c **** 		while( IINCHIP_read(Sn_CR(s)) ) ;
+ 1485               	.LM159:
+ 1486 070a C101      		movw r24,r2
+ 1487 070c 0E94 0000 		call IINCHIP_read
+ 1488 0710 8111      		cpse r24,__zero_reg__
+ 1489 0712 00C0      		rjmp .L128
+ 1490 0714 00C0      		rjmp .L123
+ 1491               	.L129:
+ 486:../freeRTOS750/lib_iinchip/socket.c **** 	uint16_t data_len = 0;
+ 1493               	.LM160:
+ 1494 0716 00E0      		ldi r16,0
+ 1495 0718 10E0      		ldi r17,0
+ 1496               	.L123:
+ 582:../freeRTOS750/lib_iinchip/socket.c **** 	}
+ 583:../freeRTOS750/lib_iinchip/socket.c **** #ifdef __DEF_IINCHIP_DBG__
+ 584:../freeRTOS750/lib_iinchip/socket.c **** 	xSerialPrint_P(PSTR(" ...recvfrom() end\r\n"));
+ 585:../freeRTOS750/lib_iinchip/socket.c **** #endif
+ 586:../freeRTOS750/lib_iinchip/socket.c ****  	return data_len;
+ 587:../freeRTOS750/lib_iinchip/socket.c **** }
+ 1498               	.LM161:
+ 1499 071a C801      		movw r24,r16
+ 1500               	/* epilogue start */
+ 1501 071c 2896      		adiw r28,8
+ 1502 071e 0FB6      		in __tmp_reg__,__SREG__
+ 1503 0720 F894      		cli
+ 1504 0722 DEBF      		out __SP_H__,r29
+ 1505 0724 0FBE      		out __SREG__,__tmp_reg__
+ 1506 0726 CDBF      		out __SP_L__,r28
+ 1507 0728 DF91      		pop r29
+ 1508 072a CF91      		pop r28
+ 1509 072c 1F91      		pop r17
+ 1510 072e 0F91      		pop r16
+ 1511 0730 FF90      		pop r15
+ 1512 0732 EF90      		pop r14
+ 1513 0734 DF90      		pop r13
+ 1514 0736 CF90      		pop r12
+ 1515 0738 BF90      		pop r11
+ 1516 073a AF90      		pop r10
+ 1517 073c 9F90      		pop r9
+ 1518 073e 8F90      		pop r8
+ 1519 0740 7F90      		pop r7
+ 1520 0742 6F90      		pop r6
+ 1521 0744 5F90      		pop r5
+ 1522 0746 3F90      		pop r3
+ 1523 0748 2F90      		pop r2
+ 1524 074a 0895      		ret
+ 1529               	.Lscope9:
+ 1531               		.stabd	78,0,0
+ 1536               	.global	macrawsend
+ 1538               	macrawsend:
+ 1539               		.stabd	46,0,0
+ 588:../freeRTOS750/lib_iinchip/socket.c **** 
+ 589:../freeRTOS750/lib_iinchip/socket.c **** /**
+ 590:../freeRTOS750/lib_iinchip/socket.c **** @brief	This function is an application I/F function which is used to send the data in MACRAW mode.
+ 591:../freeRTOS750/lib_iinchip/socket.c **** 		There is no two byte length header on the send function.
+ 592:../freeRTOS750/lib_iinchip/socket.c **** 
+ 593:../freeRTOS750/lib_iinchip/socket.c **** @return	This function return send data size for success else 0.
+ 594:../freeRTOS750/lib_iinchip/socket.c **** */
+ 595:../freeRTOS750/lib_iinchip/socket.c **** 
+ 596:../freeRTOS750/lib_iinchip/socket.c **** uint16_t macrawsend(
+ 597:../freeRTOS750/lib_iinchip/socket.c **** 	SOCKET s, 				/**< the socket number */
+ 598:../freeRTOS750/lib_iinchip/socket.c **** 	uint8_t * buf,			/**< a pointer to copy the data to be sent */
+ 599:../freeRTOS750/lib_iinchip/socket.c **** 	uint16_t len 			/**< the data size to read */
+ 600:../freeRTOS750/lib_iinchip/socket.c **** 	)
+ 601:../freeRTOS750/lib_iinchip/socket.c **** {
+ 1541               	.LM162:
+ 1542               	.LFBB10:
+ 1543 074c 5F92      		push r5
+ 1544 074e 6F92      		push r6
+ 1545 0750 7F92      		push r7
+ 1546 0752 8F92      		push r8
+ 1547 0754 9F92      		push r9
+ 1548 0756 AF92      		push r10
+ 1549 0758 BF92      		push r11
+ 1550 075a CF92      		push r12
+ 1551 075c DF92      		push r13
+ 1552 075e EF92      		push r14
+ 1553 0760 FF92      		push r15
+ 1554 0762 0F93      		push r16
+ 1555 0764 1F93      		push r17
+ 1556 0766 CF93      		push r28
+ 1557 0768 DF93      		push r29
+ 1558               	/* prologue: function */
+ 1559               	/* frame size = 0 */
+ 1560               	/* stack size = 15 */
+ 1561               	.L__stack_usage = 15
+ 1562 076a 582E      		mov r5,r24
+ 1563 076c 3B01      		movw r6,r22
+ 1564 076e 7A01      		movw r14,r20
+ 602:../freeRTOS750/lib_iinchip/socket.c **** 	uint16_t ptr;
+ 603:../freeRTOS750/lib_iinchip/socket.c **** 	uint16_t ret;
+ 604:../freeRTOS750/lib_iinchip/socket.c **** 
+ 605:../freeRTOS750/lib_iinchip/socket.c **** #ifdef __DEF_IINCHIP_DBG__
+ 606:../freeRTOS750/lib_iinchip/socket.c **** 	xSerialPrint_P(PSTR(" macrawsend()\r\n"));
+ 607:../freeRTOS750/lib_iinchip/socket.c **** #endif
+ 608:../freeRTOS750/lib_iinchip/socket.c ****    if (len > getIINCHIP_TxMAX(s)) ret = getIINCHIP_TxMAX(s); // check size not to exceed MAX size
+ 1566               	.LM163:
+ 1567 0770 0E94 0000 		call getIINCHIP_TxMAX
+ 1568 0774 8E15      		cp r24,r14
+ 1569 0776 9F05      		cpc r25,r15
+ 1570 0778 00F4      		brsh .L143
+ 1572               	.LM164:
+ 1573 077a 852D      		mov r24,r5
+ 1574 077c 0E94 0000 		call getIINCHIP_TxMAX
+ 1575 0780 EC01      		movw r28,r24
+ 1576 0782 00C0      		rjmp .L136
+ 1577               	.L143:
+ 1579               	.LM165:
+ 1580 0784 E701      		movw r28,r14
+ 1581               	.L136:
+ 609:../freeRTOS750/lib_iinchip/socket.c **** 
+ 610:../freeRTOS750/lib_iinchip/socket.c ****    else ret = len;
+ 611:../freeRTOS750/lib_iinchip/socket.c **** 
+ 612:../freeRTOS750/lib_iinchip/socket.c **** 	if	(ret == 0)
+ 1583               	.LM166:
+ 1584 0786 2097      		sbiw r28,0
+ 1585 0788 01F4      		brne .L137
+ 1586               	.L141:
+ 608:../freeRTOS750/lib_iinchip/socket.c ****    if (len > getIINCHIP_TxMAX(s)) ret = getIINCHIP_TxMAX(s); // check size not to exceed MAX size
+ 1588               	.LM167:
+ 1589 078a C0E0      		ldi r28,0
+ 1590 078c D0E0      		ldi r29,0
+ 1591 078e 00C0      		rjmp .L138
+ 1592               	.L137:
+ 613:../freeRTOS750/lib_iinchip/socket.c ****  	{
+ 614:../freeRTOS750/lib_iinchip/socket.c **** #ifdef __DEF_IINCHIP_DBG__
+ 615:../freeRTOS750/lib_iinchip/socket.c **** 		xSerialPrintf_P(PSTR(" %d Fail[%d]\r\n"),len);
+ 616:../freeRTOS750/lib_iinchip/socket.c **** #endif
+ 617:../freeRTOS750/lib_iinchip/socket.c **** 	}
+ 618:../freeRTOS750/lib_iinchip/socket.c **** 	else
+ 619:../freeRTOS750/lib_iinchip/socket.c **** 	{
+ 620:../freeRTOS750/lib_iinchip/socket.c **** 		ptr = IINCHIP_read(Sn_TX_WR0(s));
+ 1594               	.LM168:
+ 1595 0790 052D      		mov r16,r5
+ 1596 0792 10E0      		ldi r17,0
+ 1597 0794 0C5F      		subi r16,-4
+ 1598 0796 1F4F      		sbci r17,-1
+ 1599 0798 102F      		mov r17,r16
+ 1600 079a 0027      		clr r16
+ 1601 079c 5801      		movw r10,r16
+ 1602 079e 84E2      		ldi r24,36
+ 1603 07a0 A80E      		add r10,r24
+ 1604 07a2 B11C      		adc r11,__zero_reg__
+ 1605 07a4 C501      		movw r24,r10
+ 1606 07a6 0E94 0000 		call IINCHIP_read
+ 621:../freeRTOS750/lib_iinchip/socket.c **** 		ptr = (ptr << 8) + IINCHIP_read(Sn_TX_WR1(s));
+ 1608               	.LM169:
+ 1609 07aa 982E      		mov r9,r24
+ 1610 07ac 812C      		mov r8,__zero_reg__
+ 1611 07ae 6801      		movw r12,r16
+ 1612 07b0 85E2      		ldi r24,37
+ 1613 07b2 C80E      		add r12,r24
+ 1614 07b4 D11C      		adc r13,__zero_reg__
+ 1615 07b6 C601      		movw r24,r12
+ 1616 07b8 0E94 0000 		call IINCHIP_read
+ 1617 07bc 880E      		add r8,r24
+ 1618 07be 911C      		adc r9,__zero_reg__
+ 622:../freeRTOS750/lib_iinchip/socket.c **** 
+ 623:../freeRTOS750/lib_iinchip/socket.c **** 		write_data( s, buf, (uint8_t *)(ptr), len );
+ 1620               	.LM170:
+ 1621 07c0 9701      		movw r18,r14
+ 1622 07c2 A401      		movw r20,r8
+ 1623 07c4 B301      		movw r22,r6
+ 1624 07c6 852D      		mov r24,r5
+ 1625 07c8 0E94 0000 		call write_data
+ 624:../freeRTOS750/lib_iinchip/socket.c **** 		ptr += len;
+ 1627               	.LM171:
+ 1628 07cc E80C      		add r14,r8
+ 1629 07ce F91C      		adc r15,r9
+ 625:../freeRTOS750/lib_iinchip/socket.c **** 
+ 626:../freeRTOS750/lib_iinchip/socket.c **** 	#ifdef __DEF_IINCHIP_DBG__
+ 627:../freeRTOS750/lib_iinchip/socket.c **** 		xSerialPrintf_P(PSTR(" tx_ptr: %.4x tx_len: %.4x\r\n"), ptr, len);
+ 628:../freeRTOS750/lib_iinchip/socket.c **** 	#endif
+ 629:../freeRTOS750/lib_iinchip/socket.c **** 
+ 630:../freeRTOS750/lib_iinchip/socket.c **** 		IINCHIP_write(Sn_TX_WR0(s), (uint8_t)((ptr & 0xff00) >> 8));
+ 1631               	.LM172:
+ 1632 07d0 6F2D      		mov r22,r15
+ 1633 07d2 C501      		movw r24,r10
+ 1634 07d4 0E94 0000 		call IINCHIP_write
+ 631:../freeRTOS750/lib_iinchip/socket.c **** 		IINCHIP_write(Sn_TX_WR1(s), (uint8_t)(ptr & 0x00ff));
+ 1636               	.LM173:
+ 1637 07d8 6E2D      		mov r22,r14
+ 1638 07da C601      		movw r24,r12
+ 1639 07dc 0E94 0000 		call IINCHIP_write
+ 632:../freeRTOS750/lib_iinchip/socket.c **** 
+ 633:../freeRTOS750/lib_iinchip/socket.c **** 		IINCHIP_write(Sn_CR(s), Sn_CR_SEND);
+ 1641               	.LM174:
+ 1642 07e0 7801      		movw r14,r16
+ 1643 07e2 8FEF      		ldi r24,-1
+ 1644 07e4 E81A      		sub r14,r24
+ 1645 07e6 F80A      		sbc r15,r24
+ 1646 07e8 60E2      		ldi r22,lo8(32)
+ 1647 07ea C701      		movw r24,r14
+ 1648 07ec 0E94 0000 		call IINCHIP_write
+ 1649               	.L139:
+ 634:../freeRTOS750/lib_iinchip/socket.c **** 
+ 635:../freeRTOS750/lib_iinchip/socket.c **** 		/* wait to process the command... */
+ 636:../freeRTOS750/lib_iinchip/socket.c **** 		while( IINCHIP_read(Sn_CR(s)) ) ;
+ 1651               	.LM175:
+ 1652 07f0 C701      		movw r24,r14
+ 1653 07f2 0E94 0000 		call IINCHIP_read
+ 1654 07f6 8111      		cpse r24,__zero_reg__
+ 1655 07f8 00C0      		rjmp .L139
+ 637:../freeRTOS750/lib_iinchip/socket.c **** 
+ 638:../freeRTOS750/lib_iinchip/socket.c **** #ifdef __DEF_IINCHIP_INT__
+ 639:../freeRTOS750/lib_iinchip/socket.c ****    	while ( (getISR(s) & Sn_IR_SEND_OK) != Sn_IR_SEND_OK )
+ 640:../freeRTOS750/lib_iinchip/socket.c **** #else
+ 641:../freeRTOS750/lib_iinchip/socket.c ****    		while ( (IINCHIP_read(Sn_IR(s)) & Sn_IR_SEND_OK) != Sn_IR_SEND_OK )
+ 1657               	.LM176:
+ 1658 07fa 0E5F      		subi r16,-2
+ 1659 07fc 1F4F      		sbci r17,-1
+ 1660               	.L145:
+ 1661 07fe C801      		movw r24,r16
+ 1662 0800 0E94 0000 		call IINCHIP_read
+ 1663 0804 84FD      		sbrc r24,4
+ 1664 0806 00C0      		rjmp .L140
+ 642:../freeRTOS750/lib_iinchip/socket.c **** #endif
+ 643:../freeRTOS750/lib_iinchip/socket.c **** 		{
+ 644:../freeRTOS750/lib_iinchip/socket.c **** #ifdef __DEF_IINCHIP_INT__
+ 645:../freeRTOS750/lib_iinchip/socket.c ****       	if (getISR(s) & Sn_IR_TIMEOUT)
+ 646:../freeRTOS750/lib_iinchip/socket.c **** #else
+ 647:../freeRTOS750/lib_iinchip/socket.c **** 	      if (IINCHIP_read(Sn_IR(s)) & Sn_IR_TIMEOUT)
+ 1666               	.LM177:
+ 1667 0808 C801      		movw r24,r16
+ 1668 080a 0E94 0000 		call IINCHIP_read
+ 1669 080e 83FF      		sbrs r24,3
+ 1670 0810 00C0      		rjmp .L145
+ 1671 0812 00C0      		rjmp .L141
+ 1672               	.L140:
+ 648:../freeRTOS750/lib_iinchip/socket.c **** #endif
+ 649:../freeRTOS750/lib_iinchip/socket.c **** 			{
+ 650:../freeRTOS750/lib_iinchip/socket.c **** #ifdef __DEF_IINCHIP_DBG__
+ 651:../freeRTOS750/lib_iinchip/socket.c **** 				xSerialPrint_P(PSTR(" ...macrawsend fail.\r\n"));
+ 652:../freeRTOS750/lib_iinchip/socket.c **** #endif
+ 653:../freeRTOS750/lib_iinchip/socket.c **** 			   return 0;
+ 654:../freeRTOS750/lib_iinchip/socket.c **** 			}
+ 655:../freeRTOS750/lib_iinchip/socket.c **** 		}
+ 656:../freeRTOS750/lib_iinchip/socket.c **** #ifdef __DEF_IINCHIP_INT__
+ 657:../freeRTOS750/lib_iinchip/socket.c ****      	putISR(s, getISR(s) & (~Sn_IR_SEND_OK));
+ 658:../freeRTOS750/lib_iinchip/socket.c **** #else
+ 659:../freeRTOS750/lib_iinchip/socket.c **** 	   IINCHIP_write(Sn_IR(s), Sn_IR_SEND_OK);
+ 1674               	.LM178:
+ 1675 0814 60E1      		ldi r22,lo8(16)
+ 1676 0816 C801      		movw r24,r16
+ 1677 0818 0E94 0000 		call IINCHIP_write
+ 1678               	.L138:
+ 660:../freeRTOS750/lib_iinchip/socket.c **** #endif
+ 661:../freeRTOS750/lib_iinchip/socket.c ****    }
+ 662:../freeRTOS750/lib_iinchip/socket.c **** 
+ 663:../freeRTOS750/lib_iinchip/socket.c **** #ifdef __DEF_IINCHIP_DBG__
+ 664:../freeRTOS750/lib_iinchip/socket.c **** 	xSerialPrint_P(PSTR(" ...macrawsend() end\r\n"));
+ 665:../freeRTOS750/lib_iinchip/socket.c **** #endif
+ 666:../freeRTOS750/lib_iinchip/socket.c **** 	return ret;
+ 667:../freeRTOS750/lib_iinchip/socket.c **** }
+ 1680               	.LM179:
+ 1681 081c CE01      		movw r24,r28
+ 1682               	/* epilogue start */
+ 1683 081e DF91      		pop r29
+ 1684 0820 CF91      		pop r28
+ 1685 0822 1F91      		pop r17
+ 1686 0824 0F91      		pop r16
+ 1687 0826 FF90      		pop r15
+ 1688 0828 EF90      		pop r14
+ 1689 082a DF90      		pop r13
+ 1690 082c CF90      		pop r12
+ 1691 082e BF90      		pop r11
+ 1692 0830 AF90      		pop r10
+ 1693 0832 9F90      		pop r9
+ 1694 0834 8F90      		pop r8
+ 1695 0836 7F90      		pop r7
+ 1696 0838 6F90      		pop r6
+ 1697 083a 5F90      		pop r5
+ 1698 083c 0895      		ret
+ 1703               	.Lscope10:
+ 1705               		.stabd	78,0,0
+ 1710               	.global	macrawrecv
+ 1712               	macrawrecv:
+ 1713               		.stabd	46,0,0
+ 668:../freeRTOS750/lib_iinchip/socket.c **** 
+ 669:../freeRTOS750/lib_iinchip/socket.c **** 
+ 670:../freeRTOS750/lib_iinchip/socket.c **** /**
+ 671:../freeRTOS750/lib_iinchip/socket.c **** @brief	This function is an application I/F function which is used to receive the data
+ 672:../freeRTOS750/lib_iinchip/socket.c ****  	 	MAC_RAW mode, and handle the 2 byte length header as well.
+ 673:../freeRTOS750/lib_iinchip/socket.c **** 
+ 674:../freeRTOS750/lib_iinchip/socket.c **** @return	This function return received data size for success else 0.
+ 675:../freeRTOS750/lib_iinchip/socket.c **** */
+ 676:../freeRTOS750/lib_iinchip/socket.c **** uint16_t macrawrecv(
+ 677:../freeRTOS750/lib_iinchip/socket.c **** 	SOCKET s, 		/**< the socket number */
+ 678:../freeRTOS750/lib_iinchip/socket.c **** 	uint8_t * buf, 	/**< a pointer to copy the data to be received */
+ 679:../freeRTOS750/lib_iinchip/socket.c **** 	uint16_t len 	/**< the data size to read */
+ 680:../freeRTOS750/lib_iinchip/socket.c **** 	)
+ 681:../freeRTOS750/lib_iinchip/socket.c **** {
+ 1715               	.LM180:
+ 1716               	.LFBB11:
+ 1717 083e 5F92      		push r5
+ 1718 0840 6F92      		push r6
+ 1719 0842 7F92      		push r7
+ 1720 0844 8F92      		push r8
+ 1721 0846 9F92      		push r9
+ 1722 0848 AF92      		push r10
+ 1723 084a BF92      		push r11
+ 1724 084c CF92      		push r12
+ 1725 084e DF92      		push r13
+ 1726 0850 EF92      		push r14
+ 1727 0852 FF92      		push r15
+ 1728 0854 0F93      		push r16
+ 1729 0856 1F93      		push r17
+ 1730 0858 CF93      		push r28
+ 1731 085a DF93      		push r29
+ 1732 085c 00D0      		rcall .
+ 1733 085e CDB7      		in r28,__SP_L__
+ 1734 0860 DEB7      		in r29,__SP_H__
+ 1735               	/* prologue: function */
+ 1736               	/* frame size = 2 */
+ 1737               	/* stack size = 17 */
+ 1738               	.L__stack_usage = 17
+ 1739 0862 582E      		mov r5,r24
+ 1740 0864 4B01      		movw r8,r22
+ 682:../freeRTOS750/lib_iinchip/socket.c **** 	uint8_t head[2];
+ 683:../freeRTOS750/lib_iinchip/socket.c **** 	uint16_t data_len = 0;
+ 684:../freeRTOS750/lib_iinchip/socket.c **** 	uint16_t ptr;
+ 685:../freeRTOS750/lib_iinchip/socket.c **** 
+ 686:../freeRTOS750/lib_iinchip/socket.c **** #ifdef __DEF_IINCHIP_DBG__
+ 687:../freeRTOS750/lib_iinchip/socket.c **** 	xSerialPrint_P(PSTR(" macrawrecv()\r\n"));
+ 688:../freeRTOS750/lib_iinchip/socket.c **** #endif
+ 689:../freeRTOS750/lib_iinchip/socket.c **** 
+ 690:../freeRTOS750/lib_iinchip/socket.c **** 	if ( len > 0 )
+ 1742               	.LM181:
+ 1743 0866 452B      		or r20,r21
+ 1744 0868 01F4      		brne .+2
+ 1745 086a 00C0      		rjmp .L150
+ 691:../freeRTOS750/lib_iinchip/socket.c **** 	{
+ 692:../freeRTOS750/lib_iinchip/socket.c **** 	   	ptr = IINCHIP_read(Sn_RX_RD0(s));
+ 1747               	.LM182:
+ 1748 086c C82E      		mov r12,r24
+ 1749 086e D12C      		mov r13,__zero_reg__
+ 1750 0870 84E0      		ldi r24,4
+ 1751 0872 C80E      		add r12,r24
+ 1752 0874 D11C      		adc r13,__zero_reg__
+ 1753 0876 DC2C      		mov r13,r12
+ 1754 0878 CC24      		clr r12
+ 1755 087a 5601      		movw r10,r12
+ 1756 087c 98E2      		ldi r25,40
+ 1757 087e A90E      		add r10,r25
+ 1758 0880 B11C      		adc r11,__zero_reg__
+ 1759 0882 C501      		movw r24,r10
+ 1760 0884 0E94 0000 		call IINCHIP_read
+ 693:../freeRTOS750/lib_iinchip/socket.c **** 	   	ptr = ((ptr & 0x00ff) << 8) + IINCHIP_read(Sn_RX_RD1(s));
+ 1762               	.LM183:
+ 1763 0888 782E      		mov r7,r24
+ 1764 088a 612C      		mov r6,__zero_reg__
+ 1765 088c 89E2      		ldi r24,41
+ 1766 088e C80E      		add r12,r24
+ 1767 0890 D11C      		adc r13,__zero_reg__
+ 1768 0892 C601      		movw r24,r12
+ 1769 0894 0E94 0000 		call IINCHIP_read
+ 1770 0898 680E      		add r6,r24
+ 1771 089a 711C      		adc r7,__zero_reg__
+ 694:../freeRTOS750/lib_iinchip/socket.c **** 
+ 695:../freeRTOS750/lib_iinchip/socket.c **** 		read_data( s, (uint8_t*)ptr, head, 2 );
+ 1773               	.LM184:
+ 1774 089c 22E0      		ldi r18,lo8(2)
+ 1775 089e 30E0      		ldi r19,0
+ 1776 08a0 AE01      		movw r20,r28
+ 1777 08a2 4F5F      		subi r20,-1
+ 1778 08a4 5F4F      		sbci r21,-1
+ 1779 08a6 B301      		movw r22,r6
+ 1780 08a8 852D      		mov r24,r5
+ 1781 08aa 0E94 0000 		call read_data
+ 696:../freeRTOS750/lib_iinchip/socket.c **** 		ptr+=2;
+ 697:../freeRTOS750/lib_iinchip/socket.c **** 		data_len = head[0];
+ 698:../freeRTOS750/lib_iinchip/socket.c **** 		data_len = (data_len<<8) + head[1] - 2;
+ 1783               	.LM185:
+ 1784 08ae 9981      		ldd r25,Y+1
+ 1785 08b0 80E0      		ldi r24,0
+ 1786 08b2 0A81      		ldd r16,Y+2
+ 1787 08b4 10E0      		ldi r17,0
+ 1788 08b6 0250      		subi r16,2
+ 1789 08b8 1109      		sbc r17,__zero_reg__
+ 1790 08ba 080F      		add r16,r24
+ 1791 08bc 191F      		adc r17,r25
+ 699:../freeRTOS750/lib_iinchip/socket.c **** 
+ 700:../freeRTOS750/lib_iinchip/socket.c **** 		if(data_len > 1514)
+ 1793               	.LM186:
+ 1794 08be 0B3E      		cpi r16,-21
+ 1795 08c0 95E0      		ldi r25,5
+ 1796 08c2 1907      		cpc r17,r25
+ 1797 08c4 00F4      		brsh .L151
+ 696:../freeRTOS750/lib_iinchip/socket.c **** 		ptr+=2;
+ 1799               	.LM187:
+ 1800 08c6 82E0      		ldi r24,2
+ 1801 08c8 680E      		add r6,r24
+ 1802 08ca 711C      		adc r7,__zero_reg__
+ 701:../freeRTOS750/lib_iinchip/socket.c **** 		{
+ 702:../freeRTOS750/lib_iinchip/socket.c **** #ifdef __DEF_IINCHIP_DBG__
+ 703:../freeRTOS750/lib_iinchip/socket.c **** 			xSerialPrintf_P(PSTR(" ...data_len over 1514: [%d]\r\n"), len);
+ 704:../freeRTOS750/lib_iinchip/socket.c **** #endif
+ 705:../freeRTOS750/lib_iinchip/socket.c **** 			return 0;
+ 706:../freeRTOS750/lib_iinchip/socket.c **** 		}
+ 707:../freeRTOS750/lib_iinchip/socket.c **** 
+ 708:../freeRTOS750/lib_iinchip/socket.c **** 		read_data( s, (uint8_t*) ptr, buf, data_len );
+ 1804               	.LM188:
+ 1805 08cc 9801      		movw r18,r16
+ 1806 08ce A401      		movw r20,r8
+ 1807 08d0 B301      		movw r22,r6
+ 1808 08d2 852D      		mov r24,r5
+ 1809 08d4 0E94 0000 		call read_data
+ 709:../freeRTOS750/lib_iinchip/socket.c **** 		ptr += data_len;
+ 1811               	.LM189:
+ 1812 08d8 600E      		add r6,r16
+ 1813 08da 711E      		adc r7,r17
+ 710:../freeRTOS750/lib_iinchip/socket.c **** 		IINCHIP_write(Sn_RX_RD0(s),(uint8_t)((ptr & 0xff00) >> 8));
+ 1815               	.LM190:
+ 1816 08dc 672D      		mov r22,r7
+ 1817 08de C501      		movw r24,r10
+ 1818 08e0 0E94 0000 		call IINCHIP_write
+ 711:../freeRTOS750/lib_iinchip/socket.c **** 		IINCHIP_write(Sn_RX_RD1(s),(uint8_t)(ptr & 0x00ff));
+ 1820               	.LM191:
+ 1821 08e4 662D      		mov r22,r6
+ 1822 08e6 C601      		movw r24,r12
+ 1823 08e8 0E94 0000 		call IINCHIP_write
+ 1824 08ec 00C0      		rjmp .L147
+ 1825               	.L150:
+ 683:../freeRTOS750/lib_iinchip/socket.c **** 	uint16_t data_len = 0;
+ 1827               	.LM192:
+ 1828 08ee 00E0      		ldi r16,0
+ 1829 08f0 10E0      		ldi r17,0
+ 1830               	.L147:
+ 712:../freeRTOS750/lib_iinchip/socket.c **** 
+ 713:../freeRTOS750/lib_iinchip/socket.c **** #ifdef __DEF_IINCHIP_DBG__
+ 714:../freeRTOS750/lib_iinchip/socket.c **** 		xSerialPrintf_P(PSTR(" dest mac=%.2X.%.2X.%.2X.%.2X.%.2X.%.2X\r\n"),buf[0],buf[1],buf[2],buf[3],b
+ 715:../freeRTOS750/lib_iinchip/socket.c **** 		xSerialPrintf_P(PSTR(" src  mac=%.2X.%.2X.%.2X.%.2X.%.2X.%.2X\r\n"),buf[6],buf[7],buf[8],buf[9],b
+ 716:../freeRTOS750/lib_iinchip/socket.c **** 		xSerialPrintf_P(PSTR(" type    =%.2X%.2X\r\n"),buf[12],buf[13]);
+ 717:../freeRTOS750/lib_iinchip/socket.c **** #endif
+ 718:../freeRTOS750/lib_iinchip/socket.c **** 
+ 719:../freeRTOS750/lib_iinchip/socket.c ****    	}
+ 720:../freeRTOS750/lib_iinchip/socket.c **** 
+ 721:../freeRTOS750/lib_iinchip/socket.c **** 	IINCHIP_write(Sn_CR(s), Sn_CR_RECV);
+ 1832               	.LM193:
+ 1833 08f2 F52C      		mov r15,r5
+ 1834 08f4 E12C      		mov r14,__zero_reg__
+ 1835 08f6 8FEF      		ldi r24,-1
+ 1836 08f8 E81A      		sub r14,r24
+ 1837 08fa 8BEF      		ldi r24,-5
+ 1838 08fc F80A      		sbc r15,r24
+ 1839 08fe 60E4      		ldi r22,lo8(64)
+ 1840 0900 C701      		movw r24,r14
+ 1841 0902 0E94 0000 		call IINCHIP_write
+ 1842               	.L149:
+ 722:../freeRTOS750/lib_iinchip/socket.c **** 
+ 723:../freeRTOS750/lib_iinchip/socket.c **** 	/* wait to process the command... */
+ 724:../freeRTOS750/lib_iinchip/socket.c **** 	while( IINCHIP_read(Sn_CR(s)) ) ;
+ 1844               	.LM194:
+ 1845 0906 C701      		movw r24,r14
+ 1846 0908 0E94 0000 		call IINCHIP_read
+ 1847 090c 8111      		cpse r24,__zero_reg__
+ 1848 090e 00C0      		rjmp .L149
+ 1849 0910 00C0      		rjmp .L148
+ 1850               	.L151:
+ 705:../freeRTOS750/lib_iinchip/socket.c **** 			return 0;
+ 1852               	.LM195:
+ 1853 0912 00E0      		ldi r16,0
+ 1854 0914 10E0      		ldi r17,0
+ 1855               	.L148:
+ 725:../freeRTOS750/lib_iinchip/socket.c **** 
+ 726:../freeRTOS750/lib_iinchip/socket.c **** #ifdef __DEF_IINCHIP_DBG__
+ 727:../freeRTOS750/lib_iinchip/socket.c **** 	xSerialPrint_P(PSTR(" ...macrawrecv() end\r\n"));
+ 728:../freeRTOS750/lib_iinchip/socket.c **** #endif
+ 729:../freeRTOS750/lib_iinchip/socket.c ****  	return data_len;
+ 730:../freeRTOS750/lib_iinchip/socket.c **** }
+ 1857               	.LM196:
+ 1858 0916 C801      		movw r24,r16
+ 1859               	/* epilogue start */
+ 1860 0918 0F90      		pop __tmp_reg__
+ 1861 091a 0F90      		pop __tmp_reg__
+ 1862 091c DF91      		pop r29
+ 1863 091e CF91      		pop r28
+ 1864 0920 1F91      		pop r17
+ 1865 0922 0F91      		pop r16
+ 1866 0924 FF90      		pop r15
+ 1867 0926 EF90      		pop r14
+ 1868 0928 DF90      		pop r13
+ 1869 092a CF90      		pop r12
+ 1870 092c BF90      		pop r11
+ 1871 092e AF90      		pop r10
+ 1872 0930 9F90      		pop r9
+ 1873 0932 8F90      		pop r8
+ 1874 0934 7F90      		pop r7
+ 1875 0936 6F90      		pop r6
+ 1876 0938 5F90      		pop r5
+ 1877 093a 0895      		ret
+ 1882               	.Lscope11:
+ 1884               		.stabd	78,0,0
+ 1885               		.local	local_port
+ 1886               		.comm	local_port,2,1
+ 1889               	.Letext0:
+ 1890               		.ident	"GCC: (GNU) 4.7.2"
+ 1891               	.global __do_clear_bss
+DEFINED SYMBOLS
+                            *ABS*:00000000 socket.c
+     /tmp/ccSL5LzX.s:2      *ABS*:0000003e __SP_H__
+     /tmp/ccSL5LzX.s:3      *ABS*:0000003d __SP_L__
+     /tmp/ccSL5LzX.s:4      *ABS*:0000003f __SREG__
+     /tmp/ccSL5LzX.s:5      *ABS*:00000000 __tmp_reg__
+     /tmp/ccSL5LzX.s:6      *ABS*:00000001 __zero_reg__
+     /tmp/ccSL5LzX.s:116    .text:00000000 close
+     /tmp/ccSL5LzX.s:185    .text:0000004c socket
+                             .bss:00000000 local_port
+     /tmp/ccSL5LzX.s:392    .text:00000170 listen
+     /tmp/ccSL5LzX.s:468    .text:000001be connect
+     /tmp/ccSL5LzX.s:686    .text:000002e2 disconnect
+     /tmp/ccSL5LzX.s:744    .text:00000320 send
+     /tmp/ccSL5LzX.s:957    .text:0000043e recv
+     /tmp/ccSL5LzX.s:1030   .text:00000486 sendto
+     /tmp/ccSL5LzX.s:1240   .text:000005a6 recvfrom
+     /tmp/ccSL5LzX.s:1538   .text:0000074c macrawsend
+     /tmp/ccSL5LzX.s:1712   .text:0000083e macrawrecv
+
+UNDEFINED SYMBOLS
+IINCHIP_write
+IINCHIP_read
+setSUBR
+getSn_IR
+clearSUBR
+getIINCHIP_TxMAX
+getSn_TX_FSR
+send_data_processing
+recv_data_processing
+read_data
+write_data
+__do_clear_bss

@@ -1,0 +1,254 @@
+   1               		.file	"fatfs_time.c"
+   2               	__SP_H__ = 0x3e
+   3               	__SP_L__ = 0x3d
+   4               	__SREG__ = 0x3f
+   5               	__tmp_reg__ = 0
+   6               	__zero_reg__ = 1
+   9               		.text
+  10               	.Ltext0:
+  82               	.global	fatfs_time
+  84               	fatfs_time:
+  85               		.stabd	46,0,0
+   1:../freeRTOS750/lib_time/fatfs_time.c **** /*
+   2:../freeRTOS750/lib_time/fatfs_time.c ****  * (C)2012 Michael Duane Rice All rights reserved.
+   3:../freeRTOS750/lib_time/fatfs_time.c ****  *
+   4:../freeRTOS750/lib_time/fatfs_time.c ****  * Redistribution and use in source and binary forms, with or without
+   5:../freeRTOS750/lib_time/fatfs_time.c ****  * modification, are permitted provided that the following conditions are
+   6:../freeRTOS750/lib_time/fatfs_time.c ****  * met:
+   7:../freeRTOS750/lib_time/fatfs_time.c ****  *
+   8:../freeRTOS750/lib_time/fatfs_time.c ****  * Redistributions of source code must retain the above copyright notice, this
+   9:../freeRTOS750/lib_time/fatfs_time.c ****  * list of conditions and the following disclaimer. Redistributions in binary
+  10:../freeRTOS750/lib_time/fatfs_time.c ****  * form must reproduce the above copyright notice, this list of conditions
+  11:../freeRTOS750/lib_time/fatfs_time.c ****  * and the following disclaimer in the documentation and/or other materials
+  12:../freeRTOS750/lib_time/fatfs_time.c ****  * provided with the distribution. Neither the name of the copyright holders
+  13:../freeRTOS750/lib_time/fatfs_time.c ****  * nor the names of contributors may be used to endorse or promote products
+  14:../freeRTOS750/lib_time/fatfs_time.c ****  * derived from this software without specific prior written permission.
+  15:../freeRTOS750/lib_time/fatfs_time.c ****  *
+  16:../freeRTOS750/lib_time/fatfs_time.c ****  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  17:../freeRTOS750/lib_time/fatfs_time.c ****  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  18:../freeRTOS750/lib_time/fatfs_time.c ****  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  19:../freeRTOS750/lib_time/fatfs_time.c ****  * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+  20:../freeRTOS750/lib_time/fatfs_time.c ****  * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+  21:../freeRTOS750/lib_time/fatfs_time.c ****  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+  22:../freeRTOS750/lib_time/fatfs_time.c ****  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+  23:../freeRTOS750/lib_time/fatfs_time.c ****  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+  24:../freeRTOS750/lib_time/fatfs_time.c ****  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+  25:../freeRTOS750/lib_time/fatfs_time.c ****  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+  26:../freeRTOS750/lib_time/fatfs_time.c ****  * POSSIBILITY OF SUCH DAMAGE.
+  27:../freeRTOS750/lib_time/fatfs_time.c ****  */
+  28:../freeRTOS750/lib_time/fatfs_time.c **** 
+  29:../freeRTOS750/lib_time/fatfs_time.c **** /* $Id$ */
+  30:../freeRTOS750/lib_time/fatfs_time.c **** 
+  31:../freeRTOS750/lib_time/fatfs_time.c **** /*
+  32:../freeRTOS750/lib_time/fatfs_time.c **** 	Return a value suitable for use as a file system time stamp.
+  33:../freeRTOS750/lib_time/fatfs_time.c **** */
+  34:../freeRTOS750/lib_time/fatfs_time.c **** 
+  35:../freeRTOS750/lib_time/fatfs_time.c **** #include <time.h>
+  36:../freeRTOS750/lib_time/fatfs_time.c **** 
+  37:../freeRTOS750/lib_time/fatfs_time.c **** uint32_t
+  38:../freeRTOS750/lib_time/fatfs_time.c **** fatfs_time(const struct tm * timeptr)
+  39:../freeRTOS750/lib_time/fatfs_time.c **** {
+  87               	.LM0:
+  88               	.LFBB1:
+  89 0000 8F92      		push r8
+  90 0002 9F92      		push r9
+  91 0004 AF92      		push r10
+  92 0006 BF92      		push r11
+  93 0008 CF92      		push r12
+  94 000a DF92      		push r13
+  95 000c EF92      		push r14
+  96 000e FF92      		push r15
+  97 0010 0F93      		push r16
+  98 0012 1F93      		push r17
+  99               	/* prologue: function */
+ 100               	/* frame size = 0 */
+ 101               	/* stack size = 10 */
+ 102               	.L__stack_usage = 10
+ 103 0014 FC01      		movw r30,r24
+  40:../freeRTOS750/lib_time/fatfs_time.c **** 	uint32_t        ret;
+  41:../freeRTOS750/lib_time/fatfs_time.c **** 	uint32_t        n;
+  42:../freeRTOS750/lib_time/fatfs_time.c **** 
+  43:../freeRTOS750/lib_time/fatfs_time.c **** 	n = timeptr->tm_year - 80;
+ 105               	.LM1:
+ 106 0016 C680      		ldd r12,Z+6
+ 107 0018 D780      		ldd r13,Z+7
+ 108 001a 80E5      		ldi r24,80
+ 109 001c C81A      		sub r12,r24
+ 110 001e D108      		sbc r13,__zero_reg__
+ 111 0020 EE24      		clr r14
+ 112 0022 D7FC      		sbrc r13,7
+ 113 0024 E094      		com r14
+ 114 0026 FE2C      		mov r15,r14
+  44:../freeRTOS750/lib_time/fatfs_time.c **** 	n <<= 25;
+  45:../freeRTOS750/lib_time/fatfs_time.c **** 	ret = n;
+  46:../freeRTOS750/lib_time/fatfs_time.c **** 
+  47:../freeRTOS750/lib_time/fatfs_time.c **** 	n = timeptr->tm_mon + 1;
+ 116               	.LM2:
+ 117 0028 8581      		ldd r24,Z+5
+ 118 002a 9927      		clr r25
+ 119 002c 87FD      		sbrc r24,7
+ 120 002e 9095      		com r25
+ 121 0030 0196      		adiw r24,1
+ 122 0032 AA27      		clr r26
+ 123 0034 97FD      		sbrc r25,7
+ 124 0036 A095      		com r26
+ 125 0038 BA2F      		mov r27,r26
+  48:../freeRTOS750/lib_time/fatfs_time.c **** 	n <<= 21;
+  49:../freeRTOS750/lib_time/fatfs_time.c **** 	ret |= n;
+  50:../freeRTOS750/lib_time/fatfs_time.c **** 
+  51:../freeRTOS750/lib_time/fatfs_time.c **** 	n = timeptr->tm_mday;
+ 127               	.LM3:
+ 128 003a 8380      		ldd r8,Z+3
+ 129 003c 9924      		clr r9
+ 130 003e 87FC      		sbrc r8,7
+ 131 0040 9094      		com r9
+ 132 0042 A92C      		mov r10,r9
+ 133 0044 B92C      		mov r11,r9
+  52:../freeRTOS750/lib_time/fatfs_time.c **** 	n <<= 16;
+  53:../freeRTOS750/lib_time/fatfs_time.c **** 	ret |= n;
+  54:../freeRTOS750/lib_time/fatfs_time.c **** 
+  55:../freeRTOS750/lib_time/fatfs_time.c **** 	n = timeptr->tm_hour;
+ 135               	.LM4:
+ 136 0046 4281      		ldd r20,Z+2
+ 137 0048 5527      		clr r21
+ 138 004a 47FD      		sbrc r20,7
+ 139 004c 5095      		com r21
+ 140 004e 652F      		mov r22,r21
+ 141 0050 752F      		mov r23,r21
+  56:../freeRTOS750/lib_time/fatfs_time.c **** 	n <<= 11;
+  57:../freeRTOS750/lib_time/fatfs_time.c **** 	ret |= n;
+  58:../freeRTOS750/lib_time/fatfs_time.c **** 
+  59:../freeRTOS750/lib_time/fatfs_time.c **** 	n = timeptr->tm_min;
+ 143               	.LM5:
+ 144 0052 0181      		ldd r16,Z+1
+ 145 0054 1127      		clr r17
+ 146 0056 07FD      		sbrc r16,7
+ 147 0058 1095      		com r17
+ 148 005a 212F      		mov r18,r17
+ 149 005c 312F      		mov r19,r17
+  56:../freeRTOS750/lib_time/fatfs_time.c **** 	n <<= 11;
+ 151               	.LM6:
+ 152 005e 032E      		mov r0,r19
+ 153 0060 3BE0      		ldi r19,11
+ 154               		1:
+ 155 0062 440F      		lsl r20
+ 156 0064 551F      		rol r21
+ 157 0066 661F      		rol r22
+ 158 0068 771F      		rol r23
+ 159 006a 3A95      		dec r19
+ 160 006c 01F4      		brne 1b
+ 161 006e 302D      		mov r19,r0
+  52:../freeRTOS750/lib_time/fatfs_time.c **** 	n <<= 16;
+ 163               	.LM7:
+ 164 0070 5401      		movw r10,r8
+ 165 0072 9924      		clr r9
+ 166 0074 8824      		clr r8
+  49:../freeRTOS750/lib_time/fatfs_time.c **** 	ret |= n;
+ 168               	.LM8:
+ 169 0076 4829      		or r20,r8
+ 170 0078 5929      		or r21,r9
+ 171 007a 6A29      		or r22,r10
+ 172 007c 7B29      		or r23,r11
+  60:../freeRTOS750/lib_time/fatfs_time.c **** 	n <<= 5;
+ 174               	.LM9:
+ 175 007e 6894      		set
+ 176 0080 14F8      		bld __zero_reg__,5-1
+ 177               		1:
+ 178 0082 000F      		lsl r16
+ 179 0084 111F      		rol r17
+ 180 0086 221F      		rol r18
+ 181 0088 331F      		rol r19
+ 182 008a 1694      		lsr __zero_reg__
+ 183 008c 01F4      		brne 1b
+  53:../freeRTOS750/lib_time/fatfs_time.c **** 	ret |= n;
+ 185               	.LM10:
+ 186 008e 402B      		or r20,r16
+ 187 0090 512B      		or r21,r17
+ 188 0092 622B      		or r22,r18
+ 189 0094 732B      		or r23,r19
+  61:../freeRTOS750/lib_time/fatfs_time.c **** 	ret |= n;
+  62:../freeRTOS750/lib_time/fatfs_time.c **** 
+  63:../freeRTOS750/lib_time/fatfs_time.c **** 	ret |= (timeptr->tm_sec / 2);
+ 191               	.LM11:
+ 192 0096 2081      		ld r18,Z
+ 193 0098 27FD      		sbrc r18,7
+ 194 009a 2F5F      		subi r18,lo8(-(1))
+ 195               	.L2:
+ 196 009c 022F      		mov r16,r18
+ 197 009e 0595      		asr r16
+ 198 00a0 1127      		clr r17
+ 199 00a2 07FD      		sbrc r16,7
+ 200 00a4 1095      		com r17
+ 201 00a6 212F      		mov r18,r17
+ 202 00a8 312F      		mov r19,r17
+  57:../freeRTOS750/lib_time/fatfs_time.c **** 	ret |= n;
+ 204               	.LM12:
+ 205 00aa 042B      		or r16,r20
+ 206 00ac 152B      		or r17,r21
+ 207 00ae 262B      		or r18,r22
+ 208 00b0 372B      		or r19,r23
+  44:../freeRTOS750/lib_time/fatfs_time.c **** 	n <<= 25;
+ 210               	.LM13:
+ 211 00b2 B701      		movw r22,r14
+ 212 00b4 A601      		movw r20,r12
+ 213 00b6 E9E1      		ldi r30,25
+ 214               		1:
+ 215 00b8 440F      		lsl r20
+ 216 00ba 551F      		rol r21
+ 217 00bc 661F      		rol r22
+ 218 00be 771F      		rol r23
+ 219 00c0 EA95      		dec r30
+ 220 00c2 01F4      		brne 1b
+  61:../freeRTOS750/lib_time/fatfs_time.c **** 	ret |= n;
+ 222               	.LM14:
+ 223 00c4 042B      		or r16,r20
+ 224 00c6 152B      		or r17,r21
+ 225 00c8 262B      		or r18,r22
+ 226 00ca 372B      		or r19,r23
+  48:../freeRTOS750/lib_time/fatfs_time.c **** 	n <<= 21;
+ 228               	.LM15:
+ 229 00cc F5E1      		ldi r31,21
+ 230               		1:
+ 231 00ce 880F      		lsl r24
+ 232 00d0 991F      		rol r25
+ 233 00d2 AA1F      		rol r26
+ 234 00d4 BB1F      		rol r27
+ 235 00d6 FA95      		dec r31
+ 236 00d8 01F4      		brne 1b
+ 238               	.LM16:
+ 239 00da 082B      		or r16,r24
+ 240 00dc 192B      		or r17,r25
+ 241 00de 2A2B      		or r18,r26
+ 242 00e0 3B2B      		or r19,r27
+  64:../freeRTOS750/lib_time/fatfs_time.c **** 
+  65:../freeRTOS750/lib_time/fatfs_time.c **** 	return ret;
+  66:../freeRTOS750/lib_time/fatfs_time.c **** }
+ 244               	.LM17:
+ 245 00e2 B801      		movw r22,r16
+ 246 00e4 C901      		movw r24,r18
+ 247               	/* epilogue start */
+ 248 00e6 1F91      		pop r17
+ 249 00e8 0F91      		pop r16
+ 250 00ea FF90      		pop r15
+ 251 00ec EF90      		pop r14
+ 252 00ee DF90      		pop r13
+ 253 00f0 CF90      		pop r12
+ 254 00f2 BF90      		pop r11
+ 255 00f4 AF90      		pop r10
+ 256 00f6 9F90      		pop r9
+ 257 00f8 8F90      		pop r8
+ 258 00fa 0895      		ret
+ 260               	.Lscope1:
+ 262               		.stabd	78,0,0
+ 264               	.Letext0:
+ 265               		.ident	"GCC: (GNU) 4.7.2"
+DEFINED SYMBOLS
+                            *ABS*:00000000 fatfs_time.c
+     /tmp/ccllWYah.s:2      *ABS*:0000003e __SP_H__
+     /tmp/ccllWYah.s:3      *ABS*:0000003d __SP_L__
+     /tmp/ccllWYah.s:4      *ABS*:0000003f __SREG__
+     /tmp/ccllWYah.s:5      *ABS*:00000000 __tmp_reg__
+     /tmp/ccllWYah.s:6      *ABS*:00000001 __zero_reg__
+     /tmp/ccllWYah.s:84     .text:00000000 fatfs_time
+
+NO UNDEFINED SYMBOLS

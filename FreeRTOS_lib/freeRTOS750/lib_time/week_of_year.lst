@@ -1,0 +1,136 @@
+   1               		.file	"week_of_year.c"
+   2               	__SP_H__ = 0x3e
+   3               	__SP_L__ = 0x3d
+   4               	__SREG__ = 0x3f
+   5               	__tmp_reg__ = 0
+   6               	__zero_reg__ = 1
+   9               		.text
+  10               	.Ltext0:
+  83               	.global	week_of_year
+  85               	week_of_year:
+  86               		.stabd	46,0,0
+   1:../freeRTOS750/lib_time/week_of_year.c **** /*
+   2:../freeRTOS750/lib_time/week_of_year.c ****  * (C)2012 Michael Duane Rice All rights reserved.
+   3:../freeRTOS750/lib_time/week_of_year.c ****  *
+   4:../freeRTOS750/lib_time/week_of_year.c ****  * Redistribution and use in source and binary forms, with or without
+   5:../freeRTOS750/lib_time/week_of_year.c ****  * modification, are permitted provided that the following conditions are
+   6:../freeRTOS750/lib_time/week_of_year.c ****  * met:
+   7:../freeRTOS750/lib_time/week_of_year.c ****  *
+   8:../freeRTOS750/lib_time/week_of_year.c ****  * Redistributions of source code must retain the above copyright notice, this
+   9:../freeRTOS750/lib_time/week_of_year.c ****  * list of conditions and the following disclaimer. Redistributions in binary
+  10:../freeRTOS750/lib_time/week_of_year.c ****  * form must reproduce the above copyright notice, this list of conditions
+  11:../freeRTOS750/lib_time/week_of_year.c ****  * and the following disclaimer in the documentation and/or other materials
+  12:../freeRTOS750/lib_time/week_of_year.c ****  * provided with the distribution. Neither the name of the copyright holders
+  13:../freeRTOS750/lib_time/week_of_year.c ****  * nor the names of contributors may be used to endorse or promote products
+  14:../freeRTOS750/lib_time/week_of_year.c ****  * derived from this software without specific prior written permission.
+  15:../freeRTOS750/lib_time/week_of_year.c ****  *
+  16:../freeRTOS750/lib_time/week_of_year.c ****  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  17:../freeRTOS750/lib_time/week_of_year.c ****  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  18:../freeRTOS750/lib_time/week_of_year.c ****  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  19:../freeRTOS750/lib_time/week_of_year.c ****  * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+  20:../freeRTOS750/lib_time/week_of_year.c ****  * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+  21:../freeRTOS750/lib_time/week_of_year.c ****  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+  22:../freeRTOS750/lib_time/week_of_year.c ****  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+  23:../freeRTOS750/lib_time/week_of_year.c ****  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+  24:../freeRTOS750/lib_time/week_of_year.c ****  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+  25:../freeRTOS750/lib_time/week_of_year.c ****  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+  26:../freeRTOS750/lib_time/week_of_year.c ****  * POSSIBILITY OF SUCH DAMAGE.
+  27:../freeRTOS750/lib_time/week_of_year.c ****  */
+  28:../freeRTOS750/lib_time/week_of_year.c **** 
+  29:../freeRTOS750/lib_time/week_of_year.c **** /* $Id$ */
+  30:../freeRTOS750/lib_time/week_of_year.c **** 
+  31:../freeRTOS750/lib_time/week_of_year.c **** /*
+  32:../freeRTOS750/lib_time/week_of_year.c **** 	Return the week of year, where 'base' represents the first day of the week.
+  33:../freeRTOS750/lib_time/week_of_year.c **** 	In the USA, the week is generally considered to start on Sunday (base = 0),
+  34:../freeRTOS750/lib_time/week_of_year.c **** 	while in Europe it is generally considered to be Monday (base = 1).
+  35:../freeRTOS750/lib_time/week_of_year.c **** 
+  36:../freeRTOS750/lib_time/week_of_year.c **** 	Return value ranges from 0 to 52.
+  37:../freeRTOS750/lib_time/week_of_year.c **** */
+  38:../freeRTOS750/lib_time/week_of_year.c **** 
+  39:../freeRTOS750/lib_time/week_of_year.c **** #include <time.h>
+  40:../freeRTOS750/lib_time/week_of_year.c **** 
+  41:../freeRTOS750/lib_time/week_of_year.c **** uint8_t
+  42:../freeRTOS750/lib_time/week_of_year.c **** week_of_year(const struct tm * timestruct, uint8_t base)
+  43:../freeRTOS750/lib_time/week_of_year.c **** {
+  88               	.LM0:
+  89               	.LFBB1:
+  90 0000 CF93      		push r28
+  91 0002 DF93      		push r29
+  92               	/* prologue: function */
+  93               	/* frame size = 0 */
+  94               	/* stack size = 2 */
+  95               	.L__stack_usage = 2
+  44:../freeRTOS750/lib_time/week_of_year.c **** 	int             first, n;
+  45:../freeRTOS750/lib_time/week_of_year.c **** 
+  46:../freeRTOS750/lib_time/week_of_year.c **** 	/* find the first base day of the year (start of week 1) */
+  47:../freeRTOS750/lib_time/week_of_year.c **** 	first = 7 + timestruct->tm_yday - timestruct->tm_wday + base;
+  97               	.LM1:
+  98 0004 FC01      		movw r30,r24
+  99 0006 C085      		ldd r28,Z+8
+ 100 0008 D185      		ldd r29,Z+9
+ 101 000a 9E01      		movw r18,r28
+ 102 000c 295F      		subi r18,-7
+ 103 000e 3F4F      		sbci r19,-1
+ 104 0010 8481      		ldd r24,Z+4
+ 105 0012 281B      		sub r18,r24
+ 106 0014 3109      		sbc r19,__zero_reg__
+ 107 0016 87FD      		sbrc r24,7
+ 108 0018 3395      		inc r19
+ 109 001a 260F      		add r18,r22
+ 110 001c 311D      		adc r19,__zero_reg__
+  48:../freeRTOS750/lib_time/week_of_year.c ****     first %= 7;
+ 112               	.LM2:
+ 113 001e E7E0      		ldi r30,lo8(7)
+ 114 0020 F0E0      		ldi r31,0
+ 115 0022 C901      		movw r24,r18
+ 116 0024 BF01      		movw r22,r30
+ 117 0026 0E94 0000 		call __divmodhi4
+  49:../freeRTOS750/lib_time/week_of_year.c **** 
+  50:../freeRTOS750/lib_time/week_of_year.c **** 	/* find days since that first base day*/
+  51:../freeRTOS750/lib_time/week_of_year.c **** 	n = timestruct->tm_yday - first;
+ 119               	.LM3:
+ 120 002a 9E01      		movw r18,r28
+ 121 002c 281B      		sub r18,r24
+ 122 002e 390B      		sbc r19,r25
+ 123 0030 C901      		movw r24,r18
+  52:../freeRTOS750/lib_time/week_of_year.c **** 
+  53:../freeRTOS750/lib_time/week_of_year.c **** 	/* if negative, we are in week 0 */
+  54:../freeRTOS750/lib_time/week_of_year.c **** 	if (n < 0)
+ 125               	.LM4:
+ 126 0032 37FD      		sbrc r19,7
+ 127 0034 00C0      		rjmp .L3
+  55:../freeRTOS750/lib_time/week_of_year.c **** 		return 0;
+  56:../freeRTOS750/lib_time/week_of_year.c **** 
+  57:../freeRTOS750/lib_time/week_of_year.c **** 	return n / 7 + 1;
+ 129               	.LM5:
+ 130 0036 BF01      		movw r22,r30
+ 131 0038 0E94 0000 		call __divmodhi4
+ 132 003c 862F      		mov r24,r22
+ 133 003e 8F5F      		subi r24,lo8(-(1))
+ 134 0040 00C0      		rjmp .L2
+ 135               	.L3:
+  55:../freeRTOS750/lib_time/week_of_year.c **** 		return 0;
+ 137               	.LM6:
+ 138 0042 80E0      		ldi r24,0
+ 139               	.L2:
+ 140               	/* epilogue start */
+  58:../freeRTOS750/lib_time/week_of_year.c **** }
+ 142               	.LM7:
+ 143 0044 DF91      		pop r29
+ 144 0046 CF91      		pop r28
+ 145 0048 0895      		ret
+ 150               	.Lscope1:
+ 152               		.stabd	78,0,0
+ 154               	.Letext0:
+ 155               		.ident	"GCC: (GNU) 4.7.2"
+DEFINED SYMBOLS
+                            *ABS*:00000000 week_of_year.c
+     /tmp/ccDqWyTo.s:2      *ABS*:0000003e __SP_H__
+     /tmp/ccDqWyTo.s:3      *ABS*:0000003d __SP_L__
+     /tmp/ccDqWyTo.s:4      *ABS*:0000003f __SREG__
+     /tmp/ccDqWyTo.s:5      *ABS*:00000000 __tmp_reg__
+     /tmp/ccDqWyTo.s:6      *ABS*:00000001 __zero_reg__
+     /tmp/ccDqWyTo.s:85     .text:00000000 week_of_year
+
+UNDEFINED SYMBOLS
+__divmodhi4

@@ -1,0 +1,25 @@
+   1               		.file	"geo_location.c"
+   2               	__SP_H__ = 0x3e
+   3               	__SP_L__ = 0x3d
+   4               	__SREG__ = 0x3f
+   5               	__tmp_reg__ = 0
+   6               	__zero_reg__ = 1
+   9               		.text
+  10               	.Ltext0:
+  27               		.comm	__longitude,4,1
+  28               		.comm	__latitude,4,1
+  32               	.Letext0:
+  33               		.ident	"GCC: (GNU) 4.7.2"
+  34               	.global __do_clear_bss
+DEFINED SYMBOLS
+                            *ABS*:00000000 geo_location.c
+     /tmp/ccmRQfNj.s:2      *ABS*:0000003e __SP_H__
+     /tmp/ccmRQfNj.s:3      *ABS*:0000003d __SP_L__
+     /tmp/ccmRQfNj.s:4      *ABS*:0000003f __SREG__
+     /tmp/ccmRQfNj.s:5      *ABS*:00000000 __tmp_reg__
+     /tmp/ccmRQfNj.s:6      *ABS*:00000001 __zero_reg__
+                            *COM*:00000004 __longitude
+                            *COM*:00000004 __latitude
+
+UNDEFINED SYMBOLS
+__do_clear_bss

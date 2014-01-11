@@ -1,0 +1,1478 @@
+   1               		.file	"http.c"
+   2               	__SP_H__ = 0x3e
+   3               	__SP_L__ = 0x3d
+   4               	__SREG__ = 0x3f
+   5               	__tmp_reg__ = 0
+   6               	__zero_reg__ = 1
+   9               		.text
+  10               	.Ltext0:
+ 164               	.global	init_HTTP
+ 166               	init_HTTP:
+ 167               		.stabd	46,0,0
+   1:../freeRTOS750/lib_inet/http.c **** /**
+   2:../freeRTOS750/lib_inet/http.c ****  @file		http.c
+   3:../freeRTOS750/lib_inet/http.c ****  @brief 	functions associated with http processing
+   4:../freeRTOS750/lib_inet/http.c ****  */
+   5:../freeRTOS750/lib_inet/http.c **** 
+   6:../freeRTOS750/lib_inet/http.c **** #include <stdio.h>
+   7:../freeRTOS750/lib_inet/http.c **** #include <string.h>
+   8:../freeRTOS750/lib_inet/http.c **** #include <avr/pgmspace.h>
+   9:../freeRTOS750/lib_inet/http.c **** #include <util/delay.h>
+  10:../freeRTOS750/lib_inet/http.c **** 
+  11:../freeRTOS750/lib_inet/http.c **** /* Scheduler include files. */
+  12:../freeRTOS750/lib_inet/http.c **** #include <FreeRTOS.h>
+  13:../freeRTOS750/lib_inet/http.c **** #include <task.h>
+  14:../freeRTOS750/lib_inet/http.c **** #include <queue.h>
+  15:../freeRTOS750/lib_inet/http.c **** #include <semphr.h>
+  16:../freeRTOS750/lib_inet/http.c **** 
+  17:../freeRTOS750/lib_inet/http.c **** #include <lib_serial.h>
+  18:../freeRTOS750/lib_inet/http.c **** 
+  19:../freeRTOS750/lib_inet/http.c **** #include <socket.h>
+  20:../freeRTOS750/lib_inet/http.c **** #include <inet.h>
+  21:../freeRTOS750/lib_inet/http.c **** 
+  22:../freeRTOS750/lib_inet/http.c **** 
+  23:../freeRTOS750/lib_inet/http.c **** HTTP_REQUEST *pHTTPRequest;	// < Pointer to HTTP request buffer
+  24:../freeRTOS750/lib_inet/http.c **** uint8_t *pHTTPResponse;		// < Pointer to HTTP response buffer
+  25:../freeRTOS750/lib_inet/http.c **** 
+  26:../freeRTOS750/lib_inet/http.c **** static SOCKET HTTPD_SOCK;			// < Socket for the HTTP daemon.
+  27:../freeRTOS750/lib_inet/http.c **** 
+  28:../freeRTOS750/lib_inet/http.c **** /**
+  29:../freeRTOS750/lib_inet/http.c ****  * @brief		Initialise the socket & buffer for HTTP server
+  30:../freeRTOS750/lib_inet/http.c ****  */
+  31:../freeRTOS750/lib_inet/http.c **** uint8_t init_HTTP(SOCKET s)
+  32:../freeRTOS750/lib_inet/http.c **** {
+ 169               	.LM0:
+ 170               	.LFBB1:
+ 171 0000 CF93      		push r28
+ 172               	/* prologue: function */
+ 173               	/* frame size = 0 */
+ 174               	/* stack size = 1 */
+ 175               	.L__stack_usage = 1
+ 176 0002 C82F      		mov r28,r24
+  33:../freeRTOS750/lib_inet/http.c **** 
+  34:../freeRTOS750/lib_inet/http.c **** 	if( getSn_SR(s) != SOCK_CLOSED )	// Check the preferred socket is available,
+ 178               	.LM1:
+ 179 0004 0E94 0000 		call getSn_SR
+ 180 0008 8823      		tst r24
+ 181 000a 01F0      		breq .L2
+  35:../freeRTOS750/lib_inet/http.c **** 	{
+  36:../freeRTOS750/lib_inet/http.c **** 		s = getSocket(SOCK_CLOSED, 0);	// otherwise find free socket,
+ 183               	.LM2:
+ 184 000c 60E0      		ldi r22,0
+ 185 000e 80E0      		ldi r24,0
+ 186 0010 0E94 0000 		call getSocket
+ 187 0014 C82F      		mov r28,r24
+  37:../freeRTOS750/lib_inet/http.c **** 		if(s == MAX_SOCK_NUM )        	// If there is no free socket?
+ 189               	.LM3:
+ 190 0016 8430      		cpi r24,lo8(4)
+ 191 0018 01F4      		brne .+2
+ 192 001a 00C0      		rjmp .L7
+ 193               	.L2:
+  38:../freeRTOS750/lib_inet/http.c **** 			return 0;
+  39:../freeRTOS750/lib_inet/http.c **** 	}
+  40:../freeRTOS750/lib_inet/http.c **** 
+  41:../freeRTOS750/lib_inet/http.c **** 	if(!socket(s, Sn_MR_TCP, IP_PORT_HTTP, 0x00)) // initialise the socket for DHCP service
+ 195               	.LM4:
+ 196 001c 20E0      		ldi r18,0
+ 197 001e 40E5      		ldi r20,lo8(80)
+ 198 0020 50E0      		ldi r21,0
+ 199 0022 61E0      		ldi r22,lo8(1)
+ 200 0024 8C2F      		mov r24,r28
+ 201 0026 0E94 0000 		call socket
+ 202 002a 8111      		cpse r24,__zero_reg__
+ 203 002c 00C0      		rjmp .L4
+  42:../freeRTOS750/lib_inet/http.c **** 	{
+  43:../freeRTOS750/lib_inet/http.c **** 		xSerialPrintf_P(PSTR("HTTPD socket: %d, initialise fail..!\r\n"),s);
+ 205               	.LM5:
+ 206 002e 1F92      		push __zero_reg__
+ 207 0030 CF93      		push r28
+ 208 0032 80E0      		ldi r24,lo8(__c.2787)
+ 209 0034 90E0      		ldi r25,hi8(__c.2787)
+ 210 0036 9F93      		push r25
+ 211 0038 8F93      		push r24
+ 212 003a 0E94 0000 		call xSerialPrintf_P
+  44:../freeRTOS750/lib_inet/http.c **** 		return 0;
+ 214               	.LM6:
+ 215 003e 0F90      		pop __tmp_reg__
+ 216 0040 0F90      		pop __tmp_reg__
+ 217 0042 0F90      		pop __tmp_reg__
+ 218 0044 0F90      		pop __tmp_reg__
+ 219 0046 00C0      		rjmp .L7
+ 220               	.L4:
+  45:../freeRTOS750/lib_inet/http.c **** 	}
+  46:../freeRTOS750/lib_inet/http.c **** #ifdef HTTP_DEBUG
+  47:../freeRTOS750/lib_inet/http.c **** 	else
+  48:../freeRTOS750/lib_inet/http.c **** 		xSerialPrintf_P(PSTR("HTTPD socket: %d, initialise success..!\r\n"),s);
+  49:../freeRTOS750/lib_inet/http.c **** #endif
+  50:../freeRTOS750/lib_inet/http.c **** 
+  51:../freeRTOS750/lib_inet/http.c **** 	if(pHTTPRequest == NULL) // if there is no buffer allocated (pointer is NULL), then allocate reque
+ 222               	.LM7:
+ 223 0048 2091 0000 		lds r18,pHTTPRequest
+ 224 004c 3091 0000 		lds r19,pHTTPRequest+1
+ 225 0050 232B      		or r18,r19
+ 226 0052 01F4      		brne .L5
+  52:../freeRTOS750/lib_inet/http.c **** 	{
+  53:../freeRTOS750/lib_inet/http.c **** 		if( !(pHTTPRequest = (HTTP_REQUEST *) pvPortMalloc( sizeof(HTTP_REQUEST) )))
+ 228               	.LM8:
+ 229 0054 82E0      		ldi r24,lo8(2)
+ 230 0056 94E0      		ldi r25,lo8(4)
+ 231 0058 0E94 0000 		call pvPortMalloc
+ 232 005c 9093 0000 		sts pHTTPRequest+1,r25
+ 233 0060 8093 0000 		sts pHTTPRequest,r24
+ 234 0064 892B      		or r24,r25
+ 235 0066 01F4      		brne .L5
+  54:../freeRTOS750/lib_inet/http.c **** 		{
+  55:../freeRTOS750/lib_inet/http.c **** 			xSerialPrint_P(PSTR("HTTP Request Buffer: malloc fail..!\r\n"));
+ 237               	.LM9:
+ 238 0068 80E0      		ldi r24,lo8(__c.2789)
+ 239 006a 90E0      		ldi r25,hi8(__c.2789)
+ 240 006c 0E94 0000 		call xSerialPrint_P
+ 241 0070 00C0      		rjmp .L7
+ 242               	.L5:
+  56:../freeRTOS750/lib_inet/http.c **** 			return 0;
+  57:../freeRTOS750/lib_inet/http.c **** 		}
+  58:../freeRTOS750/lib_inet/http.c **** #ifdef HTTP_DEBUG
+  59:../freeRTOS750/lib_inet/http.c **** 		else
+  60:../freeRTOS750/lib_inet/http.c **** 			xSerialPrint_P(PSTR("HTTP Request Buffer: malloc success..!\r\n"));
+  61:../freeRTOS750/lib_inet/http.c **** #endif
+  62:../freeRTOS750/lib_inet/http.c **** 	}
+  63:../freeRTOS750/lib_inet/http.c **** 
+  64:../freeRTOS750/lib_inet/http.c **** 	if(pHTTPResponse == NULL) // if there is no buffer allocated (pointer is NULL), then allocate resp
+ 244               	.LM10:
+ 245 0072 2091 0000 		lds r18,pHTTPResponse
+ 246 0076 3091 0000 		lds r19,pHTTPResponse+1
+ 247 007a 232B      		or r18,r19
+ 248 007c 01F4      		brne .L6
+  65:../freeRTOS750/lib_inet/http.c **** 	{
+  66:../freeRTOS750/lib_inet/http.c **** 		if( !(pHTTPResponse = (uint8_t *) pvPortMalloc( sizeof(uint8_t) * (FILE_BUFFER_SIZE + 1) )))
+ 250               	.LM11:
+ 251 007e 81E0      		ldi r24,lo8(1)
+ 252 0080 92E0      		ldi r25,lo8(2)
+ 253 0082 0E94 0000 		call pvPortMalloc
+ 254 0086 9093 0000 		sts pHTTPResponse+1,r25
+ 255 008a 8093 0000 		sts pHTTPResponse,r24
+ 256 008e 892B      		or r24,r25
+ 257 0090 01F4      		brne .L6
+  67:../freeRTOS750/lib_inet/http.c **** 		{
+  68:../freeRTOS750/lib_inet/http.c **** 			xSerialPrint_P(PSTR("HTTP Response Buffer: malloc fail..!\r\n"));
+ 259               	.LM12:
+ 260 0092 80E0      		ldi r24,lo8(__c.2791)
+ 261 0094 90E0      		ldi r25,hi8(__c.2791)
+ 262 0096 0E94 0000 		call xSerialPrint_P
+  69:../freeRTOS750/lib_inet/http.c **** 			vPortFree(pHTTPRequest);
+ 264               	.LM13:
+ 265 009a 8091 0000 		lds r24,pHTTPRequest
+ 266 009e 9091 0000 		lds r25,pHTTPRequest+1
+ 267 00a2 0E94 0000 		call vPortFree
+ 268 00a6 00C0      		rjmp .L7
+ 269               	.L6:
+  70:../freeRTOS750/lib_inet/http.c **** 			return 0;
+  71:../freeRTOS750/lib_inet/http.c **** 		}
+  72:../freeRTOS750/lib_inet/http.c **** #ifdef HTTP_DEBUG
+  73:../freeRTOS750/lib_inet/http.c **** 		else
+  74:../freeRTOS750/lib_inet/http.c **** 			xSerialPrint_P(PSTR("HTTP Response Buffer: malloc success..!\r\n"));
+  75:../freeRTOS750/lib_inet/http.c **** #endif
+  76:../freeRTOS750/lib_inet/http.c **** 	}
+  77:../freeRTOS750/lib_inet/http.c **** 
+  78:../freeRTOS750/lib_inet/http.c **** 	HTTPD_SOCK = s;
+ 271               	.LM14:
+ 272 00a8 C093 0000 		sts HTTPD_SOCK,r28
+  79:../freeRTOS750/lib_inet/http.c **** 
+  80:../freeRTOS750/lib_inet/http.c **** 	return 1;
+ 274               	.LM15:
+ 275 00ac 81E0      		ldi r24,lo8(1)
+ 276 00ae 00C0      		rjmp .L3
+ 277               	.L7:
+  38:../freeRTOS750/lib_inet/http.c **** 			return 0;
+ 279               	.LM16:
+ 280 00b0 80E0      		ldi r24,0
+ 281               	.L3:
+ 282               	/* epilogue start */
+  81:../freeRTOS750/lib_inet/http.c **** }
+ 284               	.LM17:
+ 285 00b2 CF91      		pop r28
+ 286 00b4 0895      		ret
+ 288               	.Lscope1:
+ 290               		.stabd	78,0,0
+ 292               	.global	get_HTTP_socket
+ 294               	get_HTTP_socket:
+ 295               		.stabd	46,0,0
+  82:../freeRTOS750/lib_inet/http.c **** 
+  83:../freeRTOS750/lib_inet/http.c **** 
+  84:../freeRTOS750/lib_inet/http.c **** 
+  85:../freeRTOS750/lib_inet/http.c **** SOCKET get_HTTP_socket(void)				// Get the socket assigned for HTTPD
+  86:../freeRTOS750/lib_inet/http.c **** {
+ 297               	.LM18:
+ 298               	.LFBB2:
+ 299               	/* prologue: function */
+ 300               	/* frame size = 0 */
+ 301               	/* stack size = 0 */
+ 302               	.L__stack_usage = 0
+  87:../freeRTOS750/lib_inet/http.c **** 	return HTTPD_SOCK;
+  88:../freeRTOS750/lib_inet/http.c **** }
+ 304               	.LM19:
+ 305 00b6 8091 0000 		lds r24,HTTPD_SOCK
+ 306 00ba 0895      		ret
+ 308               	.Lscope2:
+ 310               		.stabd	78,0,0
+ 313               	.global	unescape_HTTP_URL
+ 315               	unescape_HTTP_URL:
+ 316               		.stabd	46,0,0
+  89:../freeRTOS750/lib_inet/http.c **** 
+  90:../freeRTOS750/lib_inet/http.c **** 
+  91:../freeRTOS750/lib_inet/http.c **** /**
+  92:../freeRTOS750/lib_inet/http.c ****  @brief	convert escape characters(%XX) to ascii character
+  93:../freeRTOS750/lib_inet/http.c ****  */
+  94:../freeRTOS750/lib_inet/http.c **** void unescape_HTTP_URL(
+  95:../freeRTOS750/lib_inet/http.c **** 	uint8_t * url	/**< pointer to be converted ( escape characters )*/
+  96:../freeRTOS750/lib_inet/http.c **** 	)
+  97:../freeRTOS750/lib_inet/http.c **** {
+ 318               	.LM20:
+ 319               	.LFBB3:
+ 320 00bc DF92      		push r13
+ 321 00be EF92      		push r14
+ 322 00c0 FF92      		push r15
+ 323 00c2 0F93      		push r16
+ 324 00c4 1F93      		push r17
+ 325 00c6 CF93      		push r28
+ 326 00c8 DF93      		push r29
+ 327               	/* prologue: function */
+ 328               	/* frame size = 0 */
+ 329               	/* stack size = 7 */
+ 330               	.L__stack_usage = 7
+ 331 00ca 8C01      		movw r16,r24
+  98:../freeRTOS750/lib_inet/http.c **** 	uint16_t x, y;
+  99:../freeRTOS750/lib_inet/http.c **** 
+ 100:../freeRTOS750/lib_inet/http.c **** 	for (x = 0, y = 0; url[y]; ++x, ++y) {
+ 333               	.LM21:
+ 334 00cc 7C01      		movw r14,r24
+ 335 00ce C0E0      		ldi r28,0
+ 336 00d0 D0E0      		ldi r29,0
+ 337 00d2 00C0      		rjmp .L13
+ 338               	.L15:
+ 101:../freeRTOS750/lib_inet/http.c **** 		if ((url[x] = url[y]) == '%') {
+ 340               	.LM22:
+ 341 00d4 D701      		movw r26,r14
+ 342 00d6 2C93      		st X,r18
+ 343 00d8 2532      		cpi r18,lo8(37)
+ 344 00da 01F4      		brne .L14
+ 102:../freeRTOS750/lib_inet/http.c **** 			url[x] = C2D(url[y+1])*0x10+C2D(url[y+2]);
+ 346               	.LM23:
+ 347 00dc 8181      		ldd r24,Z+1
+ 348 00de 0E94 0000 		call C2D
+ 349 00e2 D82E      		mov r13,r24
+ 350 00e4 2296      		adiw r28,2
+ 351 00e6 F801      		movw r30,r16
+ 352 00e8 EC0F      		add r30,r28
+ 353 00ea FD1F      		adc r31,r29
+ 354 00ec 8081      		ld r24,Z
+ 355 00ee 0E94 0000 		call C2D
+ 356 00f2 B0E1      		ldi r27,lo8(16)
+ 357 00f4 DB9E      		mul r13,r27
+ 358 00f6 800D      		add r24,r0
+ 359 00f8 1124      		clr __zero_reg__
+ 360 00fa F701      		movw r30,r14
+ 361 00fc 8083      		st Z,r24
+ 362               	.L14:
+ 100:../freeRTOS750/lib_inet/http.c **** 	for (x = 0, y = 0; url[y]; ++x, ++y) {
+ 364               	.LM24:
+ 365 00fe 2196      		adiw r28,1
+ 366 0100 FFEF      		ldi r31,-1
+ 367 0102 EF1A      		sub r14,r31
+ 368 0104 FF0A      		sbc r15,r31
+ 369               	.L13:
+  94:../freeRTOS750/lib_inet/http.c **** void unescape_HTTP_URL(
+ 371               	.LM25:
+ 372 0106 C701      		movw r24,r14
+ 373 0108 801B      		sub r24,r16
+ 374 010a 910B      		sbc r25,r17
+ 100:../freeRTOS750/lib_inet/http.c **** 	for (x = 0, y = 0; url[y]; ++x, ++y) {
+ 376               	.LM26:
+ 377 010c F801      		movw r30,r16
+ 378 010e EC0F      		add r30,r28
+ 379 0110 FD1F      		adc r31,r29
+ 380 0112 2081      		ld r18,Z
+ 381 0114 2111      		cpse r18,__zero_reg__
+ 382 0116 00C0      		rjmp .L15
+ 103:../freeRTOS750/lib_inet/http.c **** 			y+=2;
+ 104:../freeRTOS750/lib_inet/http.c **** 		}
+ 105:../freeRTOS750/lib_inet/http.c **** 	}
+ 106:../freeRTOS750/lib_inet/http.c **** 	url[x] = '\0';
+ 384               	.LM27:
+ 385 0118 F801      		movw r30,r16
+ 386 011a E80F      		add r30,r24
+ 387 011c F91F      		adc r31,r25
+ 388 011e 1082      		st Z,__zero_reg__
+ 389               	/* epilogue start */
+ 107:../freeRTOS750/lib_inet/http.c **** }
+ 391               	.LM28:
+ 392 0120 DF91      		pop r29
+ 393 0122 CF91      		pop r28
+ 394 0124 1F91      		pop r17
+ 395 0126 0F91      		pop r16
+ 396 0128 FF90      		pop r15
+ 397 012a EF90      		pop r14
+ 398 012c DF90      		pop r13
+ 399 012e 0895      		ret
+ 405               	.Lscope3:
+ 407               		.stabd	78,0,0
+ 408               		.section	.rodata.str1.1,"aMS",@progbits,1
+ 409               	.LC0:
+ 410 0000 256C 6400 		.string	"%ld"
+ 411               		.text
+ 415               	.global	make_HTTP_response_header
+ 417               	make_HTTP_response_header:
+ 418               		.stabd	46,0,0
+ 108:../freeRTOS750/lib_inet/http.c **** 
+ 109:../freeRTOS750/lib_inet/http.c **** 
+ 110:../freeRTOS750/lib_inet/http.c **** /**
+ 111:../freeRTOS750/lib_inet/http.c ****  @brief	make response header such as html, gif, jpeg, zip, etc.
+ 112:../freeRTOS750/lib_inet/http.c ****  */
+ 113:../freeRTOS750/lib_inet/http.c **** void make_HTTP_response_header(
+ 114:../freeRTOS750/lib_inet/http.c **** 	uint8_t * buf, 	/**< pointer to response header to be made */
+ 115:../freeRTOS750/lib_inet/http.c **** 	uint8_t type, 	/**< response type */
+ 116:../freeRTOS750/lib_inet/http.c **** 	uint32_t len	/**< size of response file / document */
+ 117:../freeRTOS750/lib_inet/http.c **** 	)
+ 118:../freeRTOS750/lib_inet/http.c **** {
+ 420               	.LM29:
+ 421               	.LFBB4:
+ 422 0130 CF92      		push r12
+ 423 0132 DF92      		push r13
+ 424 0134 EF92      		push r14
+ 425 0136 FF92      		push r15
+ 426 0138 0F93      		push r16
+ 427 013a 1F93      		push r17
+ 428 013c CF93      		push r28
+ 429 013e DF93      		push r29
+ 430 0140 CDB7      		in r28,__SP_L__
+ 431 0142 DEB7      		in r29,__SP_H__
+ 432 0144 6097      		sbiw r28,16
+ 433 0146 0FB6      		in __tmp_reg__,__SREG__
+ 434 0148 F894      		cli
+ 435 014a DEBF      		out __SP_H__,r29
+ 436 014c 0FBE      		out __SREG__,__tmp_reg__
+ 437 014e CDBF      		out __SP_L__,r28
+ 438               	/* prologue: function */
+ 439               	/* frame size = 16 */
+ 440               	/* stack size = 24 */
+ 441               	.L__stack_usage = 24
+ 442 0150 8C01      		movw r16,r24
+ 443 0152 6150      		subi r22,lo8(-(-1))
+ 444 0154 6830      		cpi r22,lo8(8)
+ 445 0156 00F4      		brsh .L18
+ 446 0158 E62F      		mov r30,r22
+ 447 015a F0E0      		ldi r31,0
+ 448 015c EE0F      		lsl r30
+ 449 015e FF1F      		rol r31
+ 450 0160 E050      		subi r30,lo8(-(CSWTCH.17))
+ 451 0162 F040      		sbci r31,hi8(-(CSWTCH.17))
+ 452 0164 C080      		ld r12,Z
+ 453 0166 D180      		ldd r13,Z+1
+ 454 0168 00C0      		rjmp .L17
+ 455               	.L18:
+ 457               	.LM30:
+ 458 016a C12C      		mov r12,__zero_reg__
+ 459 016c D12C      		mov r13,__zero_reg__
+ 460               	.L17:
+ 119:../freeRTOS750/lib_inet/http.c **** 	PGM_P head = 0;
+ 120:../freeRTOS750/lib_inet/http.c **** 	uint8_t tmp[16];
+ 121:../freeRTOS750/lib_inet/http.c **** 
+ 122:../freeRTOS750/lib_inet/http.c **** 	switch (type) {
+ 123:../freeRTOS750/lib_inet/http.c **** 
+ 124:../freeRTOS750/lib_inet/http.c **** 		case PTYPE_HTML :
+ 125:../freeRTOS750/lib_inet/http.c **** 			head = RES_HTMLHEAD_OK;
+ 126:../freeRTOS750/lib_inet/http.c **** 			break;
+ 127:../freeRTOS750/lib_inet/http.c **** 
+ 128:../freeRTOS750/lib_inet/http.c **** 		case PTYPE_GIF :
+ 129:../freeRTOS750/lib_inet/http.c **** 			head = RES_GIFHEAD_OK;
+ 130:../freeRTOS750/lib_inet/http.c **** 			break;
+ 131:../freeRTOS750/lib_inet/http.c **** 
+ 132:../freeRTOS750/lib_inet/http.c **** 		case PTYPE_TEXT :
+ 133:../freeRTOS750/lib_inet/http.c **** 			head = RES_TEXTHEAD_OK;
+ 134:../freeRTOS750/lib_inet/http.c **** 			break;
+ 135:../freeRTOS750/lib_inet/http.c **** 
+ 136:../freeRTOS750/lib_inet/http.c **** 		case PTYPE_JPEG :
+ 137:../freeRTOS750/lib_inet/http.c **** 			head = RES_JPEGHEAD_OK;
+ 138:../freeRTOS750/lib_inet/http.c **** 			break;
+ 139:../freeRTOS750/lib_inet/http.c **** 
+ 140:../freeRTOS750/lib_inet/http.c **** 		case PTYPE_FLASH :
+ 141:../freeRTOS750/lib_inet/http.c **** 			head = RES_FLASHHEAD_OK;
+ 142:../freeRTOS750/lib_inet/http.c **** 			break;
+ 143:../freeRTOS750/lib_inet/http.c **** 
+ 144:../freeRTOS750/lib_inet/http.c **** 		case PTYPE_MPEG :
+ 145:../freeRTOS750/lib_inet/http.c **** 			head = RES_MPEGHEAD_OK;
+ 146:../freeRTOS750/lib_inet/http.c **** 			break;
+ 147:../freeRTOS750/lib_inet/http.c **** 
+ 148:../freeRTOS750/lib_inet/http.c **** 		case PTYPE_PDF :
+ 149:../freeRTOS750/lib_inet/http.c **** 			head = RES_PDFHEAD_OK;
+ 150:../freeRTOS750/lib_inet/http.c **** 			break;
+ 151:../freeRTOS750/lib_inet/http.c **** 
+ 152:../freeRTOS750/lib_inet/http.c **** 		case PTYPE_ZIP :
+ 153:../freeRTOS750/lib_inet/http.c **** 			head = RES_ZIPHEAD_OK;
+ 154:../freeRTOS750/lib_inet/http.c **** 			break;
+ 155:../freeRTOS750/lib_inet/http.c **** 
+ 156:../freeRTOS750/lib_inet/http.c **** 		default:
+ 157:../freeRTOS750/lib_inet/http.c **** #ifdef HTTP_DEBUG
+ 158:../freeRTOS750/lib_inet/http.c **** 			xSerialPrint_P(PSTR("\r\n\r\nHTTP RESPONSE HEADER UNKNOWN-\r\n"));
+ 159:../freeRTOS750/lib_inet/http.c **** #endif
+ 160:../freeRTOS750/lib_inet/http.c **** 			break;
+ 161:../freeRTOS750/lib_inet/http.c **** 	}
+ 162:../freeRTOS750/lib_inet/http.c **** 
+ 163:../freeRTOS750/lib_inet/http.c **** 	sprintf((char *)tmp,"%ld", len);
+ 462               	.LM31:
+ 463 016e 5F93      		push r21
+ 464 0170 4F93      		push r20
+ 465 0172 3F93      		push r19
+ 466 0174 2F93      		push r18
+ 467 0176 80E0      		ldi r24,lo8(.LC0)
+ 468 0178 90E0      		ldi r25,hi8(.LC0)
+ 469 017a 9F93      		push r25
+ 470 017c 8F93      		push r24
+ 471 017e EE24      		clr r14
+ 472 0180 E394      		inc r14
+ 473 0182 F12C      		mov r15,__zero_reg__
+ 474 0184 EC0E      		add r14,r28
+ 475 0186 FD1E      		adc r15,r29
+ 476 0188 FF92      		push r15
+ 477 018a EF92      		push r14
+ 478 018c 0E94 0000 		call sprintf
+ 164:../freeRTOS750/lib_inet/http.c **** 
+ 165:../freeRTOS750/lib_inet/http.c **** 	strcpy_P((char *)buf, head);
+ 480               	.LM32:
+ 481 0190 B601      		movw r22,r12
+ 482 0192 C801      		movw r24,r16
+ 483 0194 0E94 0000 		call strcpy_P
+ 166:../freeRTOS750/lib_inet/http.c **** 	strcat((char *)buf, (const char *)tmp);
+ 485               	.LM33:
+ 486 0198 B701      		movw r22,r14
+ 487 019a C801      		movw r24,r16
+ 488 019c 0E94 0000 		call strcat
+ 167:../freeRTOS750/lib_inet/http.c **** 	strcat_P((char *)buf, PSTR("\r\n\r\n\0"));
+ 490               	.LM34:
+ 491 01a0 60E0      		ldi r22,lo8(__c.2837)
+ 492 01a2 70E0      		ldi r23,hi8(__c.2837)
+ 493 01a4 C801      		movw r24,r16
+ 494 01a6 0E94 0000 		call strcat_P
+ 495 01aa 0FB6      		in __tmp_reg__,__SREG__
+ 496 01ac F894      		cli
+ 497 01ae DEBF      		out __SP_H__,r29
+ 498 01b0 0FBE      		out __SREG__,__tmp_reg__
+ 499 01b2 CDBF      		out __SP_L__,r28
+ 500               	/* epilogue start */
+ 168:../freeRTOS750/lib_inet/http.c **** }
+ 502               	.LM35:
+ 503 01b4 6096      		adiw r28,16
+ 504 01b6 0FB6      		in __tmp_reg__,__SREG__
+ 505 01b8 F894      		cli
+ 506 01ba DEBF      		out __SP_H__,r29
+ 507 01bc 0FBE      		out __SREG__,__tmp_reg__
+ 508 01be CDBF      		out __SP_L__,r28
+ 509 01c0 DF91      		pop r29
+ 510 01c2 CF91      		pop r28
+ 511 01c4 1F91      		pop r17
+ 512 01c6 0F91      		pop r16
+ 513 01c8 FF90      		pop r15
+ 514 01ca EF90      		pop r14
+ 515 01cc DF90      		pop r13
+ 516 01ce CF90      		pop r12
+ 517 01d0 0895      		ret
+ 523               	.Lscope4:
+ 525               		.stabd	78,0,0
+ 529               	.global	find_HTTP_URI_type
+ 531               	find_HTTP_URI_type:
+ 532               		.stabd	46,0,0
+ 169:../freeRTOS750/lib_inet/http.c **** 
+ 170:../freeRTOS750/lib_inet/http.c **** 
+ 171:../freeRTOS750/lib_inet/http.c **** /**
+ 172:../freeRTOS750/lib_inet/http.c ****  @brief	find MIME type of a file
+ 173:../freeRTOS750/lib_inet/http.c ****  */
+ 174:../freeRTOS750/lib_inet/http.c **** void find_HTTP_URI_type(
+ 175:../freeRTOS750/lib_inet/http.c **** 	uint8_t * type, 	/**< type to be returned */
+ 176:../freeRTOS750/lib_inet/http.c **** 	uint8_t * buf		/**< file name */
+ 177:../freeRTOS750/lib_inet/http.c **** 	)
+ 178:../freeRTOS750/lib_inet/http.c **** {
+ 534               	.LM36:
+ 535               	.LFBB5:
+ 536 01d2 0F93      		push r16
+ 537 01d4 1F93      		push r17
+ 538 01d6 CF93      		push r28
+ 539 01d8 DF93      		push r29
+ 540               	/* prologue: function */
+ 541               	/* frame size = 0 */
+ 542               	/* stack size = 4 */
+ 543               	.L__stack_usage = 4
+ 544 01da 8C01      		movw r16,r24
+ 545 01dc EB01      		movw r28,r22
+ 179:../freeRTOS750/lib_inet/http.c **** 	/* Decide type according to extension*/
+ 180:../freeRTOS750/lib_inet/http.c **** 	if 		(strstr_P((const char *)buf, PSTR(".html")) || strstr_P((const char *)buf, PSTR(".htm")))	*ty
+ 547               	.LM37:
+ 548 01de 60E0      		ldi r22,lo8(__c.2843)
+ 549 01e0 70E0      		ldi r23,hi8(__c.2843)
+ 550 01e2 CE01      		movw r24,r28
+ 551 01e4 0E94 0000 		call strstr_P
+ 552 01e8 892B      		or r24,r25
+ 553 01ea 01F4      		brne .L23
+ 555               	.LM38:
+ 556 01ec 60E0      		ldi r22,lo8(__c.2845)
+ 557 01ee 70E0      		ldi r23,hi8(__c.2845)
+ 558 01f0 CE01      		movw r24,r28
+ 559 01f2 0E94 0000 		call strstr_P
+ 560 01f6 892B      		or r24,r25
+ 561 01f8 01F0      		breq .L21
+ 562 01fa 00C0      		rjmp .L23
+ 563               	.L21:
+ 181:../freeRTOS750/lib_inet/http.c **** 	else if (strstr_P((const char *)buf, PSTR(".HTML")) || strstr_P((const char *)buf, PSTR(".HTM")))	
+ 565               	.LM39:
+ 566 01fc 60E0      		ldi r22,lo8(__c.2847)
+ 567 01fe 70E0      		ldi r23,hi8(__c.2847)
+ 568 0200 CE01      		movw r24,r28
+ 569 0202 0E94 0000 		call strstr_P
+ 570 0206 892B      		or r24,r25
+ 571 0208 01F4      		brne .L23
+ 573               	.LM40:
+ 574 020a 60E0      		ldi r22,lo8(__c.2849)
+ 575 020c 70E0      		ldi r23,hi8(__c.2849)
+ 576 020e CE01      		movw r24,r28
+ 577 0210 0E94 0000 		call strstr_P
+ 578 0214 892B      		or r24,r25
+ 579 0216 01F0      		breq .L24
+ 580               	.L23:
+ 582               	.LM41:
+ 583 0218 81E0      		ldi r24,lo8(1)
+ 584 021a 00C0      		rjmp .L47
+ 585               	.L24:
+ 182:../freeRTOS750/lib_inet/http.c **** 	else if (strstr_P((const char *)buf, PSTR(".gif" )) || strstr_P((const char *)buf, PSTR(".GIF")))	
+ 587               	.LM42:
+ 588 021c 60E0      		ldi r22,lo8(__c.2851)
+ 589 021e 70E0      		ldi r23,hi8(__c.2851)
+ 590 0220 CE01      		movw r24,r28
+ 591 0222 0E94 0000 		call strstr_P
+ 592 0226 892B      		or r24,r25
+ 593 0228 01F4      		brne .L25
+ 595               	.LM43:
+ 596 022a 60E0      		ldi r22,lo8(__c.2853)
+ 597 022c 70E0      		ldi r23,hi8(__c.2853)
+ 598 022e CE01      		movw r24,r28
+ 599 0230 0E94 0000 		call strstr_P
+ 600 0234 892B      		or r24,r25
+ 601 0236 01F0      		breq .L26
+ 602               	.L25:
+ 604               	.LM44:
+ 605 0238 82E0      		ldi r24,lo8(2)
+ 606 023a 00C0      		rjmp .L47
+ 607               	.L26:
+ 183:../freeRTOS750/lib_inet/http.c **** 	else if (strstr_P((const char *)buf, PSTR(".text")) || strstr_P((const char *)buf, PSTR(".txt")))	
+ 609               	.LM45:
+ 610 023c 60E0      		ldi r22,lo8(__c.2855)
+ 611 023e 70E0      		ldi r23,hi8(__c.2855)
+ 612 0240 CE01      		movw r24,r28
+ 613 0242 0E94 0000 		call strstr_P
+ 614 0246 892B      		or r24,r25
+ 615 0248 01F4      		brne .L29
+ 617               	.LM46:
+ 618 024a 60E0      		ldi r22,lo8(__c.2857)
+ 619 024c 70E0      		ldi r23,hi8(__c.2857)
+ 620 024e CE01      		movw r24,r28
+ 621 0250 0E94 0000 		call strstr_P
+ 622 0254 892B      		or r24,r25
+ 623 0256 01F0      		breq .L28
+ 624 0258 00C0      		rjmp .L29
+ 625               	.L28:
+ 184:../freeRTOS750/lib_inet/http.c **** 	else if (strstr_P((const char *)buf, PSTR(".TEXT")) || strstr_P((const char *)buf, PSTR(".TXT")))	
+ 627               	.LM47:
+ 628 025a 60E0      		ldi r22,lo8(__c.2859)
+ 629 025c 70E0      		ldi r23,hi8(__c.2859)
+ 630 025e CE01      		movw r24,r28
+ 631 0260 0E94 0000 		call strstr_P
+ 632 0264 892B      		or r24,r25
+ 633 0266 01F4      		brne .L29
+ 635               	.LM48:
+ 636 0268 60E0      		ldi r22,lo8(__c.2861)
+ 637 026a 70E0      		ldi r23,hi8(__c.2861)
+ 638 026c CE01      		movw r24,r28
+ 639 026e 0E94 0000 		call strstr_P
+ 640 0272 892B      		or r24,r25
+ 641 0274 01F0      		breq .L30
+ 642               	.L29:
+ 644               	.LM49:
+ 645 0276 83E0      		ldi r24,lo8(3)
+ 646 0278 00C0      		rjmp .L47
+ 647               	.L30:
+ 185:../freeRTOS750/lib_inet/http.c **** 	else if (strstr_P((const char *)buf, PSTR(".jpeg")) || strstr_P((const char *)buf, PSTR(".jpg")))	
+ 649               	.LM50:
+ 650 027a 60E0      		ldi r22,lo8(__c.2863)
+ 651 027c 70E0      		ldi r23,hi8(__c.2863)
+ 652 027e CE01      		movw r24,r28
+ 653 0280 0E94 0000 		call strstr_P
+ 654 0284 892B      		or r24,r25
+ 655 0286 01F4      		brne .L33
+ 657               	.LM51:
+ 658 0288 60E0      		ldi r22,lo8(__c.2865)
+ 659 028a 70E0      		ldi r23,hi8(__c.2865)
+ 660 028c CE01      		movw r24,r28
+ 661 028e 0E94 0000 		call strstr_P
+ 662 0292 892B      		or r24,r25
+ 663 0294 01F0      		breq .L32
+ 664 0296 00C0      		rjmp .L33
+ 665               	.L32:
+ 186:../freeRTOS750/lib_inet/http.c **** 	else if (strstr_P((const char *)buf, PSTR(".JPEG")) || strstr_P((const char *)buf, PSTR(".JPG")))	
+ 667               	.LM52:
+ 668 0298 60E0      		ldi r22,lo8(__c.2867)
+ 669 029a 70E0      		ldi r23,hi8(__c.2867)
+ 670 029c CE01      		movw r24,r28
+ 671 029e 0E94 0000 		call strstr_P
+ 672 02a2 892B      		or r24,r25
+ 673 02a4 01F4      		brne .L33
+ 675               	.LM53:
+ 676 02a6 60E0      		ldi r22,lo8(__c.2869)
+ 677 02a8 70E0      		ldi r23,hi8(__c.2869)
+ 678 02aa CE01      		movw r24,r28
+ 679 02ac 0E94 0000 		call strstr_P
+ 680 02b0 892B      		or r24,r25
+ 681 02b2 01F0      		breq .L34
+ 682               	.L33:
+ 684               	.LM54:
+ 685 02b4 84E0      		ldi r24,lo8(4)
+ 686 02b6 00C0      		rjmp .L47
+ 687               	.L34:
+ 187:../freeRTOS750/lib_inet/http.c **** 	else if (strstr_P((const char *)buf, PSTR(".swf" )) || strstr_P((const char *)buf, PSTR(".SWF")))	
+ 689               	.LM55:
+ 690 02b8 60E0      		ldi r22,lo8(__c.2871)
+ 691 02ba 70E0      		ldi r23,hi8(__c.2871)
+ 692 02bc CE01      		movw r24,r28
+ 693 02be 0E94 0000 		call strstr_P
+ 694 02c2 892B      		or r24,r25
+ 695 02c4 01F4      		brne .L35
+ 697               	.LM56:
+ 698 02c6 60E0      		ldi r22,lo8(__c.2873)
+ 699 02c8 70E0      		ldi r23,hi8(__c.2873)
+ 700 02ca CE01      		movw r24,r28
+ 701 02cc 0E94 0000 		call strstr_P
+ 702 02d0 892B      		or r24,r25
+ 703 02d2 01F0      		breq .L36
+ 704               	.L35:
+ 706               	.LM57:
+ 707 02d4 85E0      		ldi r24,lo8(5)
+ 708 02d6 00C0      		rjmp .L47
+ 709               	.L36:
+ 188:../freeRTOS750/lib_inet/http.c **** 	else if (strstr_P((const char *)buf, PSTR(".mpeg")) || strstr_P((const char *)buf, PSTR(".mpg")))	
+ 711               	.LM58:
+ 712 02d8 60E0      		ldi r22,lo8(__c.2875)
+ 713 02da 70E0      		ldi r23,hi8(__c.2875)
+ 714 02dc CE01      		movw r24,r28
+ 715 02de 0E94 0000 		call strstr_P
+ 716 02e2 892B      		or r24,r25
+ 717 02e4 01F4      		brne .L39
+ 719               	.LM59:
+ 720 02e6 60E0      		ldi r22,lo8(__c.2877)
+ 721 02e8 70E0      		ldi r23,hi8(__c.2877)
+ 722 02ea CE01      		movw r24,r28
+ 723 02ec 0E94 0000 		call strstr_P
+ 724 02f0 892B      		or r24,r25
+ 725 02f2 01F0      		breq .L38
+ 726 02f4 00C0      		rjmp .L39
+ 727               	.L38:
+ 189:../freeRTOS750/lib_inet/http.c **** 	else if (strstr_P((const char *)buf, PSTR(".MPEG")) || strstr_P((const char *)buf, PSTR(".MPG")))	
+ 729               	.LM60:
+ 730 02f6 60E0      		ldi r22,lo8(__c.2879)
+ 731 02f8 70E0      		ldi r23,hi8(__c.2879)
+ 732 02fa CE01      		movw r24,r28
+ 733 02fc 0E94 0000 		call strstr_P
+ 734 0300 892B      		or r24,r25
+ 735 0302 01F4      		brne .L39
+ 737               	.LM61:
+ 738 0304 60E0      		ldi r22,lo8(__c.2881)
+ 739 0306 70E0      		ldi r23,hi8(__c.2881)
+ 740 0308 CE01      		movw r24,r28
+ 741 030a 0E94 0000 		call strstr_P
+ 742 030e 892B      		or r24,r25
+ 743 0310 01F0      		breq .L40
+ 744               	.L39:
+ 746               	.LM62:
+ 747 0312 86E0      		ldi r24,lo8(6)
+ 748 0314 00C0      		rjmp .L47
+ 749               	.L40:
+ 190:../freeRTOS750/lib_inet/http.c **** 	else if (strstr_P((const char *)buf, PSTR(".pdf" )) || strstr_P((const char *)buf, PSTR(".PDF")))	
+ 751               	.LM63:
+ 752 0316 60E0      		ldi r22,lo8(__c.2883)
+ 753 0318 70E0      		ldi r23,hi8(__c.2883)
+ 754 031a CE01      		movw r24,r28
+ 755 031c 0E94 0000 		call strstr_P
+ 756 0320 892B      		or r24,r25
+ 757 0322 01F4      		brne .L41
+ 759               	.LM64:
+ 760 0324 60E0      		ldi r22,lo8(__c.2885)
+ 761 0326 70E0      		ldi r23,hi8(__c.2885)
+ 762 0328 CE01      		movw r24,r28
+ 763 032a 0E94 0000 		call strstr_P
+ 764 032e 892B      		or r24,r25
+ 765 0330 01F0      		breq .L42
+ 766               	.L41:
+ 768               	.LM65:
+ 769 0332 87E0      		ldi r24,lo8(7)
+ 770 0334 00C0      		rjmp .L47
+ 771               	.L42:
+ 191:../freeRTOS750/lib_inet/http.c **** 	else if (strstr_P((const char *)buf, PSTR(".zip" )) || strstr_P((const char *)buf, PSTR(".ZIP")))	
+ 773               	.LM66:
+ 774 0336 60E0      		ldi r22,lo8(__c.2887)
+ 775 0338 70E0      		ldi r23,hi8(__c.2887)
+ 776 033a CE01      		movw r24,r28
+ 777 033c 0E94 0000 		call strstr_P
+ 778 0340 892B      		or r24,r25
+ 779 0342 01F4      		brne .L43
+ 781               	.LM67:
+ 782 0344 60E0      		ldi r22,lo8(__c.2889)
+ 783 0346 70E0      		ldi r23,hi8(__c.2889)
+ 784 0348 CE01      		movw r24,r28
+ 785 034a 0E94 0000 		call strstr_P
+ 786 034e 892B      		or r24,r25
+ 787 0350 01F0      		breq .L44
+ 788               	.L43:
+ 790               	.LM68:
+ 791 0352 88E0      		ldi r24,lo8(8)
+ 792 0354 00C0      		rjmp .L47
+ 793               	.L44:
+ 192:../freeRTOS750/lib_inet/http.c **** 	else if (strstr_P((const char *)buf, PSTR(".cgi" )) || strstr_P((const char *)buf, PSTR(".CGI")))	
+ 795               	.LM69:
+ 796 0356 60E0      		ldi r22,lo8(__c.2891)
+ 797 0358 70E0      		ldi r23,hi8(__c.2891)
+ 798 035a CE01      		movw r24,r28
+ 799 035c 0E94 0000 		call strstr_P
+ 800 0360 892B      		or r24,r25
+ 801 0362 01F4      		brne .L45
+ 803               	.LM70:
+ 804 0364 60E0      		ldi r22,lo8(__c.2893)
+ 805 0366 70E0      		ldi r23,hi8(__c.2893)
+ 806 0368 CE01      		movw r24,r28
+ 807 036a 0E94 0000 		call strstr_P
+ 808 036e 892B      		or r24,r25
+ 809 0370 01F0      		breq .L46
+ 810               	.L45:
+ 812               	.LM71:
+ 813 0372 89E0      		ldi r24,lo8(9)
+ 814               	.L47:
+ 815 0374 F801      		movw r30,r16
+ 816 0376 8083      		st Z,r24
+ 817 0378 00C0      		rjmp .L19
+ 818               	.L46:
+ 193:../freeRTOS750/lib_inet/http.c **** 	else 																								*type = PTYPE_ERR;
+ 820               	.LM72:
+ 821 037a F801      		movw r30,r16
+ 822 037c 1082      		st Z,__zero_reg__
+ 823               	.L19:
+ 824               	/* epilogue start */
+ 194:../freeRTOS750/lib_inet/http.c **** }
+ 826               	.LM73:
+ 827 037e DF91      		pop r29
+ 828 0380 CF91      		pop r28
+ 829 0382 1F91      		pop r17
+ 830 0384 0F91      		pop r16
+ 831 0386 0895      		ret
+ 833               	.Lscope5:
+ 835               		.stabd	78,0,0
+ 836               		.section	.rodata.str1.1
+ 837               	.LC1:
+ 838 0004 2000      		.string	" "
+ 839               		.section	.rodata
+ 840               	.LC2:
+ 841 0000 00        		.string	""
+ 842 0001 00        		.string	""
+ 843               		.text
+ 847               	.global	parse_HTTP_request
+ 849               	parse_HTTP_request:
+ 850               		.stabd	46,0,0
+ 195:../freeRTOS750/lib_inet/http.c **** 
+ 196:../freeRTOS750/lib_inet/http.c **** 
+ 197:../freeRTOS750/lib_inet/http.c **** 
+ 198:../freeRTOS750/lib_inet/http.c **** /**
+ 199:../freeRTOS750/lib_inet/http.c ****  @brief	parse http request from a peer
+ 200:../freeRTOS750/lib_inet/http.c ****  */
+ 201:../freeRTOS750/lib_inet/http.c **** void parse_HTTP_request(
+ 202:../freeRTOS750/lib_inet/http.c **** 	HTTP_REQUEST *request, 	/**< request to be returned */
+ 203:../freeRTOS750/lib_inet/http.c **** 	uint8_t *buffer			/**< pointer to be parsed */
+ 204:../freeRTOS750/lib_inet/http.c **** 	)
+ 205:../freeRTOS750/lib_inet/http.c **** {
+ 852               	.LM74:
+ 853               	.LFBB6:
+ 854 0388 0F93      		push r16
+ 855 038a 1F93      		push r17
+ 856 038c CF93      		push r28
+ 857 038e DF93      		push r29
+ 858               	/* prologue: function */
+ 859               	/* frame size = 0 */
+ 860               	/* stack size = 4 */
+ 861               	.L__stack_usage = 4
+ 862 0390 8C01      		movw r16,r24
+ 863 0392 CB01      		movw r24,r22
+ 206:../freeRTOS750/lib_inet/http.c **** 	uint8_t *nexttok;
+ 207:../freeRTOS750/lib_inet/http.c **** 	nexttok = (uint8_t *)strtok((char *)buffer," ");
+ 865               	.LM75:
+ 866 0394 60E0      		ldi r22,lo8(.LC1)
+ 867 0396 70E0      		ldi r23,hi8(.LC1)
+ 868 0398 0E94 0000 		call strtok
+ 869 039c EC01      		movw r28,r24
+ 208:../freeRTOS750/lib_inet/http.c **** 	if(!nexttok)
+ 871               	.LM76:
+ 872 039e 0097      		sbiw r24,0
+ 873 03a0 01F4      		brne .L49
+ 874 03a2 00C0      		rjmp .L69
+ 875               	.L49:
+ 209:../freeRTOS750/lib_inet/http.c **** 	{
+ 210:../freeRTOS750/lib_inet/http.c **** 		request->METHOD = METHOD_ERR;
+ 211:../freeRTOS750/lib_inet/http.c **** 		return;
+ 212:../freeRTOS750/lib_inet/http.c **** 	}
+ 213:../freeRTOS750/lib_inet/http.c **** 	if 	(!strcmp_P((const char *)nexttok, PSTR("GET")) || !strcmp_P((const char *)nexttok, PSTR("get")
+ 877               	.LM77:
+ 878 03a4 60E0      		ldi r22,lo8(__c.2900)
+ 879 03a6 70E0      		ldi r23,hi8(__c.2900)
+ 880 03a8 0E94 0000 		call strcmp_P
+ 881 03ac 892B      		or r24,r25
+ 882 03ae 01F0      		breq .L51
+ 884               	.LM78:
+ 885 03b0 60E0      		ldi r22,lo8(__c.2902)
+ 886 03b2 70E0      		ldi r23,hi8(__c.2902)
+ 887 03b4 CE01      		movw r24,r28
+ 888 03b6 0E94 0000 		call strcmp_P
+ 889 03ba 892B      		or r24,r25
+ 890 03bc 01F4      		brne .L52
+ 891               	.L51:
+ 214:../freeRTOS750/lib_inet/http.c **** 	{
+ 215:../freeRTOS750/lib_inet/http.c **** 		request->METHOD = METHOD_GET;
+ 893               	.LM79:
+ 894 03be 81E0      		ldi r24,lo8(1)
+ 895 03c0 00C0      		rjmp .L68
+ 896               	.L52:
+ 216:../freeRTOS750/lib_inet/http.c **** 		nexttok = (uint8_t *)strtok(NULL," ");
+ 217:../freeRTOS750/lib_inet/http.c **** #ifdef HTTP_DEBUG
+ 218:../freeRTOS750/lib_inet/http.c **** 		xSerialPrint_P(PSTR("METHOD_GET "));
+ 219:../freeRTOS750/lib_inet/http.c **** #endif
+ 220:../freeRTOS750/lib_inet/http.c **** 	}
+ 221:../freeRTOS750/lib_inet/http.c **** 	else if (!strcmp_P((const char *)nexttok, PSTR("HEAD")) || !strcmp_P((const char *)nexttok, PSTR("
+ 898               	.LM80:
+ 899 03c2 60E0      		ldi r22,lo8(__c.2904)
+ 900 03c4 70E0      		ldi r23,hi8(__c.2904)
+ 901 03c6 CE01      		movw r24,r28
+ 902 03c8 0E94 0000 		call strcmp_P
+ 903 03cc 892B      		or r24,r25
+ 904 03ce 01F0      		breq .L54
+ 906               	.LM81:
+ 907 03d0 60E0      		ldi r22,lo8(__c.2906)
+ 908 03d2 70E0      		ldi r23,hi8(__c.2906)
+ 909 03d4 CE01      		movw r24,r28
+ 910 03d6 0E94 0000 		call strcmp_P
+ 911 03da 892B      		or r24,r25
+ 912 03dc 01F4      		brne .L55
+ 913               	.L54:
+ 222:../freeRTOS750/lib_inet/http.c **** 	{
+ 223:../freeRTOS750/lib_inet/http.c **** 		request->METHOD = METHOD_HEAD;
+ 915               	.LM82:
+ 916 03de 82E0      		ldi r24,lo8(2)
+ 917               	.L68:
+ 918 03e0 F801      		movw r30,r16
+ 919 03e2 8083      		st Z,r24
+ 224:../freeRTOS750/lib_inet/http.c **** 		nexttok = (uint8_t *)strtok(NULL," ");
+ 921               	.LM83:
+ 922 03e4 60E0      		ldi r22,lo8(.LC1)
+ 923 03e6 70E0      		ldi r23,hi8(.LC1)
+ 924 03e8 80E0      		ldi r24,0
+ 925 03ea 90E0      		ldi r25,0
+ 926 03ec 0E94 0000 		call strtok
+ 927 03f0 EC01      		movw r28,r24
+ 928 03f2 00C0      		rjmp .L53
+ 929               	.L55:
+ 225:../freeRTOS750/lib_inet/http.c **** #ifdef HTTP_DEBUG
+ 226:../freeRTOS750/lib_inet/http.c **** 		xSerialPrint_P(PSTR("METHOD_HEAD "));
+ 227:../freeRTOS750/lib_inet/http.c **** #endif
+ 228:../freeRTOS750/lib_inet/http.c **** 
+ 229:../freeRTOS750/lib_inet/http.c **** 	}
+ 230:../freeRTOS750/lib_inet/http.c **** 	else if (!strcmp_P((const char *)nexttok, PSTR("POST")) || !strcmp_P((const char *)nexttok, PSTR("
+ 931               	.LM84:
+ 932 03f4 60E0      		ldi r22,lo8(__c.2908)
+ 933 03f6 70E0      		ldi r23,hi8(__c.2908)
+ 934 03f8 CE01      		movw r24,r28
+ 935 03fa 0E94 0000 		call strcmp_P
+ 936 03fe 892B      		or r24,r25
+ 937 0400 01F0      		breq .L56
+ 939               	.LM85:
+ 940 0402 60E0      		ldi r22,lo8(__c.2910)
+ 941 0404 70E0      		ldi r23,hi8(__c.2910)
+ 942 0406 CE01      		movw r24,r28
+ 943 0408 0E94 0000 		call strcmp_P
+ 944 040c 892B      		or r24,r25
+ 945 040e 01F4      		brne .L57
+ 946               	.L56:
+ 231:../freeRTOS750/lib_inet/http.c **** 	{
+ 232:../freeRTOS750/lib_inet/http.c **** 		nexttok = (uint8_t *)strtok((char *)NULL,"\0");
+ 948               	.LM86:
+ 949 0410 60E0      		ldi r22,lo8(.LC2)
+ 950 0412 70E0      		ldi r23,hi8(.LC2)
+ 951 0414 80E0      		ldi r24,0
+ 952 0416 90E0      		ldi r25,0
+ 953 0418 0E94 0000 		call strtok
+ 954 041c EC01      		movw r28,r24
+ 233:../freeRTOS750/lib_inet/http.c **** 		request->METHOD = METHOD_POST;
+ 956               	.LM87:
+ 957 041e 83E0      		ldi r24,lo8(3)
+ 958 0420 F801      		movw r30,r16
+ 959 0422 8083      		st Z,r24
+ 960 0424 00C0      		rjmp .L53
+ 961               	.L57:
+ 234:../freeRTOS750/lib_inet/http.c **** #ifdef HTTP_DEBUG
+ 235:../freeRTOS750/lib_inet/http.c **** 		xSerialPrint_P(PSTR("METHOD_POST "));
+ 236:../freeRTOS750/lib_inet/http.c **** #endif
+ 237:../freeRTOS750/lib_inet/http.c **** 	}
+ 238:../freeRTOS750/lib_inet/http.c **** 	else
+ 239:../freeRTOS750/lib_inet/http.c **** 	{
+ 240:../freeRTOS750/lib_inet/http.c **** 		request->METHOD = METHOD_ERR;
+ 963               	.LM88:
+ 964 0426 F801      		movw r30,r16
+ 965 0428 1082      		st Z,__zero_reg__
+ 966 042a 00C0      		rjmp .L58
+ 967               	.L53:
+ 241:../freeRTOS750/lib_inet/http.c **** #ifdef HTTP_DEBUG
+ 242:../freeRTOS750/lib_inet/http.c **** 		xSerialPrint_P(PSTR("METHOD_ERR "));
+ 243:../freeRTOS750/lib_inet/http.c **** #endif
+ 244:../freeRTOS750/lib_inet/http.c **** 	}
+ 245:../freeRTOS750/lib_inet/http.c **** 
+ 246:../freeRTOS750/lib_inet/http.c **** 	if(!nexttok)
+ 969               	.LM89:
+ 970 042c 2097      		sbiw r28,0
+ 971 042e 01F4      		brne .L58
+ 972               	.L69:
+ 247:../freeRTOS750/lib_inet/http.c **** 	{
+ 248:../freeRTOS750/lib_inet/http.c **** 		request->METHOD = METHOD_ERR;
+ 974               	.LM90:
+ 975 0430 F801      		movw r30,r16
+ 976 0432 1082      		st Z,__zero_reg__
+ 249:../freeRTOS750/lib_inet/http.c **** #ifdef HTTP_DEBUG
+ 250:../freeRTOS750/lib_inet/http.c **** 		xSerialPrint_P(PSTR("METHOD_ERR "));
+ 251:../freeRTOS750/lib_inet/http.c **** #endif
+ 252:../freeRTOS750/lib_inet/http.c **** 		return;
+ 978               	.LM91:
+ 979 0434 00C0      		rjmp .L48
+ 980               	.L58:
+ 253:../freeRTOS750/lib_inet/http.c **** 	}
+ 254:../freeRTOS750/lib_inet/http.c **** 
+ 255:../freeRTOS750/lib_inet/http.c **** 	strcpy((char *)request->URI,(const char *)nexttok);
+ 982               	.LM92:
+ 983 0436 BE01      		movw r22,r28
+ 984 0438 C801      		movw r24,r16
+ 985 043a 0296      		adiw r24,2
+ 986               	/* epilogue start */
+ 256:../freeRTOS750/lib_inet/http.c **** 
+ 257:../freeRTOS750/lib_inet/http.c **** #ifdef HTTP_DEBUG
+ 258:../freeRTOS750/lib_inet/http.c **** 	{
+ 259:../freeRTOS750/lib_inet/http.c **** 		uint16_t i;
+ 260:../freeRTOS750/lib_inet/http.c **** 		xSerialPrint_P(PSTR("\nhttp_request->URI: "));
+ 261:../freeRTOS750/lib_inet/http.c **** 		for(i=0; i < strlen((const char *)request->URI);i++)
+ 262:../freeRTOS750/lib_inet/http.c **** 			xSerialPrintf_P(PSTR("%c"),request->URI[i]);
+ 263:../freeRTOS750/lib_inet/http.c **** 		xSerialPrint_P(PSTR(""));
+ 264:../freeRTOS750/lib_inet/http.c **** 	}
+ 265:../freeRTOS750/lib_inet/http.c **** #endif
+ 266:../freeRTOS750/lib_inet/http.c **** 
+ 267:../freeRTOS750/lib_inet/http.c **** }
+ 988               	.LM93:
+ 989 043c DF91      		pop r29
+ 990 043e CF91      		pop r28
+ 991 0440 1F91      		pop r17
+ 992 0442 0F91      		pop r16
+ 255:../freeRTOS750/lib_inet/http.c **** 	strcpy((char *)request->URI,(const char *)nexttok);
+ 994               	.LM94:
+ 995 0444 0C94 0000 		jmp strcpy
+ 996               	.L48:
+ 997               	/* epilogue start */
+ 999               	.LM95:
+ 1000 0448 DF91      		pop r29
+ 1001 044a CF91      		pop r28
+ 1002 044c 1F91      		pop r17
+ 1003 044e 0F91      		pop r16
+ 1004 0450 0895      		ret
+ 1009               	.Lscope6:
+ 1011               		.stabd	78,0,0
+ 1012               		.section	.rodata
+ 1013               	.LC3:
+ 1014 0002 2620 0D0A 		.string	"& \r\n\t"
+ 1014      0900 
+ 1015 0008 00        		.string	""
+ 1016               		.text
+ 1020               	.global	get_HTTP_param_value
+ 1022               	get_HTTP_param_value:
+ 1023               		.stabd	46,0,0
+ 268:../freeRTOS750/lib_inet/http.c **** 
+ 269:../freeRTOS750/lib_inet/http.c **** 
+ 270:../freeRTOS750/lib_inet/http.c **** /**
+ 271:../freeRTOS750/lib_inet/http.c ****  @brief	get next parameter value in the request
+ 272:../freeRTOS750/lib_inet/http.c ****  */
+ 273:../freeRTOS750/lib_inet/http.c **** uint8_t* get_HTTP_param_value(
+ 274:../freeRTOS750/lib_inet/http.c **** 	uint8_t* uri,
+ 275:../freeRTOS750/lib_inet/http.c **** 	uint8_t* param_name
+ 276:../freeRTOS750/lib_inet/http.c **** 	)
+ 277:../freeRTOS750/lib_inet/http.c **** {
+ 1025               	.LM96:
+ 1026               	.LFBB7:
+ 1027 0452 0F93      		push r16
+ 1028 0454 1F93      		push r17
+ 1029 0456 CF93      		push r28
+ 1030 0458 DF93      		push r29
+ 1031 045a CDB7      		in r28,__SP_L__
+ 1032 045c DEB7      		in r29,__SP_H__
+ 1033 045e D450      		subi r29,4
+ 1034 0460 0FB6      		in __tmp_reg__,__SREG__
+ 1035 0462 F894      		cli
+ 1036 0464 DEBF      		out __SP_H__,r29
+ 1037 0466 0FBE      		out __SREG__,__tmp_reg__
+ 1038 0468 CDBF      		out __SP_L__,r28
+ 1039               	/* prologue: function */
+ 1040               	/* frame size = 1024 */
+ 1041               	/* stack size = 1028 */
+ 1042               	.L__stack_usage = 1028
+ 1043 046a 8B01      		movw r16,r22
+ 278:../freeRTOS750/lib_inet/http.c **** 	uint8_t tempURI[MAX_URI_SIZE];
+ 279:../freeRTOS750/lib_inet/http.c **** 	uint8_t* name=0;
+ 280:../freeRTOS750/lib_inet/http.c **** 	if(!uri || !param_name) return 0;
+ 1045               	.LM97:
+ 1046 046c 0097      		sbiw r24,0
+ 1047 046e 01F4      		brne .L71
+ 1048               	.L73:
+ 1049 0470 00E0      		ldi r16,0
+ 1050 0472 10E0      		ldi r17,0
+ 1051 0474 00C0      		rjmp .L72
+ 1052               	.L71:
+ 1054               	.LM98:
+ 1055 0476 6115      		cp r22,__zero_reg__
+ 1056 0478 7105      		cpc r23,__zero_reg__
+ 1057 047a 01F0      		breq .L73
+ 281:../freeRTOS750/lib_inet/http.c **** 
+ 282:../freeRTOS750/lib_inet/http.c **** 	strncpy((char *)tempURI, (const char *)uri, MAX_URI_SIZE);
+ 1059               	.LM99:
+ 1060 047c 40E0      		ldi r20,0
+ 1061 047e 54E0      		ldi r21,lo8(4)
+ 1062 0480 BC01      		movw r22,r24
+ 1063 0482 CE01      		movw r24,r28
+ 1064 0484 0196      		adiw r24,1
+ 1065 0486 0E94 0000 		call strncpy
+ 283:../freeRTOS750/lib_inet/http.c **** 	if((name=(uint8_t*)strstr((const char *)tempURI, (const char *)param_name)))
+ 1067               	.LM100:
+ 1068 048a B801      		movw r22,r16
+ 1069 048c CE01      		movw r24,r28
+ 1070 048e 0196      		adiw r24,1
+ 1071 0490 0E94 0000 		call strstr
+ 1072 0494 0097      		sbiw r24,0
+ 1073 0496 01F0      		breq .L73
+ 284:../freeRTOS750/lib_inet/http.c **** 	{
+ 285:../freeRTOS750/lib_inet/http.c **** 		name += strlen((const char *)param_name) + 1; // strlen(para_name) + strlen("=")
+ 1075               	.LM101:
+ 1076 0498 D801      		movw r26,r16
+ 1077               		0:
+ 1078 049a 0D90      		ld __tmp_reg__,X+
+ 1079 049c 0020      		tst __tmp_reg__
+ 1080 049e 01F4      		brne 0b
+ 1081 04a0 A01B      		sub r26,r16
+ 1082 04a2 B10B      		sbc r27,r17
+ 286:../freeRTOS750/lib_inet/http.c **** 		if((name = (uint8_t*)strtok((char *)name,"& \r\n\t\0")))
+ 1084               	.LM102:
+ 1085 04a4 60E0      		ldi r22,lo8(.LC3)
+ 1086 04a6 70E0      		ldi r23,hi8(.LC3)
+ 1087 04a8 8A0F      		add r24,r26
+ 1088 04aa 9B1F      		adc r25,r27
+ 1089 04ac 0E94 0000 		call strtok
+ 1090 04b0 8C01      		movw r16,r24
+ 1091 04b2 0097      		sbiw r24,0
+ 1092 04b4 01F0      		breq .L73
+ 287:../freeRTOS750/lib_inet/http.c **** 		{
+ 288:../freeRTOS750/lib_inet/http.c **** 			unescape_HTTP_URL((uint8_t*)name);
+ 1094               	.LM103:
+ 1095 04b6 0E94 0000 		call unescape_HTTP_URL
+ 289:../freeRTOS750/lib_inet/http.c **** 			replacetochar((uint8_t*)name,'+',' ');
+ 1097               	.LM104:
+ 1098 04ba 40E2      		ldi r20,lo8(32)
+ 1099 04bc 6BE2      		ldi r22,lo8(43)
+ 1100 04be C801      		movw r24,r16
+ 1101 04c0 0E94 0000 		call replacetochar
+ 1102               	.L72:
+ 290:../freeRTOS750/lib_inet/http.c **** 		}
+ 291:../freeRTOS750/lib_inet/http.c **** 	}
+ 292:../freeRTOS750/lib_inet/http.c **** #ifdef HTTP_DEBUG
+ 293:../freeRTOS750/lib_inet/http.c **** 	xSerialPrintf_P(PSTR("\n%s=%s "),param_name,name);
+ 294:../freeRTOS750/lib_inet/http.c **** #endif
+ 295:../freeRTOS750/lib_inet/http.c **** 	return (uint8_t*)name;
+ 296:../freeRTOS750/lib_inet/http.c **** }
+ 1104               	.LM105:
+ 1105 04c4 C801      		movw r24,r16
+ 1106               	/* epilogue start */
+ 1107 04c6 DC5F      		subi r29,-4
+ 1108 04c8 0FB6      		in __tmp_reg__,__SREG__
+ 1109 04ca F894      		cli
+ 1110 04cc DEBF      		out __SP_H__,r29
+ 1111 04ce 0FBE      		out __SREG__,__tmp_reg__
+ 1112 04d0 CDBF      		out __SP_L__,r28
+ 1113 04d2 DF91      		pop r29
+ 1114 04d4 CF91      		pop r28
+ 1115 04d6 1F91      		pop r17
+ 1116 04d8 0F91      		pop r16
+ 1117 04da 0895      		ret
+ 1122               	.Lscope7:
+ 1124               		.stabd	78,0,0
+ 1125               		.section	.rodata.str1.1
+ 1126               	.LC4:
+ 1127 0006 203F 00   		.string	" ?"
+ 1128               	.LC5:
+ 1129 0009 2F00      		.string	"/"
+ 1130               		.text
+ 1133               	.global	get_HTTP_URI_name
+ 1135               	get_HTTP_URI_name:
+ 1136               		.stabd	46,0,0
+ 297:../freeRTOS750/lib_inet/http.c **** 
+ 298:../freeRTOS750/lib_inet/http.c **** 
+ 299:../freeRTOS750/lib_inet/http.c **** uint8_t* get_HTTP_URI_name(uint8_t* uri)
+ 300:../freeRTOS750/lib_inet/http.c **** {
+ 1138               	.LM106:
+ 1139               	.LFBB8:
+ 1140 04dc 0F93      		push r16
+ 1141 04de 1F93      		push r17
+ 1142 04e0 CF93      		push r28
+ 1143 04e2 DF93      		push r29
+ 1144 04e4 CDB7      		in r28,__SP_L__
+ 1145 04e6 DEB7      		in r29,__SP_H__
+ 1146 04e8 D450      		subi r29,4
+ 1147 04ea 0FB6      		in __tmp_reg__,__SREG__
+ 1148 04ec F894      		cli
+ 1149 04ee DEBF      		out __SP_H__,r29
+ 1150 04f0 0FBE      		out __SREG__,__tmp_reg__
+ 1151 04f2 CDBF      		out __SP_L__,r28
+ 1152               	/* prologue: function */
+ 1153               	/* frame size = 1024 */
+ 1154               	/* stack size = 1028 */
+ 1155               	.L__stack_usage = 1028
+ 301:../freeRTOS750/lib_inet/http.c **** 	uint8_t tempURI[MAX_URI_SIZE];
+ 302:../freeRTOS750/lib_inet/http.c **** 	uint8_t* uri_name;
+ 303:../freeRTOS750/lib_inet/http.c **** 	if(!uri) return 0;
+ 1157               	.LM107:
+ 1158 04f4 0097      		sbiw r24,0
+ 1159 04f6 01F0      		breq .L85
+ 304:../freeRTOS750/lib_inet/http.c **** 	strncpy((char *)tempURI, (const char *)uri, MAX_URI_SIZE);
+ 1161               	.LM108:
+ 1162 04f8 40E0      		ldi r20,0
+ 1163 04fa 54E0      		ldi r21,lo8(4)
+ 1164 04fc BC01      		movw r22,r24
+ 1165 04fe CE01      		movw r24,r28
+ 1166 0500 0196      		adiw r24,1
+ 1167 0502 0E94 0000 		call strncpy
+ 305:../freeRTOS750/lib_inet/http.c **** 	uri_name = (uint8_t*)strtok((char *)tempURI, " ?");
+ 1169               	.LM109:
+ 1170 0506 60E0      		ldi r22,lo8(.LC4)
+ 1171 0508 70E0      		ldi r23,hi8(.LC4)
+ 1172 050a CE01      		movw r24,r28
+ 1173 050c 0196      		adiw r24,1
+ 1174 050e 0E94 0000 		call strtok
+ 1175 0512 8C01      		movw r16,r24
+ 306:../freeRTOS750/lib_inet/http.c **** 	if(strcmp( (const char *)uri_name, "/" )) uri_name++;
+ 1177               	.LM110:
+ 1178 0514 60E0      		ldi r22,lo8(.LC5)
+ 1179 0516 70E0      		ldi r23,hi8(.LC5)
+ 1180 0518 0E94 0000 		call strcmp
+ 1181 051c 0097      		sbiw r24,0
+ 1182 051e 01F0      		breq .L84
+ 1184               	.LM111:
+ 1185 0520 0F5F      		subi r16,-1
+ 1186 0522 1F4F      		sbci r17,-1
+ 1187 0524 00C0      		rjmp .L84
+ 1188               	.L85:
+ 303:../freeRTOS750/lib_inet/http.c **** 	if(!uri) return 0;
+ 1190               	.LM112:
+ 1191 0526 00E0      		ldi r16,0
+ 1192 0528 10E0      		ldi r17,0
+ 1193               	.L84:
+ 307:../freeRTOS750/lib_inet/http.c **** #ifdef HTTP_DEBUG
+ 308:../freeRTOS750/lib_inet/http.c **** 	xSerialPrintf_P(PSTR("\nuri_name=%s "),uri_name);
+ 309:../freeRTOS750/lib_inet/http.c **** #endif
+ 310:../freeRTOS750/lib_inet/http.c **** 	return (uint8_t*)uri_name;
+ 311:../freeRTOS750/lib_inet/http.c **** }
+ 1195               	.LM113:
+ 1196 052a C801      		movw r24,r16
+ 1197               	/* epilogue start */
+ 1198 052c DC5F      		subi r29,-4
+ 1199 052e 0FB6      		in __tmp_reg__,__SREG__
+ 1200 0530 F894      		cli
+ 1201 0532 DEBF      		out __SP_H__,r29
+ 1202 0534 0FBE      		out __SREG__,__tmp_reg__
+ 1203 0536 CDBF      		out __SP_L__,r28
+ 1204 0538 DF91      		pop r29
+ 1205 053a CF91      		pop r28
+ 1206 053c 1F91      		pop r17
+ 1207 053e 0F91      		pop r16
+ 1208 0540 0895      		ret
+ 1214               	.Lscope8:
+ 1216               		.stabd	78,0,0
+ 1217               		.comm	pHTTPResponse,2,1
+ 1218               		.comm	pHTTPRequest,2,1
+ 1219               		.section	.progmem.data,"a",@progbits
+ 1222               	__c.2787:
+ 1223 0000 4854 5450 		.string	"HTTPD socket: %d, initialise fail..!\r\n"
+ 1223      4420 736F 
+ 1223      636B 6574 
+ 1223      3A20 2564 
+ 1223      2C20 696E 
+ 1226               	__c.2789:
+ 1227 0027 4854 5450 		.string	"HTTP Request Buffer: malloc fail..!\r\n"
+ 1227      2052 6571 
+ 1227      7565 7374 
+ 1227      2042 7566 
+ 1227      6665 723A 
+ 1230               	__c.2791:
+ 1231 004d 4854 5450 		.string	"HTTP Response Buffer: malloc fail..!\r\n"
+ 1231      2052 6573 
+ 1231      706F 6E73 
+ 1231      6520 4275 
+ 1231      6666 6572 
+ 1232               		.local	HTTPD_SOCK
+ 1233               		.comm	HTTPD_SOCK,1,1
+ 1234               		.section	.rodata
+ 1237               	CSWTCH.17:
+ 1238 0009 0000      		.word	__c.2812
+ 1239 000b 0000      		.word	__c.2816
+ 1240 000d 0000      		.word	__c.2819
+ 1241 000f 0000      		.word	__c.2822
+ 1242 0011 0000      		.word	__c.2825
+ 1243 0013 0000      		.word	__c.2828
+ 1244 0015 0000      		.word	__c.2831
+ 1245 0017 0000      		.word	__c.2834
+ 1246               		.section	.progmem.data,"a",@progbits
+ 1249               	__c.2837:
+ 1250 0074 0D0A 0D0A 		.string	"\r\n\r\n"
+ 1250      00
+ 1251 0079 00        		.string	""
+ 1254               	__c.2843:
+ 1255 007a 2E68 746D 		.string	".html"
+ 1255      6C00 
+ 1258               	__c.2845:
+ 1259 0080 2E68 746D 		.string	".htm"
+ 1259      00
+ 1262               	__c.2847:
+ 1263 0085 2E48 544D 		.string	".HTML"
+ 1263      4C00 
+ 1266               	__c.2849:
+ 1267 008b 2E48 544D 		.string	".HTM"
+ 1267      00
+ 1270               	__c.2851:
+ 1271 0090 2E67 6966 		.string	".gif"
+ 1271      00
+ 1274               	__c.2853:
+ 1275 0095 2E47 4946 		.string	".GIF"
+ 1275      00
+ 1278               	__c.2855:
+ 1279 009a 2E74 6578 		.string	".text"
+ 1279      7400 
+ 1282               	__c.2857:
+ 1283 00a0 2E74 7874 		.string	".txt"
+ 1283      00
+ 1286               	__c.2859:
+ 1287 00a5 2E54 4558 		.string	".TEXT"
+ 1287      5400 
+ 1290               	__c.2861:
+ 1291 00ab 2E54 5854 		.string	".TXT"
+ 1291      00
+ 1294               	__c.2863:
+ 1295 00b0 2E6A 7065 		.string	".jpeg"
+ 1295      6700 
+ 1298               	__c.2865:
+ 1299 00b6 2E6A 7067 		.string	".jpg"
+ 1299      00
+ 1302               	__c.2867:
+ 1303 00bb 2E4A 5045 		.string	".JPEG"
+ 1303      4700 
+ 1306               	__c.2869:
+ 1307 00c1 2E4A 5047 		.string	".JPG"
+ 1307      00
+ 1310               	__c.2871:
+ 1311 00c6 2E73 7766 		.string	".swf"
+ 1311      00
+ 1314               	__c.2873:
+ 1315 00cb 2E53 5746 		.string	".SWF"
+ 1315      00
+ 1318               	__c.2875:
+ 1319 00d0 2E6D 7065 		.string	".mpeg"
+ 1319      6700 
+ 1322               	__c.2877:
+ 1323 00d6 2E6D 7067 		.string	".mpg"
+ 1323      00
+ 1326               	__c.2879:
+ 1327 00db 2E4D 5045 		.string	".MPEG"
+ 1327      4700 
+ 1330               	__c.2881:
+ 1331 00e1 2E4D 5047 		.string	".MPG"
+ 1331      00
+ 1334               	__c.2883:
+ 1335 00e6 2E70 6466 		.string	".pdf"
+ 1335      00
+ 1338               	__c.2885:
+ 1339 00eb 2E50 4446 		.string	".PDF"
+ 1339      00
+ 1342               	__c.2887:
+ 1343 00f0 2E7A 6970 		.string	".zip"
+ 1343      00
+ 1346               	__c.2889:
+ 1347 00f5 2E5A 4950 		.string	".ZIP"
+ 1347      00
+ 1350               	__c.2891:
+ 1351 00fa 2E63 6769 		.string	".cgi"
+ 1351      00
+ 1354               	__c.2893:
+ 1355 00ff 2E43 4749 		.string	".CGI"
+ 1355      00
+ 1358               	__c.2900:
+ 1359 0104 4745 5400 		.string	"GET"
+ 1362               	__c.2902:
+ 1363 0108 6765 7400 		.string	"get"
+ 1366               	__c.2904:
+ 1367 010c 4845 4144 		.string	"HEAD"
+ 1367      00
+ 1370               	__c.2906:
+ 1371 0111 6865 6164 		.string	"head"
+ 1371      00
+ 1374               	__c.2908:
+ 1375 0116 504F 5354 		.string	"POST"
+ 1375      00
+ 1378               	__c.2910:
+ 1379 011b 706F 7374 		.string	"post"
+ 1379      00
+ 1382               	__c.2812:
+ 1383 0120 4854 5450 		.string	"HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: "
+ 1383      2F31 2E31 
+ 1383      2032 3030 
+ 1383      204F 4B0D 
+ 1383      0A43 6F6E 
+ 1386               	__c.2816:
+ 1387 015b 4854 5450 		.string	"HTTP/1.1 200 OK\r\nContent-Type: image/gif\r\nContent-Length: "
+ 1387      2F31 2E31 
+ 1387      2032 3030 
+ 1387      204F 4B0D 
+ 1387      0A43 6F6E 
+ 1390               	__c.2819:
+ 1391 0196 4854 5450 		.string	"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: "
+ 1391      2F31 2E31 
+ 1391      2032 3030 
+ 1391      204F 4B0D 
+ 1391      0A43 6F6E 
+ 1394               	__c.2822:
+ 1395 01d2 4854 5450 		.string	"HTTP/1.1 200 OK\r\nContent-Type: image/jpeg\r\nContent-Length: "
+ 1395      2F31 2E31 
+ 1395      2032 3030 
+ 1395      204F 4B0D 
+ 1395      0A43 6F6E 
+ 1398               	__c.2825:
+ 1399 020e 4854 5450 		.string	"HTTP/1.1 200 OK\r\nContent-Type: application/x-shockwave-flash\r\nContent-Length: "
+ 1399      2F31 2E31 
+ 1399      2032 3030 
+ 1399      204F 4B0D 
+ 1399      0A43 6F6E 
+ 1402               	__c.2828:
+ 1403 025d 4854 5450 		.string	"HTTP/1.1 200 OK\r\nContent-Type: video/mpeg\r\nContent-Length: "
+ 1403      2F31 2E31 
+ 1403      2032 3030 
+ 1403      204F 4B0D 
+ 1403      0A43 6F6E 
+ 1406               	__c.2831:
+ 1407 0299 4854 5450 		.string	"HTTP/1.1 200 OK\r\nContent-Type: application/pdf\r\nContent-Length: "
+ 1407      2F31 2E31 
+ 1407      2032 3030 
+ 1407      204F 4B0D 
+ 1407      0A43 6F6E 
+ 1410               	__c.2834:
+ 1411 02da 4854 5450 		.string	"HTTP/1.1 200 OK\r\nContent-Type: application/zip\r\nContent-Length: "
+ 1411      2F31 2E31 
+ 1411      2032 3030 
+ 1411      204F 4B0D 
+ 1411      0A43 6F6E 
+ 1415               		.text
+ 1417               	.Letext0:
+ 1418               		.ident	"GCC: (GNU) 4.7.2"
+ 1419               	.global __do_copy_data
+ 1420               	.global __do_clear_bss
+DEFINED SYMBOLS
+                            *ABS*:00000000 http.c
+     /tmp/ccJvMOpF.s:2      *ABS*:0000003e __SP_H__
+     /tmp/ccJvMOpF.s:3      *ABS*:0000003d __SP_L__
+     /tmp/ccJvMOpF.s:4      *ABS*:0000003f __SREG__
+     /tmp/ccJvMOpF.s:5      *ABS*:00000000 __tmp_reg__
+     /tmp/ccJvMOpF.s:6      *ABS*:00000001 __zero_reg__
+     /tmp/ccJvMOpF.s:166    .text:00000000 init_HTTP
+     /tmp/ccJvMOpF.s:1222   .progmem.data:00000000 __c.2787
+                            *COM*:00000002 pHTTPRequest
+     /tmp/ccJvMOpF.s:1226   .progmem.data:00000027 __c.2789
+                            *COM*:00000002 pHTTPResponse
+     /tmp/ccJvMOpF.s:1230   .progmem.data:0000004d __c.2791
+                             .bss:00000000 HTTPD_SOCK
+     /tmp/ccJvMOpF.s:294    .text:000000b6 get_HTTP_socket
+     /tmp/ccJvMOpF.s:315    .text:000000bc unescape_HTTP_URL
+     /tmp/ccJvMOpF.s:417    .text:00000130 make_HTTP_response_header
+     /tmp/ccJvMOpF.s:1237   .rodata:00000009 CSWTCH.17
+     /tmp/ccJvMOpF.s:1249   .progmem.data:00000074 __c.2837
+     /tmp/ccJvMOpF.s:531    .text:000001d2 find_HTTP_URI_type
+     /tmp/ccJvMOpF.s:1254   .progmem.data:0000007a __c.2843
+     /tmp/ccJvMOpF.s:1258   .progmem.data:00000080 __c.2845
+     /tmp/ccJvMOpF.s:1262   .progmem.data:00000085 __c.2847
+     /tmp/ccJvMOpF.s:1266   .progmem.data:0000008b __c.2849
+     /tmp/ccJvMOpF.s:1270   .progmem.data:00000090 __c.2851
+     /tmp/ccJvMOpF.s:1274   .progmem.data:00000095 __c.2853
+     /tmp/ccJvMOpF.s:1278   .progmem.data:0000009a __c.2855
+     /tmp/ccJvMOpF.s:1282   .progmem.data:000000a0 __c.2857
+     /tmp/ccJvMOpF.s:1286   .progmem.data:000000a5 __c.2859
+     /tmp/ccJvMOpF.s:1290   .progmem.data:000000ab __c.2861
+     /tmp/ccJvMOpF.s:1294   .progmem.data:000000b0 __c.2863
+     /tmp/ccJvMOpF.s:1298   .progmem.data:000000b6 __c.2865
+     /tmp/ccJvMOpF.s:1302   .progmem.data:000000bb __c.2867
+     /tmp/ccJvMOpF.s:1306   .progmem.data:000000c1 __c.2869
+     /tmp/ccJvMOpF.s:1310   .progmem.data:000000c6 __c.2871
+     /tmp/ccJvMOpF.s:1314   .progmem.data:000000cb __c.2873
+     /tmp/ccJvMOpF.s:1318   .progmem.data:000000d0 __c.2875
+     /tmp/ccJvMOpF.s:1322   .progmem.data:000000d6 __c.2877
+     /tmp/ccJvMOpF.s:1326   .progmem.data:000000db __c.2879
+     /tmp/ccJvMOpF.s:1330   .progmem.data:000000e1 __c.2881
+     /tmp/ccJvMOpF.s:1334   .progmem.data:000000e6 __c.2883
+     /tmp/ccJvMOpF.s:1338   .progmem.data:000000eb __c.2885
+     /tmp/ccJvMOpF.s:1342   .progmem.data:000000f0 __c.2887
+     /tmp/ccJvMOpF.s:1346   .progmem.data:000000f5 __c.2889
+     /tmp/ccJvMOpF.s:1350   .progmem.data:000000fa __c.2891
+     /tmp/ccJvMOpF.s:1354   .progmem.data:000000ff __c.2893
+     /tmp/ccJvMOpF.s:849    .text:00000388 parse_HTTP_request
+     /tmp/ccJvMOpF.s:1358   .progmem.data:00000104 __c.2900
+     /tmp/ccJvMOpF.s:1362   .progmem.data:00000108 __c.2902
+     /tmp/ccJvMOpF.s:1366   .progmem.data:0000010c __c.2904
+     /tmp/ccJvMOpF.s:1370   .progmem.data:00000111 __c.2906
+     /tmp/ccJvMOpF.s:1374   .progmem.data:00000116 __c.2908
+     /tmp/ccJvMOpF.s:1378   .progmem.data:0000011b __c.2910
+     /tmp/ccJvMOpF.s:1022   .text:00000452 get_HTTP_param_value
+     /tmp/ccJvMOpF.s:1135   .text:000004dc get_HTTP_URI_name
+     /tmp/ccJvMOpF.s:1382   .progmem.data:00000120 __c.2812
+     /tmp/ccJvMOpF.s:1386   .progmem.data:0000015b __c.2816
+     /tmp/ccJvMOpF.s:1390   .progmem.data:00000196 __c.2819
+     /tmp/ccJvMOpF.s:1394   .progmem.data:000001d2 __c.2822
+     /tmp/ccJvMOpF.s:1398   .progmem.data:0000020e __c.2825
+     /tmp/ccJvMOpF.s:1402   .progmem.data:0000025d __c.2828
+     /tmp/ccJvMOpF.s:1406   .progmem.data:00000299 __c.2831
+     /tmp/ccJvMOpF.s:1410   .progmem.data:000002da __c.2834
+
+UNDEFINED SYMBOLS
+getSn_SR
+getSocket
+socket
+xSerialPrintf_P
+pvPortMalloc
+xSerialPrint_P
+vPortFree
+C2D
+sprintf
+strcpy_P
+strcat
+strcat_P
+strstr_P
+strtok
+strcmp_P
+strcpy
+strncpy
+strstr
+replacetochar
+strcmp
+__do_copy_data
+__do_clear_bss

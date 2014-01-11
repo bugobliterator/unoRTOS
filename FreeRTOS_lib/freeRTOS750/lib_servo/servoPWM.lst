@@ -1,0 +1,353 @@
+   1               		.file	"servoPWM.c"
+   2               	__SP_H__ = 0x3e
+   3               	__SP_L__ = 0x3d
+   4               	__SREG__ = 0x3f
+   5               	__tmp_reg__ = 0
+   6               	__zero_reg__ = 1
+   9               		.text
+  10               	.Ltext0:
+ 112               	.global	start_PWM_hardware
+ 114               	start_PWM_hardware:
+ 115               		.stabd	46,0,0
+   1:../freeRTOS750/lib_servo/servoPWM.c **** 
+   2:../freeRTOS750/lib_servo/servoPWM.c **** /*
+   3:../freeRTOS750/lib_servo/servoPWM.c ****   This library is free software; you can redistribute it and/or
+   4:../freeRTOS750/lib_servo/servoPWM.c ****   modify it under the terms of the GNU Lesser General Public
+   5:../freeRTOS750/lib_servo/servoPWM.c ****   License as published by the Free Software Foundation; either
+   6:../freeRTOS750/lib_servo/servoPWM.c ****   version 2.1 of the License, or (at your option) any later version.
+   7:../freeRTOS750/lib_servo/servoPWM.c **** 
+   8:../freeRTOS750/lib_servo/servoPWM.c ****   This library is distributed in the hope that it will be useful,
+   9:../freeRTOS750/lib_servo/servoPWM.c ****   but WITHOUT ANY WARRANTY; without even the implied warranty of
+  10:../freeRTOS750/lib_servo/servoPWM.c ****   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+  11:../freeRTOS750/lib_servo/servoPWM.c ****   Lesser General Public License for more details.
+  12:../freeRTOS750/lib_servo/servoPWM.c **** 
+  13:../freeRTOS750/lib_servo/servoPWM.c ****   You should have received a copy of the GNU Lesser General Public
+  14:../freeRTOS750/lib_servo/servoPWM.c ****   License along with this library; if not, write to the Free Software
+  15:../freeRTOS750/lib_servo/servoPWM.c ****   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+  16:../freeRTOS750/lib_servo/servoPWM.c **** */
+  17:../freeRTOS750/lib_servo/servoPWM.c **** 
+  18:../freeRTOS750/lib_servo/servoPWM.c **** 
+  19:../freeRTOS750/lib_servo/servoPWM.c **** #include <avr/interrupt.h>
+  20:../freeRTOS750/lib_servo/servoPWM.c **** 
+  21:../freeRTOS750/lib_servo/servoPWM.c **** /* Scheduler include files. */
+  22:../freeRTOS750/lib_servo/servoPWM.c **** #include <FreeRTOS.h>
+  23:../freeRTOS750/lib_servo/servoPWM.c **** #include <task.h>
+  24:../freeRTOS750/lib_servo/servoPWM.c **** #include <freeRTOSBoardDefs.h>
+  25:../freeRTOS750/lib_servo/servoPWM.c **** #include <servoPWM.h>
+  26:../freeRTOS750/lib_servo/servoPWM.c **** 
+  27:../freeRTOS750/lib_servo/servoPWM.c **** 
+  28:../freeRTOS750/lib_servo/servoPWM.c **** void start_PWM_hardware()
+  29:../freeRTOS750/lib_servo/servoPWM.c **** {
+ 117               	.LM0:
+ 118               	.LFBB1:
+ 119               	/* prologue: function */
+ 120               	/* frame size = 0 */
+ 121               	/* stack size = 0 */
+ 122               	.L__stack_usage = 0
+  30:../freeRTOS750/lib_servo/servoPWM.c ****     taskENTER_CRITICAL();
+ 124               	.LM1:
+ 125               	/* #APP */
+ 126               	 ;  30 "../freeRTOS750/lib_servo/servoPWM.c" 1
+ 127 0000 0FB6      		in		__tmp_reg__, __SREG__
+ 128               	 ;  0 "" 2
+ 129               	 ;  30 "../freeRTOS750/lib_servo/servoPWM.c" 1
+ 130 0002 F894      		cli
+ 131               	 ;  0 "" 2
+ 132               	 ;  30 "../freeRTOS750/lib_servo/servoPWM.c" 1
+ 133 0004 0F92      		push	__tmp_reg__
+ 134               	 ;  0 "" 2
+  31:../freeRTOS750/lib_servo/servoPWM.c **** 
+  32:../freeRTOS750/lib_servo/servoPWM.c **** #if defined( portUSE_TIMER0_PWM )
+  33:../freeRTOS750/lib_servo/servoPWM.c **** #warning "Timer0 used for PWM."
+  34:../freeRTOS750/lib_servo/servoPWM.c **** 
+  35:../freeRTOS750/lib_servo/servoPWM.c ****     // OutputHZ = configCPU_CLOCK_HZ/(pwmCLOCK_PRESCALER*510) = 42.352Hz with pwmPRESCALE_1024 Phas
+  36:../freeRTOS750/lib_servo/servoPWM.c ****     // This calculation result applies to 22118400Hz.
+  37:../freeRTOS750/lib_servo/servoPWM.c ****     pwmTCCRb = pwmPRESCALE_1024;                            // always counts to 0xFF
+  38:../freeRTOS750/lib_servo/servoPWM.c **** 
+  39:../freeRTOS750/lib_servo/servoPWM.c ****     DDRD |= pwmDDRD; // PD6 OC0A (Pin 6) & PD5 OC0B (Pin 5)
+  40:../freeRTOS750/lib_servo/servoPWM.c **** 
+  41:../freeRTOS750/lib_servo/servoPWM.c ****      // set servo A to mid range, being 3/40 or 1500uS/20000uS
+  42:../freeRTOS750/lib_servo/servoPWM.c ****     pwmOCRa = (uint8_t)( (configCPU_CLOCK_HZ/(pwmCLOCK_PRESCALER*pwmBASE_HZ) - 1) / 5 * 3 / 8 );
+  43:../freeRTOS750/lib_servo/servoPWM.c **** 
+  44:../freeRTOS750/lib_servo/servoPWM.c ****      // set servo B to mid range, being 3/40 or 1500uS/20000uS
+  45:../freeRTOS750/lib_servo/servoPWM.c ****     pwmOCRb = (uint8_t)( (configCPU_CLOCK_HZ/(pwmCLOCK_PRESCALER*pwmBASE_HZ) - 1) / 5 * 3 / 8 );
+  46:../freeRTOS750/lib_servo/servoPWM.c **** 
+  47:../freeRTOS750/lib_servo/servoPWM.c ****     pwmTCCRa = pwmFAST_NONINVERTED_a; // turn on the PWM...
+  48:../freeRTOS750/lib_servo/servoPWM.c **** 
+  49:../freeRTOS750/lib_servo/servoPWM.c **** #elif defined( portUSE_TIMER1_PWM )
+  50:../freeRTOS750/lib_servo/servoPWM.c **** #warning "Timer1 used for PWM."
+  51:../freeRTOS750/lib_servo/servoPWM.c **** 
+  52:../freeRTOS750/lib_servo/servoPWM.c ****     pwmTCCRb = pwmFAST_NONINVERTED_b | pwmPRESCALE_8;
+ 136               	.LM2:
+ 137               	/* #NOAPP */
+ 138 0006 8AE1      		ldi r24,lo8(26)
+ 139 0008 8093 8100 		sts 129,r24
+  53:../freeRTOS750/lib_servo/servoPWM.c **** 
+  54:../freeRTOS750/lib_servo/servoPWM.c ****     /* pwmIRC1 = configCPU_CLOCK_HZ/(pwmCLOCK_PRESCALER*pwmBASE_HZ) - 1 = 55,295 with pwmPRESCALE_8
+  55:../freeRTOS750/lib_servo/servoPWM.c ****     // This calculation result applies to 22118400Hz.
+  56:../freeRTOS750/lib_servo/servoPWM.c ****     pwmICR1 = configCPU_CLOCK_HZ/(pwmCLOCK_PRESCALER*pwmBASE_HZ) - 1; // 50Hz or 20mS cycles.
+ 141               	.LM3:
+ 142 000c 8FE3      		ldi r24,lo8(63)
+ 143 000e 9CE9      		ldi r25,lo8(-100)
+ 144 0010 9093 8700 		sts 134+1,r25
+ 145 0014 8093 8600 		sts 134,r24
+  57:../freeRTOS750/lib_servo/servoPWM.c **** 
+  58:../freeRTOS750/lib_servo/servoPWM.c **** #if defined(__AVR_ATmega328P__)  // Arduino
+  59:../freeRTOS750/lib_servo/servoPWM.c ****     DDRB |= pwmDDRB; // PB1 OC1A (Pin 9) & PB2 OC1B (Pin 10)
+ 147               	.LM4:
+ 148 0018 84B1      		in r24,0x4
+ 149 001a 8660      		ori r24,lo8(6)
+ 150 001c 84B9      		out 0x4,r24
+  60:../freeRTOS750/lib_servo/servoPWM.c **** 
+  61:../freeRTOS750/lib_servo/servoPWM.c **** #elif defined(__AVR_ATmega324P__)  || defined(__AVR_ATmega644P__)|| defined(__AVR_ATmega1284P__) ||
+  62:../freeRTOS750/lib_servo/servoPWM.c ****     DDRD |= pwmDDRD; // PD5 OC1A & PD4 OC1B
+  63:../freeRTOS750/lib_servo/servoPWM.c **** 
+  64:../freeRTOS750/lib_servo/servoPWM.c **** #endif
+  65:../freeRTOS750/lib_servo/servoPWM.c **** 
+  66:../freeRTOS750/lib_servo/servoPWM.c ****     // set servo A to mid range, being 3/40 or 1500uS/20000uS
+  67:../freeRTOS750/lib_servo/servoPWM.c ****     pwmOCRa = (uint16_t)( (configCPU_CLOCK_HZ/(pwmCLOCK_PRESCALER*pwmBASE_HZ) - 1) / 5 * 3 / 8 );
+ 152               	.LM5:
+ 153 001e 87EB      		ldi r24,lo8(-73)
+ 154 0020 9BE0      		ldi r25,lo8(11)
+ 155 0022 9093 8900 		sts 136+1,r25
+ 156 0026 8093 8800 		sts 136,r24
+  68:../freeRTOS750/lib_servo/servoPWM.c **** 
+  69:../freeRTOS750/lib_servo/servoPWM.c ****      // set servo B to mid range, being 3/40 or 1500uS/20000uS
+  70:../freeRTOS750/lib_servo/servoPWM.c ****     pwmOCRb = (uint16_t)( (configCPU_CLOCK_HZ/(pwmCLOCK_PRESCALER*pwmBASE_HZ) - 1) / 5 * 3 / 8 );
+ 158               	.LM6:
+ 159 002a 9093 8B00 		sts 138+1,r25
+ 160 002e 8093 8A00 		sts 138,r24
+  71:../freeRTOS750/lib_servo/servoPWM.c **** 
+  72:../freeRTOS750/lib_servo/servoPWM.c ****     pwmTCCRa = pwmFAST_NONINVERTED_a; // turn on the PWM...
+ 162               	.LM7:
+ 163 0032 82EA      		ldi r24,lo8(-94)
+ 164 0034 8093 8000 		sts 128,r24
+  73:../freeRTOS750/lib_servo/servoPWM.c **** 
+  74:../freeRTOS750/lib_servo/servoPWM.c **** #endif
+  75:../freeRTOS750/lib_servo/servoPWM.c **** 
+  76:../freeRTOS750/lib_servo/servoPWM.c **** 
+  77:../freeRTOS750/lib_servo/servoPWM.c ****     taskEXIT_CRITICAL();
+ 166               	.LM8:
+ 167               	/* #APP */
+ 168               	 ;  77 "../freeRTOS750/lib_servo/servoPWM.c" 1
+ 169 0038 0F90      		pop		__tmp_reg__
+ 170               	 ;  0 "" 2
+ 171               	 ;  77 "../freeRTOS750/lib_servo/servoPWM.c" 1
+ 172 003a 0FBE      		out		__SREG__, __tmp_reg__
+ 173               	 ;  0 "" 2
+ 174               	/* #NOAPP */
+ 175 003c 0895      		ret
+ 177               	.Lscope1:
+ 179               		.stabd	78,0,0
+ 181               	.global	stop_PWM_hardware
+ 183               	stop_PWM_hardware:
+ 184               		.stabd	46,0,0
+  78:../freeRTOS750/lib_servo/servoPWM.c **** }
+  79:../freeRTOS750/lib_servo/servoPWM.c **** 
+  80:../freeRTOS750/lib_servo/servoPWM.c **** void stop_PWM_hardware()
+  81:../freeRTOS750/lib_servo/servoPWM.c **** {
+ 186               	.LM9:
+ 187               	.LFBB2:
+ 188               	/* prologue: function */
+ 189               	/* frame size = 0 */
+ 190               	/* stack size = 0 */
+ 191               	.L__stack_usage = 0
+  82:../freeRTOS750/lib_servo/servoPWM.c ****     taskENTER_CRITICAL();
+ 193               	.LM10:
+ 194               	/* #APP */
+ 195               	 ;  82 "../freeRTOS750/lib_servo/servoPWM.c" 1
+ 196 003e 0FB6      		in		__tmp_reg__, __SREG__
+ 197               	 ;  0 "" 2
+ 198               	 ;  82 "../freeRTOS750/lib_servo/servoPWM.c" 1
+ 199 0040 F894      		cli
+ 200               	 ;  0 "" 2
+ 201               	 ;  82 "../freeRTOS750/lib_servo/servoPWM.c" 1
+ 202 0042 0F92      		push	__tmp_reg__
+ 203               	 ;  0 "" 2
+  83:../freeRTOS750/lib_servo/servoPWM.c ****     pwmTCCRa = 0;
+ 205               	.LM11:
+ 206               	/* #NOAPP */
+ 207 0044 1092 8000 		sts 128,__zero_reg__
+  84:../freeRTOS750/lib_servo/servoPWM.c **** 
+  85:../freeRTOS750/lib_servo/servoPWM.c **** #if defined( portUSE_TIMER0_PWM )
+  86:../freeRTOS750/lib_servo/servoPWM.c ****     pwmTCCRb = 0;
+  87:../freeRTOS750/lib_servo/servoPWM.c **** 	DDRD &= ~pwmDDRD; // PD6 OC0A (Pin 6) & PD5 OC0B (Pin 5)
+  88:../freeRTOS750/lib_servo/servoPWM.c **** 
+  89:../freeRTOS750/lib_servo/servoPWM.c **** #elif defined( portUSE_TIMER1_PWM )
+  90:../freeRTOS750/lib_servo/servoPWM.c **** 
+  91:../freeRTOS750/lib_servo/servoPWM.c **** 	#if defined(__AVR_ATmega328P__)  // Arduino
+  92:../freeRTOS750/lib_servo/servoPWM.c **** 		DDRB &= ~pwmDDRB; // PB1 OC1A (Pin 9) & PB2 OC1B (Pin 10)
+ 209               	.LM12:
+ 210 0048 84B1      		in r24,0x4
+ 211 004a 897F      		andi r24,lo8(-7)
+ 212 004c 84B9      		out 0x4,r24
+  93:../freeRTOS750/lib_servo/servoPWM.c **** 
+  94:../freeRTOS750/lib_servo/servoPWM.c **** 	#elif defined(__AVR_ATmega324P__)  || defined(__AVR_ATmega644P__)|| defined(__AVR_ATmega1284P__) |
+  95:../freeRTOS750/lib_servo/servoPWM.c **** 		DDRD &= ~pwmDDRD; // PD5 OC1A & PD4 OC1B
+  96:../freeRTOS750/lib_servo/servoPWM.c **** 
+  97:../freeRTOS750/lib_servo/servoPWM.c **** 	#endif
+  98:../freeRTOS750/lib_servo/servoPWM.c **** 
+  99:../freeRTOS750/lib_servo/servoPWM.c **** #endif
+ 100:../freeRTOS750/lib_servo/servoPWM.c **** 
+ 101:../freeRTOS750/lib_servo/servoPWM.c ****     taskEXIT_CRITICAL();
+ 214               	.LM13:
+ 215               	/* #APP */
+ 216               	 ;  101 "../freeRTOS750/lib_servo/servoPWM.c" 1
+ 217 004e 0F90      		pop		__tmp_reg__
+ 218               	 ;  0 "" 2
+ 219               	 ;  101 "../freeRTOS750/lib_servo/servoPWM.c" 1
+ 220 0050 0FBE      		out		__SREG__, __tmp_reg__
+ 221               	 ;  0 "" 2
+ 222               	/* #NOAPP */
+ 223 0052 0895      		ret
+ 225               	.Lscope2:
+ 227               		.stabd	78,0,0
+ 228               	.global	__floatunsisf
+ 229               	.global	__mulsf3
+ 230               	.global	__divsf3
+ 231               	.global	__fixunssfsi
+ 235               	.global	set_PWM_hardware
+ 237               	set_PWM_hardware:
+ 238               		.stabd	46,0,0
+ 102:../freeRTOS750/lib_servo/servoPWM.c **** }
+ 103:../freeRTOS750/lib_servo/servoPWM.c **** 
+ 104:../freeRTOS750/lib_servo/servoPWM.c **** 
+ 105:../freeRTOS750/lib_servo/servoPWM.c **** void set_PWM_hardware( uint16_t servoA, uint16_t servoB)     // PWM pulse width in uS
+ 106:../freeRTOS750/lib_servo/servoPWM.c **** {
+ 240               	.LM14:
+ 241               	.LFBB3:
+ 242 0054 0F93      		push r16
+ 243 0056 1F93      		push r17
+ 244 0058 CF93      		push r28
+ 245 005a DF93      		push r29
+ 246               	/* prologue: function */
+ 247               	/* frame size = 0 */
+ 248               	/* stack size = 4 */
+ 249               	.L__stack_usage = 4
+ 250 005c 8B01      		movw r16,r22
+ 107:../freeRTOS750/lib_servo/servoPWM.c **** #if defined( portUSE_TIMER0_PWM )
+ 108:../freeRTOS750/lib_servo/servoPWM.c **** 
+ 109:../freeRTOS750/lib_servo/servoPWM.c ****     uint8_t OCRA;
+ 110:../freeRTOS750/lib_servo/servoPWM.c ****     uint8_t OCRB;
+ 111:../freeRTOS750/lib_servo/servoPWM.c **** 
+ 112:../freeRTOS750/lib_servo/servoPWM.c ****     OCRA = (uint8_t)( (float)servoA * configCPU_CLOCK_HZ  / pwmCLOCK_PRESCALER / 1000000 ); // This
+ 113:../freeRTOS750/lib_servo/servoPWM.c ****     OCRB = (uint8_t)( (float)servoB * configCPU_CLOCK_HZ  / pwmCLOCK_PRESCALER / 1000000 ); // but 
+ 114:../freeRTOS750/lib_servo/servoPWM.c **** 
+ 115:../freeRTOS750/lib_servo/servoPWM.c ****     taskENTER_CRITICAL();
+ 116:../freeRTOS750/lib_servo/servoPWM.c ****     pwmOCRa = OCRA;
+ 117:../freeRTOS750/lib_servo/servoPWM.c ****     pwmOCRb = OCRB;
+ 118:../freeRTOS750/lib_servo/servoPWM.c ****     taskEXIT_CRITICAL();
+ 119:../freeRTOS750/lib_servo/servoPWM.c **** 
+ 120:../freeRTOS750/lib_servo/servoPWM.c **** #elif defined( portUSE_TIMER1_PWM )
+ 121:../freeRTOS750/lib_servo/servoPWM.c **** 
+ 122:../freeRTOS750/lib_servo/servoPWM.c ****     uint16_t OCRA;
+ 123:../freeRTOS750/lib_servo/servoPWM.c ****     uint16_t OCRB;
+ 124:../freeRTOS750/lib_servo/servoPWM.c **** 
+ 125:../freeRTOS750/lib_servo/servoPWM.c ****     // pwmOCRx is set in uS, so convert from uS to # of steps to pwmICR1
+ 126:../freeRTOS750/lib_servo/servoPWM.c ****     OCRA = (uint16_t)( (float)servoA * (configCPU_CLOCK_HZ/(pwmCLOCK_PRESCALER*pwmBASE_HZ) - 1) * p
+ 252               	.LM15:
+ 253 005e BC01      		movw r22,r24
+ 254 0060 80E0      		ldi r24,0
+ 255 0062 90E0      		ldi r25,0
+ 256 0064 0E94 0000 		call __floatunsisf
+ 257 0068 20E0      		ldi r18,0
+ 258 006a 3FE3      		ldi r19,lo8(63)
+ 259 006c 4CE1      		ldi r20,lo8(28)
+ 260 006e 57E4      		ldi r21,lo8(71)
+ 261 0070 0E94 0000 		call __mulsf3
+ 262 0074 20E0      		ldi r18,0
+ 263 0076 30E0      		ldi r19,0
+ 264 0078 48E4      		ldi r20,lo8(72)
+ 265 007a 52E4      		ldi r21,lo8(66)
+ 266 007c 0E94 0000 		call __mulsf3
+ 267 0080 20E0      		ldi r18,0
+ 268 0082 34E2      		ldi r19,lo8(36)
+ 269 0084 44E7      		ldi r20,lo8(116)
+ 270 0086 59E4      		ldi r21,lo8(73)
+ 271 0088 0E94 0000 		call __divsf3
+ 272 008c 0E94 0000 		call __fixunssfsi
+ 273 0090 EB01      		movw r28,r22
+ 127:../freeRTOS750/lib_servo/servoPWM.c ****     OCRB = (uint16_t)( (float)servoB * (configCPU_CLOCK_HZ/(pwmCLOCK_PRESCALER*pwmBASE_HZ) - 1) * p
+ 275               	.LM16:
+ 276 0092 B801      		movw r22,r16
+ 277 0094 80E0      		ldi r24,0
+ 278 0096 90E0      		ldi r25,0
+ 279 0098 0E94 0000 		call __floatunsisf
+ 280 009c 20E0      		ldi r18,0
+ 281 009e 3FE3      		ldi r19,lo8(63)
+ 282 00a0 4CE1      		ldi r20,lo8(28)
+ 283 00a2 57E4      		ldi r21,lo8(71)
+ 284 00a4 0E94 0000 		call __mulsf3
+ 285 00a8 20E0      		ldi r18,0
+ 286 00aa 30E0      		ldi r19,0
+ 287 00ac 48E4      		ldi r20,lo8(72)
+ 288 00ae 52E4      		ldi r21,lo8(66)
+ 289 00b0 0E94 0000 		call __mulsf3
+ 290 00b4 20E0      		ldi r18,0
+ 291 00b6 34E2      		ldi r19,lo8(36)
+ 292 00b8 44E7      		ldi r20,lo8(116)
+ 293 00ba 59E4      		ldi r21,lo8(73)
+ 294 00bc 0E94 0000 		call __divsf3
+ 295 00c0 0E94 0000 		call __fixunssfsi
+ 128:../freeRTOS750/lib_servo/servoPWM.c **** 
+ 129:../freeRTOS750/lib_servo/servoPWM.c ****     taskENTER_CRITICAL();
+ 297               	.LM17:
+ 298               	/* #APP */
+ 299               	 ;  129 "../freeRTOS750/lib_servo/servoPWM.c" 1
+ 300 00c4 0FB6      		in		__tmp_reg__, __SREG__
+ 301               	 ;  0 "" 2
+ 302               	 ;  129 "../freeRTOS750/lib_servo/servoPWM.c" 1
+ 303 00c6 F894      		cli
+ 304               	 ;  0 "" 2
+ 305               	 ;  129 "../freeRTOS750/lib_servo/servoPWM.c" 1
+ 306 00c8 0F92      		push	__tmp_reg__
+ 307               	 ;  0 "" 2
+ 130:../freeRTOS750/lib_servo/servoPWM.c ****     pwmOCRa = OCRA;
+ 309               	.LM18:
+ 310               	/* #NOAPP */
+ 311 00ca D093 8900 		sts 136+1,r29
+ 312 00ce C093 8800 		sts 136,r28
+ 131:../freeRTOS750/lib_servo/servoPWM.c ****     pwmOCRb = OCRB;
+ 314               	.LM19:
+ 315 00d2 7093 8B00 		sts 138+1,r23
+ 316 00d6 6093 8A00 		sts 138,r22
+ 132:../freeRTOS750/lib_servo/servoPWM.c ****     taskEXIT_CRITICAL();
+ 318               	.LM20:
+ 319               	/* #APP */
+ 320               	 ;  132 "../freeRTOS750/lib_servo/servoPWM.c" 1
+ 321 00da 0F90      		pop		__tmp_reg__
+ 322               	 ;  0 "" 2
+ 323               	 ;  132 "../freeRTOS750/lib_servo/servoPWM.c" 1
+ 324 00dc 0FBE      		out		__SREG__, __tmp_reg__
+ 325               	 ;  0 "" 2
+ 326               	/* epilogue start */
+ 133:../freeRTOS750/lib_servo/servoPWM.c **** 
+ 134:../freeRTOS750/lib_servo/servoPWM.c **** #endif
+ 135:../freeRTOS750/lib_servo/servoPWM.c **** }
+ 328               	.LM21:
+ 329               	/* #NOAPP */
+ 330 00de DF91      		pop r29
+ 331 00e0 CF91      		pop r28
+ 332 00e2 1F91      		pop r17
+ 333 00e4 0F91      		pop r16
+ 334 00e6 0895      		ret
+ 340               	.Lscope3:
+ 342               		.stabd	78,0,0
+ 344               	.Letext0:
+ 345               		.ident	"GCC: (GNU) 4.7.2"
+DEFINED SYMBOLS
+                            *ABS*:00000000 servoPWM.c
+     /tmp/cc3Zn7IE.s:2      *ABS*:0000003e __SP_H__
+     /tmp/cc3Zn7IE.s:3      *ABS*:0000003d __SP_L__
+     /tmp/cc3Zn7IE.s:4      *ABS*:0000003f __SREG__
+     /tmp/cc3Zn7IE.s:5      *ABS*:00000000 __tmp_reg__
+     /tmp/cc3Zn7IE.s:6      *ABS*:00000001 __zero_reg__
+     /tmp/cc3Zn7IE.s:114    .text:00000000 start_PWM_hardware
+     /tmp/cc3Zn7IE.s:183    .text:0000003e stop_PWM_hardware
+     /tmp/cc3Zn7IE.s:237    .text:00000054 set_PWM_hardware
+
+UNDEFINED SYMBOLS
+__floatunsisf
+__mulsf3
+__divsf3
+__fixunssfsi

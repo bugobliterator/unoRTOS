@@ -1,0 +1,195 @@
+   1               		.file	"mktime.c"
+   2               	__SP_H__ = 0x3e
+   3               	__SP_L__ = 0x3d
+   4               	__SREG__ = 0x3f
+   5               	__tmp_reg__ = 0
+   6               	__zero_reg__ = 1
+   9               		.text
+  10               	.Ltext0:
+  82               	.global	mktime
+  84               	mktime:
+  85               		.stabd	46,0,0
+   1:../freeRTOS750/lib_time/mktime.c **** /*
+   2:../freeRTOS750/lib_time/mktime.c ****  * (C)2012 Michael Duane Rice All rights reserved.
+   3:../freeRTOS750/lib_time/mktime.c ****  *
+   4:../freeRTOS750/lib_time/mktime.c ****  * Redistribution and use in source and binary forms, with or without
+   5:../freeRTOS750/lib_time/mktime.c ****  * modification, are permitted provided that the following conditions are
+   6:../freeRTOS750/lib_time/mktime.c ****  * met:
+   7:../freeRTOS750/lib_time/mktime.c ****  *
+   8:../freeRTOS750/lib_time/mktime.c ****  * Redistributions of source code must retain the above copyright notice, this
+   9:../freeRTOS750/lib_time/mktime.c ****  * list of conditions and the following disclaimer. Redistributions in binary
+  10:../freeRTOS750/lib_time/mktime.c ****  * form must reproduce the above copyright notice, this list of conditions
+  11:../freeRTOS750/lib_time/mktime.c ****  * and the following disclaimer in the documentation and/or other materials
+  12:../freeRTOS750/lib_time/mktime.c ****  * provided with the distribution. Neither the name of the copyright holders
+  13:../freeRTOS750/lib_time/mktime.c ****  * nor the names of contributors may be used to endorse or promote products
+  14:../freeRTOS750/lib_time/mktime.c ****  * derived from this software without specific prior written permission.
+  15:../freeRTOS750/lib_time/mktime.c ****  *
+  16:../freeRTOS750/lib_time/mktime.c ****  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  17:../freeRTOS750/lib_time/mktime.c ****  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  18:../freeRTOS750/lib_time/mktime.c ****  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  19:../freeRTOS750/lib_time/mktime.c ****  * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+  20:../freeRTOS750/lib_time/mktime.c ****  * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+  21:../freeRTOS750/lib_time/mktime.c ****  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+  22:../freeRTOS750/lib_time/mktime.c ****  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+  23:../freeRTOS750/lib_time/mktime.c ****  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+  24:../freeRTOS750/lib_time/mktime.c ****  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+  25:../freeRTOS750/lib_time/mktime.c ****  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+  26:../freeRTOS750/lib_time/mktime.c ****  * POSSIBILITY OF SUCH DAMAGE.
+  27:../freeRTOS750/lib_time/mktime.c ****  */
+  28:../freeRTOS750/lib_time/mktime.c **** 
+  29:../freeRTOS750/lib_time/mktime.c **** /* $Id$ */
+  30:../freeRTOS750/lib_time/mktime.c **** 
+  31:../freeRTOS750/lib_time/mktime.c **** /*
+  32:../freeRTOS750/lib_time/mktime.c **** 	Standard mktime(). The provided broken down Local 'calendar' time is converted into
+  33:../freeRTOS750/lib_time/mktime.c **** 	a binary time stamp. The process is then reversed to 'normalize' timeptr.
+  34:../freeRTOS750/lib_time/mktime.c **** */
+  35:../freeRTOS750/lib_time/mktime.c **** 
+  36:../freeRTOS750/lib_time/mktime.c **** #include <time.h>
+  37:../freeRTOS750/lib_time/mktime.c **** 
+  38:../freeRTOS750/lib_time/mktime.c **** extern long     __utc_offset;
+  39:../freeRTOS750/lib_time/mktime.c **** 
+  40:../freeRTOS750/lib_time/mktime.c **** extern int      (*__dst_ptr) (const time_t *, int32_t *);
+  41:../freeRTOS750/lib_time/mktime.c **** 
+  42:../freeRTOS750/lib_time/mktime.c **** time_t
+  43:../freeRTOS750/lib_time/mktime.c **** mktime(struct tm * timeptr)
+  44:../freeRTOS750/lib_time/mktime.c **** {
+  87               	.LM0:
+  88               	.LFBB1:
+  89 0000 0F93      		push r16
+  90 0002 1F93      		push r17
+  91 0004 CF93      		push r28
+  92 0006 DF93      		push r29
+  93 0008 00D0      		rcall .
+  94 000a 00D0      		rcall .
+  95 000c CDB7      		in r28,__SP_L__
+  96 000e DEB7      		in r29,__SP_H__
+  97               	/* prologue: function */
+  98               	/* frame size = 4 */
+  99               	/* stack size = 8 */
+ 100               	.L__stack_usage = 8
+ 101 0010 8C01      		movw r16,r24
+  45:../freeRTOS750/lib_time/mktime.c **** 	time_t          ret;
+  46:../freeRTOS750/lib_time/mktime.c **** 
+  47:../freeRTOS750/lib_time/mktime.c **** 	ret = mk_gmtime(timeptr);
+ 103               	.LM1:
+ 104 0012 0E94 0000 		call mk_gmtime
+ 105 0016 6983      		std Y+1,r22
+ 106 0018 7A83      		std Y+2,r23
+ 107 001a 8B83      		std Y+3,r24
+ 108 001c 9C83      		std Y+4,r25
+  48:../freeRTOS750/lib_time/mktime.c **** 
+  49:../freeRTOS750/lib_time/mktime.c **** 	if (timeptr->tm_isdst < 0) {
+ 110               	.LM2:
+ 111 001e F801      		movw r30,r16
+ 112 0020 8285      		ldd r24,Z+10
+ 113 0022 9385      		ldd r25,Z+11
+ 114 0024 97FF      		sbrs r25,7
+ 115 0026 00C0      		rjmp .L2
+  50:../freeRTOS750/lib_time/mktime.c **** 		if (__dst_ptr)
+ 117               	.LM3:
+ 118 0028 E091 0000 		lds r30,__dst_ptr
+ 119 002c F091 0000 		lds r31,__dst_ptr+1
+ 120 0030 3097      		sbiw r30,0
+ 121 0032 01F0      		breq .L2
+  51:../freeRTOS750/lib_time/mktime.c **** 			timeptr->tm_isdst = __dst_ptr(&ret, &__utc_offset);
+ 123               	.LM4:
+ 124 0034 60E0      		ldi r22,lo8(__utc_offset)
+ 125 0036 70E0      		ldi r23,hi8(__utc_offset)
+ 126 0038 CE01      		movw r24,r28
+ 127 003a 0196      		adiw r24,1
+ 128 003c 0995      		icall
+ 129 003e F801      		movw r30,r16
+ 130 0040 9387      		std Z+11,r25
+ 131 0042 8287      		std Z+10,r24
+ 132               	.L2:
+  52:../freeRTOS750/lib_time/mktime.c **** 	}
+  53:../freeRTOS750/lib_time/mktime.c **** 	if (timeptr->tm_isdst > 0)
+ 134               	.LM5:
+ 135 0044 F801      		movw r30,r16
+ 136 0046 8285      		ldd r24,Z+10
+ 137 0048 9385      		ldd r25,Z+11
+ 138 004a 1816      		cp __zero_reg__,r24
+ 139 004c 1906      		cpc __zero_reg__,r25
+ 140 004e 04F4      		brge .L3
+  54:../freeRTOS750/lib_time/mktime.c **** 		ret -= timeptr->tm_isdst;
+ 142               	.LM6:
+ 143 0050 AA27      		clr r26
+ 144 0052 97FD      		sbrc r25,7
+ 145 0054 A095      		com r26
+ 146 0056 BA2F      		mov r27,r26
+ 147 0058 4981      		ldd r20,Y+1
+ 148 005a 5A81      		ldd r21,Y+2
+ 149 005c 6B81      		ldd r22,Y+3
+ 150 005e 7C81      		ldd r23,Y+4
+ 151 0060 481B      		sub r20,r24
+ 152 0062 590B      		sbc r21,r25
+ 153 0064 6A0B      		sbc r22,r26
+ 154 0066 7B0B      		sbc r23,r27
+ 155 0068 4983      		std Y+1,r20
+ 156 006a 5A83      		std Y+2,r21
+ 157 006c 6B83      		std Y+3,r22
+ 158 006e 7C83      		std Y+4,r23
+ 159               	.L3:
+  55:../freeRTOS750/lib_time/mktime.c **** 
+  56:../freeRTOS750/lib_time/mktime.c **** 	ret -= __utc_offset;
+ 161               	.LM7:
+ 162 0070 4981      		ldd r20,Y+1
+ 163 0072 5A81      		ldd r21,Y+2
+ 164 0074 6B81      		ldd r22,Y+3
+ 165 0076 7C81      		ldd r23,Y+4
+ 166 0078 8091 0000 		lds r24,__utc_offset
+ 167 007c 9091 0000 		lds r25,__utc_offset+1
+ 168 0080 A091 0000 		lds r26,__utc_offset+2
+ 169 0084 B091 0000 		lds r27,__utc_offset+3
+ 170 0088 481B      		sub r20,r24
+ 171 008a 590B      		sbc r21,r25
+ 172 008c 6A0B      		sbc r22,r26
+ 173 008e 7B0B      		sbc r23,r27
+ 174 0090 4983      		std Y+1,r20
+ 175 0092 5A83      		std Y+2,r21
+ 176 0094 6B83      		std Y+3,r22
+ 177 0096 7C83      		std Y+4,r23
+  57:../freeRTOS750/lib_time/mktime.c **** 
+  58:../freeRTOS750/lib_time/mktime.c **** 	localtime_r(&ret, timeptr);
+ 179               	.LM8:
+ 180 0098 B801      		movw r22,r16
+ 181 009a CE01      		movw r24,r28
+ 182 009c 0196      		adiw r24,1
+ 183 009e 0E94 0000 		call localtime_r
+  59:../freeRTOS750/lib_time/mktime.c **** 
+  60:../freeRTOS750/lib_time/mktime.c **** 	return ret;
+ 185               	.LM9:
+ 186 00a2 6981      		ldd r22,Y+1
+ 187 00a4 7A81      		ldd r23,Y+2
+  61:../freeRTOS750/lib_time/mktime.c **** }
+ 189               	.LM10:
+ 190 00a6 8B81      		ldd r24,Y+3
+ 191 00a8 9C81      		ldd r25,Y+4
+ 192               	/* epilogue start */
+ 193 00aa 0F90      		pop __tmp_reg__
+ 194 00ac 0F90      		pop __tmp_reg__
+ 195 00ae 0F90      		pop __tmp_reg__
+ 196 00b0 0F90      		pop __tmp_reg__
+ 197 00b2 DF91      		pop r29
+ 198 00b4 CF91      		pop r28
+ 199 00b6 1F91      		pop r17
+ 200 00b8 0F91      		pop r16
+ 201 00ba 0895      		ret
+ 206               	.Lscope1:
+ 208               		.stabd	78,0,0
+ 210               	.Letext0:
+ 211               		.ident	"GCC: (GNU) 4.7.2"
+DEFINED SYMBOLS
+                            *ABS*:00000000 mktime.c
+     /tmp/ccAeQZ3H.s:2      *ABS*:0000003e __SP_H__
+     /tmp/ccAeQZ3H.s:3      *ABS*:0000003d __SP_L__
+     /tmp/ccAeQZ3H.s:4      *ABS*:0000003f __SREG__
+     /tmp/ccAeQZ3H.s:5      *ABS*:00000000 __tmp_reg__
+     /tmp/ccAeQZ3H.s:6      *ABS*:00000001 __zero_reg__
+     /tmp/ccAeQZ3H.s:84     .text:00000000 mktime
+
+UNDEFINED SYMBOLS
+mk_gmtime
+__dst_ptr
+__utc_offset
+localtime_r

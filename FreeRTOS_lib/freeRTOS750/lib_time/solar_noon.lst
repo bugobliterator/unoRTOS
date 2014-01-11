@@ -1,0 +1,182 @@
+   1               		.file	"solar_noon.c"
+   2               	__SP_H__ = 0x3e
+   3               	__SP_L__ = 0x3d
+   4               	__SREG__ = 0x3f
+   5               	__tmp_reg__ = 0
+   6               	__zero_reg__ = 1
+   9               		.text
+  10               	.Ltext0:
+  82               	.global	solar_noon
+  84               	solar_noon:
+  85               		.stabd	46,0,0
+   1:../freeRTOS750/lib_time/solar_noon.c **** /*
+   2:../freeRTOS750/lib_time/solar_noon.c ****  * (c)2012 Michael Duane Rice All rights reserved.
+   3:../freeRTOS750/lib_time/solar_noon.c ****  *
+   4:../freeRTOS750/lib_time/solar_noon.c ****  * Redistribution and use in source and binary forms, with or without
+   5:../freeRTOS750/lib_time/solar_noon.c ****  * modification, are permitted provided that the following conditions are
+   6:../freeRTOS750/lib_time/solar_noon.c ****  * met:
+   7:../freeRTOS750/lib_time/solar_noon.c ****  *
+   8:../freeRTOS750/lib_time/solar_noon.c ****  * Redistributions of source code must retain the above copyright notice, this
+   9:../freeRTOS750/lib_time/solar_noon.c ****  * list of conditions and the following disclaimer. Redistributions in binary
+  10:../freeRTOS750/lib_time/solar_noon.c ****  * form must reproduce the above copyright notice, this list of conditions
+  11:../freeRTOS750/lib_time/solar_noon.c ****  * and the following disclaimer in the documentation and/or other materials
+  12:../freeRTOS750/lib_time/solar_noon.c ****  * provided with the distribution. Neither the name of the copyright holders
+  13:../freeRTOS750/lib_time/solar_noon.c ****  * nor the names of contributors may be used to endorse or promote products
+  14:../freeRTOS750/lib_time/solar_noon.c ****  * derived from this software without specific prior written permission.
+  15:../freeRTOS750/lib_time/solar_noon.c ****  *
+  16:../freeRTOS750/lib_time/solar_noon.c ****  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  17:../freeRTOS750/lib_time/solar_noon.c ****  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  18:../freeRTOS750/lib_time/solar_noon.c ****  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  19:../freeRTOS750/lib_time/solar_noon.c ****  * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+  20:../freeRTOS750/lib_time/solar_noon.c ****  * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+  21:../freeRTOS750/lib_time/solar_noon.c ****  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+  22:../freeRTOS750/lib_time/solar_noon.c ****  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+  23:../freeRTOS750/lib_time/solar_noon.c ****  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+  24:../freeRTOS750/lib_time/solar_noon.c ****  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+  25:../freeRTOS750/lib_time/solar_noon.c ****  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+  26:../freeRTOS750/lib_time/solar_noon.c ****  * POSSIBILITY OF SUCH DAMAGE.
+  27:../freeRTOS750/lib_time/solar_noon.c ****  */
+  28:../freeRTOS750/lib_time/solar_noon.c **** 
+  29:../freeRTOS750/lib_time/solar_noon.c **** /* $Id$ */
+  30:../freeRTOS750/lib_time/solar_noon.c **** 
+  31:../freeRTOS750/lib_time/solar_noon.c **** /*
+  32:../freeRTOS750/lib_time/solar_noon.c ****     Return the time of solar noon at the observers position
+  33:../freeRTOS750/lib_time/solar_noon.c **** */
+  34:../freeRTOS750/lib_time/solar_noon.c **** 
+  35:../freeRTOS750/lib_time/solar_noon.c **** #include <time.h>
+  36:../freeRTOS750/lib_time/solar_noon.c **** 
+  37:../freeRTOS750/lib_time/solar_noon.c **** extern long     __longitude;
+  38:../freeRTOS750/lib_time/solar_noon.c **** 
+  39:../freeRTOS750/lib_time/solar_noon.c **** time_t
+  40:../freeRTOS750/lib_time/solar_noon.c **** solar_noon(const time_t * timer)
+  41:../freeRTOS750/lib_time/solar_noon.c **** {
+  87               	.LM0:
+  88               	.LFBB1:
+  89 0000 8F92      		push r8
+  90 0002 9F92      		push r9
+  91 0004 AF92      		push r10
+  92 0006 BF92      		push r11
+  93 0008 CF92      		push r12
+  94 000a DF92      		push r13
+  95 000c EF92      		push r14
+  96 000e FF92      		push r15
+  97 0010 0F93      		push r16
+  98 0012 1F93      		push r17
+  99 0014 CF93      		push r28
+ 100 0016 DF93      		push r29
+ 101               	/* prologue: function */
+ 102               	/* frame size = 0 */
+ 103               	/* stack size = 12 */
+ 104               	.L__stack_usage = 12
+ 105 0018 EC01      		movw r28,r24
+  42:../freeRTOS750/lib_time/solar_noon.c ****     time_t          t;
+  43:../freeRTOS750/lib_time/solar_noon.c ****     long            n;
+  44:../freeRTOS750/lib_time/solar_noon.c **** 
+  45:../freeRTOS750/lib_time/solar_noon.c ****     /* determine time of solar noon at the prime meridian */
+  46:../freeRTOS750/lib_time/solar_noon.c ****     t = *timer % ONE_DAY;
+ 107               	.LM1:
+ 108 001a C880      		ld r12,Y
+ 109 001c D980      		ldd r13,Y+1
+ 110 001e EA80      		ldd r14,Y+2
+ 111 0020 FB80      		ldd r15,Y+3
+ 112 0022 C701      		movw r24,r14
+ 113 0024 B601      		movw r22,r12
+ 114 0026 20E8      		ldi r18,lo8(-128)
+ 115 0028 31E5      		ldi r19,lo8(81)
+ 116 002a 41E0      		ldi r20,lo8(1)
+ 117 002c 50E0      		ldi r21,0
+ 118 002e 0E94 0000 		call __udivmodsi4
+ 119 0032 4B01      		movw r8,r22
+ 120 0034 5C01      		movw r10,r24
+  47:../freeRTOS750/lib_time/solar_noon.c ****     t = *timer - t;
+  48:../freeRTOS750/lib_time/solar_noon.c ****     t += 43200L;
+  49:../freeRTOS750/lib_time/solar_noon.c ****     t -= equation_of_time(timer);
+ 122               	.LM2:
+ 123 0036 CE01      		movw r24,r28
+ 124 0038 0E94 0000 		call equation_of_time
+ 125 003c EC01      		movw r28,r24
+  50:../freeRTOS750/lib_time/solar_noon.c **** 
+  51:../freeRTOS750/lib_time/solar_noon.c ****     /* rotate to observers longitude */
+  52:../freeRTOS750/lib_time/solar_noon.c ****     n = __longitude / 15L;
+ 127               	.LM3:
+ 128 003e 6091 0000 		lds r22,__longitude
+ 129 0042 7091 0000 		lds r23,__longitude+1
+ 130 0046 8091 0000 		lds r24,__longitude+2
+ 131 004a 9091 0000 		lds r25,__longitude+3
+ 132 004e 2FE0      		ldi r18,lo8(15)
+ 133 0050 30E0      		ldi r19,0
+ 134 0052 40E0      		ldi r20,0
+ 135 0054 50E0      		ldi r21,0
+ 136 0056 0E94 0000 		call __divmodsi4
+  47:../freeRTOS750/lib_time/solar_noon.c ****     t = *timer - t;
+ 138               	.LM4:
+ 139 005a D701      		movw r26,r14
+ 140 005c C601      		movw r24,r12
+ 141 005e 821B      		sub r24,r18
+ 142 0060 930B      		sbc r25,r19
+ 143 0062 A40B      		sbc r26,r20
+ 144 0064 B50B      		sbc r27,r21
+ 145 0066 8C01      		movw r16,r24
+ 146 0068 9D01      		movw r18,r26
+  48:../freeRTOS750/lib_time/solar_noon.c ****     t += 43200L;
+ 148               	.LM5:
+ 149 006a 0054      		subi r16,64
+ 150 006c 1745      		sbci r17,87
+ 151 006e 2F4F      		sbci r18,-1
+ 152 0070 3F4F      		sbci r19,-1
+  49:../freeRTOS750/lib_time/solar_noon.c ****     t -= equation_of_time(timer);
+ 154               	.LM6:
+ 155 0072 0819      		sub r16,r8
+ 156 0074 1909      		sbc r17,r9
+ 157 0076 2A09      		sbc r18,r10
+ 158 0078 3B09      		sbc r19,r11
+ 159 007a CE01      		movw r24,r28
+ 160 007c AA27      		clr r26
+ 161 007e 97FD      		sbrc r25,7
+ 162 0080 A095      		com r26
+ 163 0082 BA2F      		mov r27,r26
+  53:../freeRTOS750/lib_time/solar_noon.c ****     t -= n;
+ 165               	.LM7:
+ 166 0084 081B      		sub r16,r24
+ 167 0086 190B      		sbc r17,r25
+ 168 0088 2A0B      		sbc r18,r26
+ 169 008a 3B0B      		sbc r19,r27
+  54:../freeRTOS750/lib_time/solar_noon.c **** 
+  55:../freeRTOS750/lib_time/solar_noon.c ****     return t;
+  56:../freeRTOS750/lib_time/solar_noon.c **** 
+  57:../freeRTOS750/lib_time/solar_noon.c **** }
+ 171               	.LM8:
+ 172 008c B801      		movw r22,r16
+ 173 008e C901      		movw r24,r18
+ 174               	/* epilogue start */
+ 175 0090 DF91      		pop r29
+ 176 0092 CF91      		pop r28
+ 177 0094 1F91      		pop r17
+ 178 0096 0F91      		pop r16
+ 179 0098 FF90      		pop r15
+ 180 009a EF90      		pop r14
+ 181 009c DF90      		pop r13
+ 182 009e CF90      		pop r12
+ 183 00a0 BF90      		pop r11
+ 184 00a2 AF90      		pop r10
+ 185 00a4 9F90      		pop r9
+ 186 00a6 8F90      		pop r8
+ 187 00a8 0895      		ret
+ 189               	.Lscope1:
+ 191               		.stabd	78,0,0
+ 193               	.Letext0:
+ 194               		.ident	"GCC: (GNU) 4.7.2"
+DEFINED SYMBOLS
+                            *ABS*:00000000 solar_noon.c
+     /tmp/ccJK9Mc6.s:2      *ABS*:0000003e __SP_H__
+     /tmp/ccJK9Mc6.s:3      *ABS*:0000003d __SP_L__
+     /tmp/ccJK9Mc6.s:4      *ABS*:0000003f __SREG__
+     /tmp/ccJK9Mc6.s:5      *ABS*:00000000 __tmp_reg__
+     /tmp/ccJK9Mc6.s:6      *ABS*:00000001 __zero_reg__
+     /tmp/ccJK9Mc6.s:84     .text:00000000 solar_noon
+
+UNDEFINED SYMBOLS
+__udivmodsi4
+equation_of_time
+__longitude
+__divmodsi4

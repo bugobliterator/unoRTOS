@@ -1,0 +1,328 @@
+   1               		.file	"iso_week_date_r.c"
+   2               	__SP_H__ = 0x3e
+   3               	__SP_L__ = 0x3d
+   4               	__SREG__ = 0x3f
+   5               	__tmp_reg__ = 0
+   6               	__zero_reg__ = 1
+   9               		.text
+  10               	.Ltext0:
+  83               	.global	iso_week_date_r
+  85               	iso_week_date_r:
+  86               		.stabd	46,0,0
+   1:../freeRTOS750/lib_time/iso_week_date_r.c **** /*
+   2:../freeRTOS750/lib_time/iso_week_date_r.c ****  * (c)2012 Michael Duane Rice All rights reserved.
+   3:../freeRTOS750/lib_time/iso_week_date_r.c ****  *
+   4:../freeRTOS750/lib_time/iso_week_date_r.c ****  * Redistribution and use in source and binary forms, with or without
+   5:../freeRTOS750/lib_time/iso_week_date_r.c ****  * modification, are permitted provided that the following conditions are
+   6:../freeRTOS750/lib_time/iso_week_date_r.c ****  * met:
+   7:../freeRTOS750/lib_time/iso_week_date_r.c ****  *
+   8:../freeRTOS750/lib_time/iso_week_date_r.c ****  * Redistributions of source code must retain the above copyright notice, this
+   9:../freeRTOS750/lib_time/iso_week_date_r.c ****  * list of conditions and the following disclaimer. Redistributions in binary
+  10:../freeRTOS750/lib_time/iso_week_date_r.c ****  * form must reproduce the above copyright notice, this list of conditions
+  11:../freeRTOS750/lib_time/iso_week_date_r.c ****  * and the following disclaimer in the documentation and/or other materials
+  12:../freeRTOS750/lib_time/iso_week_date_r.c ****  * provided with the distribution. Neither the name of the copyright holders
+  13:../freeRTOS750/lib_time/iso_week_date_r.c ****  * nor the names of contributors may be used to endorse or promote products
+  14:../freeRTOS750/lib_time/iso_week_date_r.c ****  * derived from this software without specific prior written permission.
+  15:../freeRTOS750/lib_time/iso_week_date_r.c ****  *
+  16:../freeRTOS750/lib_time/iso_week_date_r.c ****  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  17:../freeRTOS750/lib_time/iso_week_date_r.c ****  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  18:../freeRTOS750/lib_time/iso_week_date_r.c ****  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  19:../freeRTOS750/lib_time/iso_week_date_r.c ****  * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+  20:../freeRTOS750/lib_time/iso_week_date_r.c ****  * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+  21:../freeRTOS750/lib_time/iso_week_date_r.c ****  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+  22:../freeRTOS750/lib_time/iso_week_date_r.c ****  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+  23:../freeRTOS750/lib_time/iso_week_date_r.c ****  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+  24:../freeRTOS750/lib_time/iso_week_date_r.c ****  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+  25:../freeRTOS750/lib_time/iso_week_date_r.c ****  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+  26:../freeRTOS750/lib_time/iso_week_date_r.c ****  * POSSIBILITY OF SUCH DAMAGE.
+  27:../freeRTOS750/lib_time/iso_week_date_r.c ****  */
+  28:../freeRTOS750/lib_time/iso_week_date_r.c **** 
+  29:../freeRTOS750/lib_time/iso_week_date_r.c **** /* $Id$ */
+  30:../freeRTOS750/lib_time/iso_week_date_r.c **** 
+  31:../freeRTOS750/lib_time/iso_week_date_r.c **** /*
+  32:../freeRTOS750/lib_time/iso_week_date_r.c ****     Compute the ISO 8601 week date corresponding to the given year and day of year.
+  33:../freeRTOS750/lib_time/iso_week_date_r.c ****     See http://en.wikipedia.org/wiki/ISO_week_date for a full description. To summarize:
+  34:../freeRTOS750/lib_time/iso_week_date_r.c **** 
+  35:../freeRTOS750/lib_time/iso_week_date_r.c ****         Weeks are numbered from 1 to 53.
+  36:../freeRTOS750/lib_time/iso_week_date_r.c ****         Week days are numbered 1 to 7, beginning with Monday as day 1.
+  37:../freeRTOS750/lib_time/iso_week_date_r.c **** 
+  38:../freeRTOS750/lib_time/iso_week_date_r.c ****         The first week of the year contains the first Thursday in that year.
+  39:../freeRTOS750/lib_time/iso_week_date_r.c ****         Dates prior to week 1 belong to the final week of the previous year.
+  40:../freeRTOS750/lib_time/iso_week_date_r.c **** 
+  41:../freeRTOS750/lib_time/iso_week_date_r.c ****         The final week of the year contains the last Thursday in that year.
+  42:../freeRTOS750/lib_time/iso_week_date_r.c ****         Dates after the final week belong to week 1 of the following year.
+  43:../freeRTOS750/lib_time/iso_week_date_r.c **** 
+  44:../freeRTOS750/lib_time/iso_week_date_r.c **** */
+  45:../freeRTOS750/lib_time/iso_week_date_r.c **** 
+  46:../freeRTOS750/lib_time/iso_week_date_r.c **** #include <time.h>
+  47:../freeRTOS750/lib_time/iso_week_date_r.c **** 
+  48:../freeRTOS750/lib_time/iso_week_date_r.c **** void
+  49:../freeRTOS750/lib_time/iso_week_date_r.c **** iso_week_date_r(int y, int yday, struct week_date * iso)
+  50:../freeRTOS750/lib_time/iso_week_date_r.c **** {
+  88               	.LM0:
+  89               	.LFBB1:
+  90 0000 AF92      		push r10
+  91 0002 BF92      		push r11
+  92 0004 DF92      		push r13
+  93 0006 EF92      		push r14
+  94 0008 FF92      		push r15
+  95 000a 0F93      		push r16
+  96 000c 1F93      		push r17
+  97 000e CF93      		push r28
+  98 0010 DF93      		push r29
+  99 0012 00D0      		rcall .
+ 100 0014 CDB7      		in r28,__SP_L__
+ 101 0016 DEB7      		in r29,__SP_H__
+ 102               	/* prologue: function */
+ 103               	/* frame size = 2 */
+ 104               	/* stack size = 11 */
+ 105               	.L__stack_usage = 11
+ 106 0018 7C01      		movw r14,r24
+ 107 001a 8A01      		movw r16,r20
+  51:../freeRTOS750/lib_time/iso_week_date_r.c ****     uint16_t        years, n, wday;
+  52:../freeRTOS750/lib_time/iso_week_date_r.c ****     int             weeknum;
+  53:../freeRTOS750/lib_time/iso_week_date_r.c ****     int isLeap;
+  54:../freeRTOS750/lib_time/iso_week_date_r.c **** 
+  55:../freeRTOS750/lib_time/iso_week_date_r.c ****     iso->year = y;
+ 109               	.LM1:
+ 110 001c DA01      		movw r26,r20
+ 111 001e 8D93      		st X+,r24
+ 112 0020 9C93      		st X,r25
+  56:../freeRTOS750/lib_time/iso_week_date_r.c **** 
+  57:../freeRTOS750/lib_time/iso_week_date_r.c ****     isLeap = is_leap_year(y);
+ 114               	.LM2:
+ 115 0022 6983      		std Y+1,r22
+ 116 0024 7A83      		std Y+2,r23
+ 117 0026 0E94 0000 		call is_leap_year
+ 118 002a D82E      		mov r13,r24
+  58:../freeRTOS750/lib_time/iso_week_date_r.c **** 
+  59:../freeRTOS750/lib_time/iso_week_date_r.c ****     /* compute days elapsed since epoch */
+  60:../freeRTOS750/lib_time/iso_week_date_r.c ****     years = y - 2000;
+ 120               	.LM3:
+ 121 002c A701      		movw r20,r14
+ 122 002e 405D      		subi r20,-48
+ 123 0030 5740      		sbci r21,7
+  61:../freeRTOS750/lib_time/iso_week_date_r.c ****     n = 365 * years + yday;
+ 125               	.LM4:
+ 126 0032 6981      		ldd r22,Y+1
+ 127 0034 E62F      		mov r30,r22
+ 128 0036 7A81      		ldd r23,Y+2
+ 129 0038 F72F      		mov r31,r23
+ 130 003a 8DE6      		ldi r24,lo8(109)
+ 131 003c 91E0      		ldi r25,lo8(1)
+ 132 003e 489F      		mul r20,r24
+ 133 0040 9001      		movw r18,r0
+ 134 0042 499F      		mul r20,r25
+ 135 0044 300D      		add r19,r0
+ 136 0046 589F      		mul r21,r24
+ 137 0048 300D      		add r19,r0
+ 138 004a 1124      		clr r1
+ 139 004c 2E0F      		add r18,r30
+ 140 004e 3F1F      		adc r19,r31
+  62:../freeRTOS750/lib_time/iso_week_date_r.c ****     if (years) {
+ 142               	.LM5:
+ 143 0050 4115      		cp r20,__zero_reg__
+ 144 0052 5105      		cpc r21,__zero_reg__
+ 145 0054 01F0      		breq .L2
+  63:../freeRTOS750/lib_time/iso_week_date_r.c ****         n++;        /* epoch was a leap year */
+  64:../freeRTOS750/lib_time/iso_week_date_r.c ****         n += years / 4;
+ 147               	.LM6:
+ 148 0056 BA01      		movw r22,r20
+ 149 0058 7695      		lsr r23
+ 150 005a 6795      		ror r22
+ 151 005c 7695      		lsr r23
+ 152 005e 6795      		ror r22
+  63:../freeRTOS750/lib_time/iso_week_date_r.c ****         n++;        /* epoch was a leap year */
+ 154               	.LM7:
+ 155 0060 6F5F      		subi r22,-1
+ 156 0062 7F4F      		sbci r23,-1
+ 158               	.LM8:
+ 159 0064 260F      		add r18,r22
+ 160 0066 371F      		adc r19,r23
+  65:../freeRTOS750/lib_time/iso_week_date_r.c ****         n -= isLeap;
+ 162               	.LM9:
+ 163 0068 2D19      		sub r18,r13
+ 164 006a 3109      		sbc r19,__zero_reg__
+  66:../freeRTOS750/lib_time/iso_week_date_r.c ****         if (years > 100)
+ 166               	.LM10:
+ 167 006c 4536      		cpi r20,101
+ 168 006e 5105      		cpc r21,__zero_reg__
+ 169 0070 00F0      		brlo .L2
+  67:../freeRTOS750/lib_time/iso_week_date_r.c ****             n--;
+ 171               	.LM11:
+ 172 0072 2150      		subi r18,1
+ 173 0074 3109      		sbc r19,__zero_reg__
+ 174               	.L2:
+  68:../freeRTOS750/lib_time/iso_week_date_r.c ****     }
+  69:../freeRTOS750/lib_time/iso_week_date_r.c **** 
+  70:../freeRTOS750/lib_time/iso_week_date_r.c ****     /* compute ISO8601 day of week (1 ... 7, Monday = 1) */
+  71:../freeRTOS750/lib_time/iso_week_date_r.c ****     wday = n + 6; /* epoch was a Saturday */
+ 176               	.LM12:
+ 177 0076 C901      		movw r24,r18
+ 178 0078 0696      		adiw r24,6
+  72:../freeRTOS750/lib_time/iso_week_date_r.c ****     wday %= 7;
+ 180               	.LM13:
+ 181 007a 67E0      		ldi r22,lo8(7)
+ 182 007c 70E0      		ldi r23,0
+ 183 007e 0E94 0000 		call __udivmodhi4
+ 184 0082 5C01      		movw r10,r24
+  73:../freeRTOS750/lib_time/iso_week_date_r.c ****     if (wday == 0)
+ 186               	.LM14:
+ 187 0084 0097      		sbiw r24,0
+ 188 0086 01F4      		brne .L3
+  74:../freeRTOS750/lib_time/iso_week_date_r.c ****         wday = 7;
+ 190               	.LM15:
+ 191 0088 87E0      		ldi r24,lo8(7)
+ 192 008a A82E      		mov r10,r24
+ 193 008c B12C      		mov r11,__zero_reg__
+ 194               	.L3:
+  75:../freeRTOS750/lib_time/iso_week_date_r.c **** 
+  76:../freeRTOS750/lib_time/iso_week_date_r.c ****     iso->day = wday;
+ 196               	.LM16:
+ 197 008e D801      		movw r26,r16
+ 198 0090 1596      		adiw r26,4+1
+ 199 0092 BC92      		st X,r11
+ 200 0094 AE92      		st -X,r10
+ 201 0096 1497      		sbiw r26,4
+  77:../freeRTOS750/lib_time/iso_week_date_r.c **** 
+  78:../freeRTOS750/lib_time/iso_week_date_r.c ****     /* compute tentative week number */
+  79:../freeRTOS750/lib_time/iso_week_date_r.c ****     weeknum = yday + 11 - wday;
+ 203               	.LM17:
+ 204 0098 CF01      		movw r24,r30
+ 205 009a 0B96      		adiw r24,11
+ 206 009c 8A19      		sub r24,r10
+ 207 009e 9B09      		sbc r25,r11
+  80:../freeRTOS750/lib_time/iso_week_date_r.c ****     weeknum /= 7;
+ 209               	.LM18:
+ 210 00a0 67E0      		ldi r22,lo8(7)
+ 211 00a2 70E0      		ldi r23,0
+ 212 00a4 0E94 0000 		call __divmodhi4
+  81:../freeRTOS750/lib_time/iso_week_date_r.c **** 
+  82:../freeRTOS750/lib_time/iso_week_date_r.c ****     /* if 53, it could be week 1 of the following year */
+  83:../freeRTOS750/lib_time/iso_week_date_r.c ****     if (weeknum == 53) {
+ 214               	.LM19:
+ 215 00a8 6533      		cpi r22,53
+ 216 00aa 7105      		cpc r23,__zero_reg__
+ 217 00ac 01F4      		brne .L4
+  84:../freeRTOS750/lib_time/iso_week_date_r.c ****         /*
+  85:../freeRTOS750/lib_time/iso_week_date_r.c ****             The final week must include its Thursday in the year. We determine the yday of this
+  86:../freeRTOS750/lib_time/iso_week_date_r.c ****             weeks Thursday, and test whether it exceeds this years length.
+  87:../freeRTOS750/lib_time/iso_week_date_r.c ****         */
+  88:../freeRTOS750/lib_time/iso_week_date_r.c **** 
+  89:../freeRTOS750/lib_time/iso_week_date_r.c ****         /* determine final yday of this year, 364 or 365 */
+  90:../freeRTOS750/lib_time/iso_week_date_r.c ****         n = 364 + isLeap;
+  91:../freeRTOS750/lib_time/iso_week_date_r.c **** 
+  92:../freeRTOS750/lib_time/iso_week_date_r.c ****         /* compute yday of this weeks Thursday */
+  93:../freeRTOS750/lib_time/iso_week_date_r.c ****         wday--;       /* convert to zero based week, Monday = 0 */
+ 219               	.LM20:
+ 220 00ae B1E0      		ldi r27,1
+ 221 00b0 AB1A      		sub r10,r27
+ 222 00b2 B108      		sbc r11,__zero_reg__
+  94:../freeRTOS750/lib_time/iso_week_date_r.c ****         yday -= wday; /* yday of this weeks Monday */
+ 224               	.LM21:
+ 225 00b4 EA19      		sub r30,r10
+ 226 00b6 FB09      		sbc r31,r11
+  95:../freeRTOS750/lib_time/iso_week_date_r.c ****         yday += 3;    /* yday of this weeks Thursday */
+ 228               	.LM22:
+ 229 00b8 3396      		adiw r30,3
+  57:../freeRTOS750/lib_time/iso_week_date_r.c ****     isLeap = is_leap_year(y);
+ 231               	.LM23:
+ 232 00ba 8D2D      		mov r24,r13
+ 233 00bc 90E0      		ldi r25,0
+  90:../freeRTOS750/lib_time/iso_week_date_r.c ****         n = 364 + isLeap;
+ 235               	.LM24:
+ 236 00be 8459      		subi r24,-108
+ 237 00c0 9E4F      		sbci r25,-2
+  96:../freeRTOS750/lib_time/iso_week_date_r.c **** 
+  97:../freeRTOS750/lib_time/iso_week_date_r.c ****         /* Is this weeks Thursday included in the year? */
+  98:../freeRTOS750/lib_time/iso_week_date_r.c ****         if (yday > (int) n) {
+ 239               	.LM25:
+ 240 00c2 8E17      		cp r24,r30
+ 241 00c4 9F07      		cpc r25,r31
+ 242 00c6 04F4      		brge .L4
+  99:../freeRTOS750/lib_time/iso_week_date_r.c ****             iso->year++;
+ 244               	.LM26:
+ 245 00c8 F801      		movw r30,r16
+ 246 00ca 8081      		ld r24,Z
+ 247 00cc 9181      		ldd r25,Z+1
+ 248 00ce 0196      		adiw r24,1
+ 249 00d0 9183      		std Z+1,r25
+ 250 00d2 8083      		st Z,r24
+ 100:../freeRTOS750/lib_time/iso_week_date_r.c ****             weeknum = 1;
+ 252               	.LM27:
+ 253 00d4 61E0      		ldi r22,lo8(1)
+ 254 00d6 70E0      		ldi r23,0
+ 255               	.L4:
+ 101:../freeRTOS750/lib_time/iso_week_date_r.c ****         }
+ 102:../freeRTOS750/lib_time/iso_week_date_r.c ****     }
+ 103:../freeRTOS750/lib_time/iso_week_date_r.c ****     iso->week = weeknum;
+ 257               	.LM28:
+ 258 00d8 D801      		movw r26,r16
+ 259 00da 1396      		adiw r26,2+1
+ 260 00dc 7C93      		st X,r23
+ 261 00de 6E93      		st -X,r22
+ 262 00e0 1297      		sbiw r26,2
+ 104:../freeRTOS750/lib_time/iso_week_date_r.c **** 
+ 105:../freeRTOS750/lib_time/iso_week_date_r.c ****     /*
+ 106:../freeRTOS750/lib_time/iso_week_date_r.c ****         If zero, it is the final week of the previous year.
+ 107:../freeRTOS750/lib_time/iso_week_date_r.c ****         We determine that by asking for the week number of Dec 31.
+ 108:../freeRTOS750/lib_time/iso_week_date_r.c ****     */
+ 109:../freeRTOS750/lib_time/iso_week_date_r.c ****     if (weeknum == 0) {
+ 264               	.LM29:
+ 265 00e2 672B      		or r22,r23
+ 266 00e4 01F4      		brne .L1
+ 110:../freeRTOS750/lib_time/iso_week_date_r.c ****         y = y - 1;
+ 268               	.LM30:
+ 269 00e6 B1E0      		ldi r27,1
+ 270 00e8 EB1A      		sub r14,r27
+ 271 00ea F108      		sbc r15,__zero_reg__
+ 111:../freeRTOS750/lib_time/iso_week_date_r.c ****         iso_week_date_r(y, 364 + is_leap_year(y), iso);
+ 273               	.LM31:
+ 274 00ec C701      		movw r24,r14
+ 275 00ee 0E94 0000 		call is_leap_year
+ 276 00f2 682F      		mov r22,r24
+ 277 00f4 70E0      		ldi r23,0
+ 278 00f6 6459      		subi r22,-108
+ 279 00f8 7E4F      		sbci r23,-2
+ 280 00fa A801      		movw r20,r16
+ 281 00fc C701      		movw r24,r14
+ 282 00fe 0E94 0000 		call iso_week_date_r
+ 112:../freeRTOS750/lib_time/iso_week_date_r.c ****         iso->day = wday;
+ 284               	.LM32:
+ 285 0102 F801      		movw r30,r16
+ 286 0104 B582      		std Z+5,r11
+ 287 0106 A482      		std Z+4,r10
+ 288               	.L1:
+ 289               	/* epilogue start */
+ 113:../freeRTOS750/lib_time/iso_week_date_r.c ****     }
+ 114:../freeRTOS750/lib_time/iso_week_date_r.c **** }
+ 291               	.LM33:
+ 292 0108 0F90      		pop __tmp_reg__
+ 293 010a 0F90      		pop __tmp_reg__
+ 294 010c DF91      		pop r29
+ 295 010e CF91      		pop r28
+ 296 0110 1F91      		pop r17
+ 297 0112 0F91      		pop r16
+ 298 0114 FF90      		pop r15
+ 299 0116 EF90      		pop r14
+ 300 0118 DF90      		pop r13
+ 301 011a BF90      		pop r11
+ 302 011c AF90      		pop r10
+ 303 011e 0895      		ret
+ 308               	.Lscope1:
+ 310               		.stabd	78,0,0
+ 312               	.Letext0:
+ 313               		.ident	"GCC: (GNU) 4.7.2"
+DEFINED SYMBOLS
+                            *ABS*:00000000 iso_week_date_r.c
+     /tmp/ccMyQ3Cv.s:2      *ABS*:0000003e __SP_H__
+     /tmp/ccMyQ3Cv.s:3      *ABS*:0000003d __SP_L__
+     /tmp/ccMyQ3Cv.s:4      *ABS*:0000003f __SREG__
+     /tmp/ccMyQ3Cv.s:5      *ABS*:00000000 __tmp_reg__
+     /tmp/ccMyQ3Cv.s:6      *ABS*:00000001 __zero_reg__
+     /tmp/ccMyQ3Cv.s:85     .text:00000000 iso_week_date_r
+
+UNDEFINED SYMBOLS
+is_leap_year
+__udivmodhi4
+__divmodhi4

@@ -1,0 +1,122 @@
+   1               		.file	"sun_rise.c"
+   2               	__SP_H__ = 0x3e
+   3               	__SP_L__ = 0x3d
+   4               	__SREG__ = 0x3f
+   5               	__tmp_reg__ = 0
+   6               	__zero_reg__ = 1
+   9               		.text
+  10               	.Ltext0:
+  82               	.global	sun_rise
+  84               	sun_rise:
+  85               		.stabd	46,0,0
+   1:../freeRTOS750/lib_time/sun_rise.c **** /*
+   2:../freeRTOS750/lib_time/sun_rise.c ****  * (c)2012 Michael Duane Rice All rights reserved.
+   3:../freeRTOS750/lib_time/sun_rise.c ****  *
+   4:../freeRTOS750/lib_time/sun_rise.c ****  * Redistribution and use in source and binary forms, with or without
+   5:../freeRTOS750/lib_time/sun_rise.c ****  * modification, are permitted provided that the following conditions are
+   6:../freeRTOS750/lib_time/sun_rise.c ****  * met:
+   7:../freeRTOS750/lib_time/sun_rise.c ****  *
+   8:../freeRTOS750/lib_time/sun_rise.c ****  * Redistributions of source code must retain the above copyright notice, this
+   9:../freeRTOS750/lib_time/sun_rise.c ****  * list of conditions and the following disclaimer. Redistributions in binary
+  10:../freeRTOS750/lib_time/sun_rise.c ****  * form must reproduce the above copyright notice, this list of conditions
+  11:../freeRTOS750/lib_time/sun_rise.c ****  * and the following disclaimer in the documentation and/or other materials
+  12:../freeRTOS750/lib_time/sun_rise.c ****  * provided with the distribution. Neither the name of the copyright holders
+  13:../freeRTOS750/lib_time/sun_rise.c ****  * nor the names of contributors may be used to endorse or promote products
+  14:../freeRTOS750/lib_time/sun_rise.c ****  * derived from this software without specific prior written permission.
+  15:../freeRTOS750/lib_time/sun_rise.c ****  *
+  16:../freeRTOS750/lib_time/sun_rise.c ****  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  17:../freeRTOS750/lib_time/sun_rise.c ****  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  18:../freeRTOS750/lib_time/sun_rise.c ****  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  19:../freeRTOS750/lib_time/sun_rise.c ****  * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+  20:../freeRTOS750/lib_time/sun_rise.c ****  * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+  21:../freeRTOS750/lib_time/sun_rise.c ****  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+  22:../freeRTOS750/lib_time/sun_rise.c ****  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+  23:../freeRTOS750/lib_time/sun_rise.c ****  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+  24:../freeRTOS750/lib_time/sun_rise.c ****  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+  25:../freeRTOS750/lib_time/sun_rise.c ****  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+  26:../freeRTOS750/lib_time/sun_rise.c ****  * POSSIBILITY OF SUCH DAMAGE.
+  27:../freeRTOS750/lib_time/sun_rise.c ****  */
+  28:../freeRTOS750/lib_time/sun_rise.c **** 
+  29:../freeRTOS750/lib_time/sun_rise.c **** /* $Id$ */
+  30:../freeRTOS750/lib_time/sun_rise.c **** 
+  31:../freeRTOS750/lib_time/sun_rise.c **** /*
+  32:../freeRTOS750/lib_time/sun_rise.c ****     Return the approximate time of sun rise.
+  33:../freeRTOS750/lib_time/sun_rise.c **** */
+  34:../freeRTOS750/lib_time/sun_rise.c **** 
+  35:../freeRTOS750/lib_time/sun_rise.c **** #include <time.h>
+  36:../freeRTOS750/lib_time/sun_rise.c **** 
+  37:../freeRTOS750/lib_time/sun_rise.c **** time_t
+  38:../freeRTOS750/lib_time/sun_rise.c **** sun_rise(const time_t * timer)
+  39:../freeRTOS750/lib_time/sun_rise.c **** {
+  87               	.LM0:
+  88               	.LFBB1:
+  89 0000 CF92      		push r12
+  90 0002 DF92      		push r13
+  91 0004 EF92      		push r14
+  92 0006 FF92      		push r15
+  93 0008 0F93      		push r16
+  94 000a 1F93      		push r17
+  95               	/* prologue: function */
+  96               	/* frame size = 0 */
+  97               	/* stack size = 6 */
+  98               	.L__stack_usage = 6
+  99 000c 8C01      		movw r16,r24
+  40:../freeRTOS750/lib_time/sun_rise.c ****     long            n;
+  41:../freeRTOS750/lib_time/sun_rise.c ****     time_t          t;
+  42:../freeRTOS750/lib_time/sun_rise.c **** 
+  43:../freeRTOS750/lib_time/sun_rise.c ****     /* sunrise is 1/2 'day' before solar noon */
+  44:../freeRTOS750/lib_time/sun_rise.c ****     t = solar_noon(timer);
+ 101               	.LM1:
+ 102 000e 0E94 0000 		call solar_noon
+ 103 0012 6B01      		movw r12,r22
+ 104 0014 7C01      		movw r14,r24
+  45:../freeRTOS750/lib_time/sun_rise.c ****     n = daylight_seconds(timer) / 2L;
+ 106               	.LM2:
+ 107 0016 C801      		movw r24,r16
+ 108 0018 0E94 0000 		call daylight_seconds
+ 109 001c 22E0      		ldi r18,lo8(2)
+ 110 001e 30E0      		ldi r19,0
+ 111 0020 40E0      		ldi r20,0
+ 112 0022 50E0      		ldi r21,0
+ 113 0024 0E94 0000 		call __divmodsi4
+  46:../freeRTOS750/lib_time/sun_rise.c ****     t -= n;
+ 115               	.LM3:
+ 116 0028 D701      		movw r26,r14
+ 117 002a C601      		movw r24,r12
+ 118 002c 821B      		sub r24,r18
+ 119 002e 930B      		sbc r25,r19
+ 120 0030 A40B      		sbc r26,r20
+ 121 0032 B50B      		sbc r27,r21
+ 122 0034 8C01      		movw r16,r24
+ 123 0036 9D01      		movw r18,r26
+  47:../freeRTOS750/lib_time/sun_rise.c **** 
+  48:../freeRTOS750/lib_time/sun_rise.c ****     return t;
+  49:../freeRTOS750/lib_time/sun_rise.c **** }
+ 125               	.LM4:
+ 126 0038 BC01      		movw r22,r24
+ 127 003a C901      		movw r24,r18
+ 128               	/* epilogue start */
+ 129 003c 1F91      		pop r17
+ 130 003e 0F91      		pop r16
+ 131 0040 FF90      		pop r15
+ 132 0042 EF90      		pop r14
+ 133 0044 DF90      		pop r13
+ 134 0046 CF90      		pop r12
+ 135 0048 0895      		ret
+ 137               	.Lscope1:
+ 139               		.stabd	78,0,0
+ 141               	.Letext0:
+ 142               		.ident	"GCC: (GNU) 4.7.2"
+DEFINED SYMBOLS
+                            *ABS*:00000000 sun_rise.c
+     /tmp/cc6NEdag.s:2      *ABS*:0000003e __SP_H__
+     /tmp/cc6NEdag.s:3      *ABS*:0000003d __SP_L__
+     /tmp/cc6NEdag.s:4      *ABS*:0000003f __SREG__
+     /tmp/cc6NEdag.s:5      *ABS*:00000000 __tmp_reg__
+     /tmp/cc6NEdag.s:6      *ABS*:00000001 __zero_reg__
+     /tmp/cc6NEdag.s:84     .text:00000000 sun_rise
+
+UNDEFINED SYMBOLS
+solar_noon
+daylight_seconds
+__divmodsi4
