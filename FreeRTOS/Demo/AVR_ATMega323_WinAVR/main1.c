@@ -34,13 +34,7 @@ void vTask1( void *pvParameters )
 	{
 		/* Print out the name of this task. */
 		//vPrintString( pcTaskName );
-		for( ul = 0; ul < 10000; ul++ )
-		{
-			/* This loop is just a very crude delay implementation. There is
-			nothing to do in here. Later examples will replace this crude
-			loop with a proper delay/sleep function. */
-			
-		}
+		PORTB = 0xFF;
 
 	}
 }
@@ -56,9 +50,6 @@ void vTask2( void *pvParameters )
 		/* Define directions for port pins */
 			
 			PORTB = 0x00;
-			for(i=0;i<10000;i++);
-			PORTB = 0xFF;
-			for(i=0;i<10000;i++);
 	}
 }
 void vApplicationIdleHook( void )
