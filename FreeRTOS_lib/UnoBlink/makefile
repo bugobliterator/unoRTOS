@@ -49,7 +49,7 @@ DEMO_DIR = ../Common/Minimal
 SOURCE_DIR = ../freeRTOS750
 PORT_DIR = ../freeRTOS750/portable
 SRC	= \
-main.c \
+main1.c \
 $(SOURCE_DIR)/tasks.c \
 $(SOURCE_DIR)/queue.c \
 $(SOURCE_DIR)/list.c \
@@ -57,59 +57,13 @@ $(SOURCE_DIR)/croutine.c \
 $(PORT_DIR)/port.c \
 $(SOURCE_DIR)/lib_digitalAnalog/digitalAnalog.c \
 $(SOURCE_DIR)/lib_i2c/i2cMultiMaster.c \
-$(SOURCE_DIR)/lib_iinchip/md5.c \
-$(SOURCE_DIR)/lib_iinchip/socket.c \
-$(SOURCE_DIR)/lib_iinchip/socket_util.c \
-$(SOURCE_DIR)/lib_iinchip/w5100.c \
-$(SOURCE_DIR)/lib_iinchip/w5200.c \
-$(SOURCE_DIR)/lib_rtc/rtc.c \
 $(SOURCE_DIR)/lib_serial/lib_serial.c \
 $(SOURCE_DIR)/lib_servo/servoPWM.c \
 $(SOURCE_DIR)/lib_spi/spi.c \
 $(SOURCE_DIR)/MemMang/heap_1.c \
-$(SOURCE_DIR)/lib_time/asc_store.c \
-$(SOURCE_DIR)/lib_time/asctime.c \
-$(SOURCE_DIR)/lib_time/asctime_r.c \
-$(SOURCE_DIR)/lib_time/ctime.c \
-$(SOURCE_DIR)/lib_time/ctime_r.c \
-$(SOURCE_DIR)/lib_time/daylight_seconds.c \
-$(SOURCE_DIR)/lib_time/difftime.c \
-$(SOURCE_DIR)/lib_time/dst_pointer.c \
-$(SOURCE_DIR)/lib_time/equation_of_time.c \
-$(SOURCE_DIR)/lib_time/fatfs_time.c \
-$(SOURCE_DIR)/lib_time/geo_location.c \
-$(SOURCE_DIR)/lib_time/gm_sidereal.c \
-$(SOURCE_DIR)/lib_time/gmtime.c \
-$(SOURCE_DIR)/lib_time/gmtime_r.c \
-$(SOURCE_DIR)/lib_time/isLeap.c \
-$(SOURCE_DIR)/lib_time/isotime.c \
-$(SOURCE_DIR)/lib_time/isotime_r.c \
-$(SOURCE_DIR)/lib_time/iso_week_date.c \
-$(SOURCE_DIR)/lib_time/iso_week_date_r.c \
-$(SOURCE_DIR)/lib_time/lm_sidereal.c \
-$(SOURCE_DIR)/lib_time/localtime.c \
-$(SOURCE_DIR)/lib_time/localtime_r.c \
-$(SOURCE_DIR)/lib_time/mk_gmtime.c \
-$(SOURCE_DIR)/lib_time/mktime.c \
-$(SOURCE_DIR)/lib_time/month_length.c \
-$(SOURCE_DIR)/lib_time/moon_phase.c \
-$(SOURCE_DIR)/lib_time/print_lz.c \
-$(SOURCE_DIR)/lib_time/set_dst.c \
-$(SOURCE_DIR)/lib_time/set_position.c \
 $(SOURCE_DIR)/lib_time/set_system_time.c \
-$(SOURCE_DIR)/lib_time/set_zone.c \
-$(SOURCE_DIR)/lib_time/solar_declination.c \
-$(SOURCE_DIR)/lib_time/solar_noon.c \
-$(SOURCE_DIR)/lib_time/strftime.c \
-$(SOURCE_DIR)/lib_time/sun_rise.c \
-$(SOURCE_DIR)/lib_time/sun_set.c \
 $(SOURCE_DIR)/lib_time/system_time.c \
 $(SOURCE_DIR)/lib_time/time.c \
-$(SOURCE_DIR)/lib_time/tm_store.c \
-$(SOURCE_DIR)/lib_time/utc_offset.c \
-$(SOURCE_DIR)/lib_time/week_of_month.c \
-$(SOURCE_DIR)/lib_time/week_of_year.c 
-
 #$(DEMO_DIR)/comtest.c
 
 
