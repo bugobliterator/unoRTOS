@@ -10,10 +10,10 @@
  130               		.ident	"GCC: (GNU) 4.7.2"
 DEFINED SYMBOLS
                             *ABS*:00000000 ramfs.c
-     /tmp/ccJ0BglF.s:2      *ABS*:0000003e __SP_H__
-     /tmp/ccJ0BglF.s:3      *ABS*:0000003d __SP_L__
-     /tmp/ccJ0BglF.s:4      *ABS*:0000003f __SREG__
-     /tmp/ccJ0BglF.s:5      *ABS*:00000000 __tmp_reg__
-     /tmp/ccJ0BglF.s:6      *ABS*:00000001 __zero_reg__
+     /tmp/ccrXK8bd.s:2      *ABS*:0000003e __SP_H__
+     /tmp/ccrXK8bd.s:3      *ABS*:0000003d __SP_L__
+     /tmp/ccrXK8bd.s:4      *ABS*:0000003f __SREG__
+     /tmp/ccrXK8bd.s:5      *ABS*:00000000 __tmp_reg__
+     /tmp/ccrXK8bd.s:6      *ABS*:00000001 __zero_reg__
 
 NO UNDEFINED SYMBOLS

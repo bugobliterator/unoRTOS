@@ -55,11 +55,7 @@ $(SOURCE_DIR)/queue.c \
 $(SOURCE_DIR)/list.c \
 $(SOURCE_DIR)/croutine.c \
 $(PORT_DIR)/port.c \
-$(SOURCE_DIR)/lib_i2c/i2cMultiMaster.c \
 $(SOURCE_DIR)/lib_digitalAnalog/digitalAnalog.c \
-$(SOURCE_DIR)/lib_ext_ram/ext_ram.c \
-$(SOURCE_DIR)/lib_ext_ram/ramfs.c \
-$(SOURCE_DIR)/lib_hd44780/hd44780.c \
 $(SOURCE_DIR)/lib_i2c/i2cMultiMaster.c \
 $(SOURCE_DIR)/lib_iinchip/md5.c \
 $(SOURCE_DIR)/lib_iinchip/socket.c \
@@ -71,9 +67,6 @@ $(SOURCE_DIR)/lib_serial/lib_serial.c \
 $(SOURCE_DIR)/lib_servo/servoPWM.c \
 $(SOURCE_DIR)/lib_spi/spi.c \
 $(SOURCE_DIR)/MemMang/heap_1.c \
-$(SOURCE_DIR)/MemMang/heap_2.c \
-$(SOURCE_DIR)/MemMang/heap_3.c \
-$(SOURCE_DIR)/MemMang/heap_4.c \
 $(SOURCE_DIR)/lib_time/asc_store.c \
 $(SOURCE_DIR)/lib_time/asctime.c \
 $(SOURCE_DIR)/lib_time/asctime_r.c \
@@ -259,6 +252,7 @@ DIRLIB = $(DIRAVR)/avr/lib
 SHELL = sh
 
 CC = avr-gcc
+
 
 OBJCOPY = avr-objcopy
 OBJDUMP = avr-objdump

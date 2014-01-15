@@ -13,7 +13,7 @@
 #include <freeRTOSBoardDefs.h>
 #include <avr/interrupt.h>
 
-#include <i2cMultiMaster.h>
+#include "i2cMultiMaster.h"
 
 /* Create a Semaphore binary flag for the i2c Bus. To ensure only single access. */
 xSemaphoreHandle xI2CSemaphore;

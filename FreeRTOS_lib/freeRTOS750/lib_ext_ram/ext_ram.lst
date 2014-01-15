@@ -10,10 +10,10 @@
   88               		.ident	"GCC: (GNU) 4.7.2"
 DEFINED SYMBOLS
                             *ABS*:00000000 ext_ram.c
-     /tmp/ccKo9RTA.s:2      *ABS*:0000003e __SP_H__
-     /tmp/ccKo9RTA.s:3      *ABS*:0000003d __SP_L__
-     /tmp/ccKo9RTA.s:4      *ABS*:0000003f __SREG__
-     /tmp/ccKo9RTA.s:5      *ABS*:00000000 __tmp_reg__
-     /tmp/ccKo9RTA.s:6      *ABS*:00000001 __zero_reg__
+     /tmp/cct1LZ1c.s:2      *ABS*:0000003e __SP_H__
+     /tmp/cct1LZ1c.s:3      *ABS*:0000003d __SP_L__
+     /tmp/cct1LZ1c.s:4      *ABS*:0000003f __SREG__
+     /tmp/cct1LZ1c.s:5      *ABS*:00000000 __tmp_reg__
+     /tmp/cct1LZ1c.s:6      *ABS*:00000001 __zero_reg__
 
 NO UNDEFINED SYMBOLS
