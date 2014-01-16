@@ -14,6 +14,8 @@
 #include <ringBuffer.h>
 /* serial interface include file. */
 #include <lib_serial.h>
+/* ADC interface include file. */
+#include <digitalAnalog.h>
 
 xComPortHandle xSerialPort1;
 xComPortHandle xSerialPort2;
@@ -23,13 +25,20 @@ void vApplicationIdleHook( void );
 void vTask1( void *pvParameters )
 {
 	const char *pcTaskName = "Task 1 is running\n";
+	char charvar[10];
 	volatile unsigned long ul;
 	xSerialPort = xSerialPortInitMinimal( USART0, 115200, 10, 10); //  serial port: WantedBaud, TxQueueLength, RxQueueLength (8n1)
+	
 	/* As per most tasks, this task is implemented in an infinite loop. */
 	while(1)
-	{	
-		if(ringBuffer_IsEmpty( &(xSerialPort.xCharsForTx) ) )
-			xSerialxPrint(&xSerialPort,"Task1\n");
+	{	if(!analogIsConverting()) {
+			sprintf(&charvar,"%d\n",analogConversionResult());			
+			if(ringBuffer_IsEmpty( &(xSerialPort.xCharsForTx))) {
+				xSerialxPrintf(&xSerialPort,charvar);
+			}
+			setAnalogMode(MODE_8_BIT);
+			startAnalogConversion(0, EXTERNAL_REF);
+		}
 	}
 }
 void vTask2( void *pvParameters )
@@ -57,8 +66,7 @@ int main( void )
 	the return value of the xTaskCreate() call to ensure the task was created
 	successfully. */
 	
-	
-
+		
 	//avrSerialxPrint_P(&xSerialPort, PSTR("\r\nStart Processes-->\n")); // Ok, so we're alive...
 	
 	xTaskCreate(vTask1, /* Pointer to the function that implements the task. */

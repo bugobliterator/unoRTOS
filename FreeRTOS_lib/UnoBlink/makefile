@@ -49,7 +49,7 @@ DEMO_DIR = ../Common/Minimal
 SOURCE_DIR = ../freeRTOS750
 PORT_DIR = ../freeRTOS750/portable
 SRC	= \
-main1.c \
+SerialBlink.c \
 $(SOURCE_DIR)/tasks.c \
 $(SOURCE_DIR)/queue.c \
 $(SOURCE_DIR)/list.c \
