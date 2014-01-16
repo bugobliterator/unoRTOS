@@ -16,28 +16,30 @@
 #include <lib_serial.h>
 /* ADC interface include file. */
 #include <digitalAnalog.h>
-
+xQueueHandle xQueue;
 xComPortHandle xSerialPort1;
 xComPortHandle xSerialPort2;
 void vTask1( void *pvParameters );
 void vTask2( void *pvParameters );
+void vTask3( void *pvParameters );
+
 void vApplicationIdleHook( void );
 void vTask1( void *pvParameters )
 {
 	const char *pcTaskName = "Task 1 is running\n";
 	char charvar[10];
 	volatile unsigned long ul;
+	char *ReceivedValue;
+	portBASE_TYPE xStatus;
+	const portTickType xTicksToWait = 100;
 	xSerialPort = xSerialPortInitMinimal( USART0, 115200, 10, 10); //  serial port: WantedBaud, TxQueueLength, RxQueueLength (8n1)
 	
 	/* As per most tasks, this task is implemented in an infinite loop. */
 	while(1)
-	{	if(!analogIsConverting()) {
-			sprintf(&charvar,"%d\n",analogConversionResult());			
-			if(ringBuffer_IsEmpty( &(xSerialPort.xCharsForTx))) {
-				xSerialxPrintf(&xSerialPort,charvar);
-			}
-			setAnalogMode(MODE_8_BIT);
-			startAnalogConversion(0, EXTERNAL_REF);
+	{	
+		xStatus = xQueueReceive( xQueue, &ReceivedValue, xTicksToWait );
+		if(!analogIsConverting()) {
+				xSerialxPrintf(&xSerialPort,ReceivedValue);
 		}
 	}
 }
@@ -55,10 +57,24 @@ void vTask2( void *pvParameters )
 		for(i=0;i<10000;i++);
 	}
 }
+
+void vTask3( void *pvParameters )
+{
+	portBASE_TYPE xStatus;
+	const portTickType xTicksToWait = 100;
+	const char *st = "Sid";
+	for( ;; )
+	{
+		xStatus = xQueueSendToBack( xQueue, pvParameters, xTicksToWait );
+		taskYIELD();
+	}
+}
+
 void vApplicationIdleHook( void )
 {
 	vCoRoutineSchedule();
 }
+
 
 int main( void )
 {
@@ -68,7 +84,7 @@ int main( void )
 	
 		
 	//avrSerialxPrint_P(&xSerialPort, PSTR("\r\nStart Processes-->\n")); // Ok, so we're alive...
-	
+	xQueue = xQueueCreate( 10, sizeof( char ) );
 	xTaskCreate(vTask1, /* Pointer to the function that implements the task. */
 		"Task 1",/* Text name for the task. This is to facilitate debugging only. */
 		240,/* Stack depth in words. */
@@ -77,6 +93,9 @@ int main( void )
 		NULL ); /* We are not going to use the task handle. */
 	/* Create the other task in exactly the same way and at the same priority. */
 	xTaskCreate( vTask2, "Task 2", 240, NULL, 1, NULL );
+
+	xTaskCreate( vTask3, "Task 2", 240, NULL, 1, NULL );
+	
 	/* Start the scheduler so the tasks start executing. */
 	vTaskStartScheduler();
 	/* If all is well then main() will never reach here as the scheduler will

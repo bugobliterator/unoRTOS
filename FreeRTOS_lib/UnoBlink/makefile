@@ -49,7 +49,7 @@ DEMO_DIR = ../Common/Minimal
 SOURCE_DIR = ../freeRTOS750
 PORT_DIR = ../freeRTOS750/portable
 SRC	= \
-SerialBlink.c \
+Queue.c \
 $(SOURCE_DIR)/tasks.c \
 $(SOURCE_DIR)/queue.c \
 $(SOURCE_DIR)/list.c \
@@ -297,6 +297,7 @@ gccversion :
 
 # Convert ELF to COFF for use in debugging / simulating in
 # AVR Studio or VMLAB.
+
 COFFCONVERT=$(OBJCOPY) --debugging \
 	--change-section-address .data-0x800000 \
 	--change-section-address .bss-0x800000 \
