@@ -19,29 +19,36 @@
 /* MPU6050 interface include file */
 #include <MPU6050.h>
 #include <i2cMultiMaster.h>
-
+#include <twi.h>
 xComPortHandle xSerialPort1;
 xComPortHandle xSerialPort2;
-char charvar[4];
 
 void vTask1( void *pvParameters );
 void vTask2( void *pvParameters );
 void vApplicationIdleHook( void );
 void vTask1( void *pvParameters )
 {
+	//char charvar[4];
 	const char *pcTaskName = "Task 1 is running\n";
 	volatile unsigned long ul;
+	uint8_t msg = MPU6050_WHO_AM_I;
+	uint8_t msg1=0;
+	char charvar[3];
+	int state=9;
 	xSerialPort = xSerialPortInitMinimal( USART0, 115200, 10, 10); //  serial port: WantedBaud, TxQueueLength, RxQueueLength (8n1)
-	
+	twi_init();
 	/* As per most tasks, this task is implemented in an infinite loop. */
-	while(1)
-	{	if(!analogIsConverting()) {
-			sprintf(&charvar,"%d\n",analogConversionResult());			
-			if(ringBuffer_IsEmpty( &(xSerialPort.xCharsForTx))) {
-				xSerialxPrintf(&xSerialPort,charvar);
-			}
+	//while(1)
+	{	
+		state=twi_writeTo(MPU6050_I2C_ADDRESS,msg,1 , 1, 0);
+		state=twi_readFrom(MPU6050_I2C_ADDRESS,&msg1, 1, 0);
+		
+		sprintf(&charvar,"\r\n%d",state);
+		if(ringBuffer_IsEmpty( &(xSerialPort.xCharsForTx))) {
+			xSerialxPrintf(&xSerialPort,charvar);
 		}
 	}
+	while(1);
 }
 void vTask2( void *pvParameters )
 {
@@ -92,7 +99,7 @@ int main( void )
 		"Task 1",/* Text name for the task. This is to facilitate debugging only. */
 		240,/* Stack depth in words. */
 		NULL,/* We are not using the task parameter. */
-		1,/* This task will run at priority 1. */
+		2,/* This task will run at priority 1. */
 		NULL ); /* We are not going to use the task handle. */
 	/* Create the other task in exactly the same way and at the same priority. */
 	xTaskCreate( vTask2, "Task 2", 240, NULL, 1, NULL );

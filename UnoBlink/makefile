@@ -49,14 +49,13 @@ DEMO_DIR = ../Common/Minimal
 SOURCE_DIR = ../freeRTOS750
 PORT_DIR = ../freeRTOS750/portable
 SRC	= \
-SerialBlink.c \
+MPU6050.c \
 $(SOURCE_DIR)/tasks.c \
 $(SOURCE_DIR)/queue.c \
 $(SOURCE_DIR)/list.c \
 $(SOURCE_DIR)/croutine.c \
 $(PORT_DIR)/port.c \
 $(SOURCE_DIR)/lib_digitalAnalog/digitalAnalog.c \
-$(SOURCE_DIR)/lib_i2c/i2cMultiMaster.c \
 $(SOURCE_DIR)/lib_serial/lib_serial.c \
 $(SOURCE_DIR)/lib_servo/servoPWM.c \
 $(SOURCE_DIR)/lib_spi/spi.c \
@@ -64,6 +63,7 @@ $(SOURCE_DIR)/MemMang/heap_1.c \
 $(SOURCE_DIR)/lib_time/set_system_time.c \
 $(SOURCE_DIR)/lib_time/system_time.c \
 $(SOURCE_DIR)/lib_time/time.c \
+$(SOURCE_DIR)/utility/twi.c 
 #$(DEMO_DIR)/comtest.c
 
 
@@ -297,6 +297,8 @@ gccversion :
 
 # Convert ELF to COFF for use in debugging / simulating in
 # AVR Studio or VMLAB.
+
+
 
 COFFCONVERT=$(OBJCOPY) --debugging \
 	--change-section-address .data-0x800000 \

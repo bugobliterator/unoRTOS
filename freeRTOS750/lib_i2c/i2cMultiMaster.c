@@ -60,7 +60,7 @@ void I2C_Slave_Initialise( uint8_t I2C_ownAddress )
 Call this function to set up the TWI master to its initial standby state.
 Remember to enable interrupts from the main application after initialising the TWI.
 ****************************************************************************/
-void I2C_Master_Initialise( uint8_t I2C_ownAddress )
+void I2C_Master_Initialise(void)// uint8_t I2C_ownAddress )
 {
 	// The Semaphore has to be created to allow the I2C bus to be shared.
 	// Assuming the I2C bus will be shared.
@@ -75,7 +75,7 @@ void I2C_Master_Initialise( uint8_t I2C_ownAddress )
     TWSR = 0;                         				// no prescaler
     TWBR = ((F_CPU/SCL_CLOCK)-16)/2;  				// must be > 10 for stable operation
 
-	TWAR = I2C_ownAddress;                     		// Set own TWI slave address, in case it is called.
+//	TWAR = I2C_ownAddress;                     		// Set own TWI slave address, in case it is called.
 													// Accept TWI General Calls if ODD address.
 
 	TWDR = 0xff;                               		// Default content = SDA released.
@@ -156,8 +156,10 @@ then initialise the next operation and return.
 ****************************************************************************/
 void I2C_Master_Start_Transceiver_With_Data( uint8_t *msg, uint8_t msgSize )
 {
-	while ( I2C_Transceiver_Busy() );             // Wait until TWI is ready for next transmission.
-
+		
+	while ( I2C_Transceiver_Busy() );           // Wait until TWI is ready for next transmission.
+	
+	
 	I2C_msgSize = msgSize;                        // Number of data to transmit.
 	I2C_buf[0]  = msg[0];                         // Store slave address with R/W setting.
 
@@ -172,6 +174,7 @@ void I2C_Master_Start_Transceiver_With_Data( uint8_t *msg, uint8_t msgSize )
 		   (1<<TWIE)|(1<<TWINT)|                // Enable TWI Interrupt and clear the flag.
 		   (0<<TWEA)|(1<<TWSTA)|(0<<TWSTO)|     // Initiate a START condition.
 		   (0<<TWWC);                           //
+		
 }
 
 
@@ -212,9 +215,9 @@ If there was an error in the previous transmission the function will return the 
 ****************************************************************************/
 uint8_t I2C_Master_Get_Data_From_Transceiver( uint8_t *msg, uint8_t msgSize )
 {
-
+	
   while ( I2C_Transceiver_Busy() );             // Wait until TWI is ready for next transmission.
-
+	
   if( I2C_statusReg.lastTransOK )               // Last transmission completed successfully.
     for ( uint8_t i=0; i<msgSize; i++ )                 // Copy data from Transceiver buffer.
 			msg[ i ] = I2C_buf[ i ];
@@ -271,24 +274,37 @@ This function is the Interrupt Service Routine (ISR), and called when the TWI in
 that is whenever a TWI event has occurred. This function should not be called directly from the main
 application.
 ****************************************************************************/
+void debug(void)
+{
+	char charvar[6];
+	uint8_t state;
+	
+	state=TWSR;
+	sprintf(&charvar,"\r\n%d",state);
+	if(ringBuffer_IsEmpty( &(xSerialPort.xCharsForTx))) {
+		xSerialxPrintf(&xSerialPort,charvar);
+	}
+  
+}
 ISR(TWI_vect)
 {
   static uint8_t I2C_bufPtr;
-
+  
   switch (TWSR)
   {
 
-    case I2C_START:             // START has been transmitted
+    case I2C_START:            // START has been transmitted
     case I2C_REP_START:         // Repeated START has been transmitted
 		I2C_bufPtr = 0;         // Set buffer pointer to the TWI Address location
 
 
 // Master Transmitter
 
-    case I2C_MTX_ADR_ACK:       // SLA+W has been transmitted and ACK received
-    case I2C_MTX_DATA_ACK:      // Data byte has been transmitted and ACK received
+    case I2C_MTX_ADR_ACK:        // SLA+W has been transmitted and ACK received
+    case I2C_MTX_DATA_ACK:       // Data byte has been transmitted and ACK received
 		if (I2C_bufPtr < I2C_msgSize)
 		{
+			
 			TWDR = I2C_buf[I2C_bufPtr++];
 			TWCR = (1<<TWEN)|                                 // TWI Interface enabled
 				   (1<<TWIE)|(1<<TWINT)|                      // Enable TWI Interrupt and clear the flag to send byte
@@ -317,7 +333,7 @@ ISR(TWI_vect)
 
 // Master Receiver
 
-    case I2C_MRX_DATA_ACK:      // Data byte has been received and ACK transmitted
+    case I2C_MRX_DATA_ACK:     // Data byte has been received and ACK transmitted
 		I2C_buf[I2C_bufPtr++] = TWDR;
 
     case I2C_MRX_ADR_ACK:       // SLA+R has been transmitted and ACK received

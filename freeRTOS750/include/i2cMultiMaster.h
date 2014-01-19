@@ -18,7 +18,7 @@ extern "C" {
 #include <task.h>
 #include <queue.h>
 #include <semphr.h>
-
+#include <lib_serial.h>
 /****************************************************************************
   I2C Status/Control register definitions
 ****************************************************************************/
@@ -68,14 +68,14 @@ void I2C_Slave_Start_Transceiver( void );
 void I2C_Slave_Start_Transceiver_With_Data( uint8_t *, uint8_t );
 uint8_t I2C_Slave_Get_Data_From_Transceiver( uint8_t *, uint8_t );
 
-void I2C_Master_Initialise( uint8_t );
+void I2C_Master_Initialise(void);// uint8_t );
 void I2C_Master_Start_Transceiver( void );
 void I2C_Master_Start_Transceiver_With_Data( uint8_t *, uint8_t );
 uint8_t I2C_Master_Get_Data_From_Transceiver( uint8_t *, uint8_t );
 
 uint8_t I2C_Check_Free_After_Stop (void);
 uint8_t I2C_Get_State_Info( void );
-
+void debug(void);
 /****************************************************************************
   Bit and byte definitions
 ****************************************************************************/
