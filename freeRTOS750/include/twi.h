@@ -37,7 +37,7 @@
   #define TWI_MTX   2
   #define TWI_SRX   3
   #define TWI_STX   4
-  
+  #define BUFFER_LENGTH TWI_BUFFER_LENGTH
   void twi_init(void);
   void twi_setAddress(uint8_t);
   uint8_t twi_readFrom(uint8_t, uint8_t*, uint8_t, uint8_t);
@@ -48,6 +48,15 @@
   void twi_reply(uint8_t);
   void twi_stop(void);
   void twi_releaseBus(void);
+  void beginTransmission(uint8_t address);
+  size_t write(uint8_t data);
+  size_t writemany(const uint8_t *data, size_t quantity);
+  int read(void);
+  int available(void);
+  uint8_t requestFrom(uint8_t address, uint8_t quantity, uint8_t sendStop);
+  uint8_t endTransmission(uint8_t sendStop);
+  size_t writemany(const uint8_t *data, size_t quantity);
+  size_t write(uint8_t data);
 
 #endif
 

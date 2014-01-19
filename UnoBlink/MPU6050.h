@@ -574,7 +574,7 @@
 
 typedef union accel_t_gyro_union
 {
-  struct
+  struct 
   {
     uint8_t x_accel_h;
     uint8_t x_accel_l;
@@ -601,5 +601,9 @@ typedef union accel_t_gyro_union
     int16_t y_gyro;
     int16_t z_gyro;
   } value;
-};
+}accel_t_gyro_u;
+
+int MPU6050_read(int start, uint8_t *buffer, int size);
+int MPU6050_write(int start, const uint8_t *pData, int size);
+int MPU6050_write_reg(int reg, uint8_t data);
 

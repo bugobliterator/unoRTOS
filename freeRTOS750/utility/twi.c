@@ -27,6 +27,11 @@
 #include <compat/twi.h>
 #include "Arduino.h" // for digitalWrite
 #include <freeRTOSBoardDefs.h>
+#include <FreeRTOS.h>
+#include <task.h>
+#include <queue.h>
+#include <semphr.h>
+#include <ringBuffer.h>
 #ifndef cbi
 #define cbi(sfr, bit) (_SFR_BYTE(sfr) &= ~_BV(bit))
 #endif
@@ -56,9 +61,11 @@ static volatile uint8_t twi_txBufferLength;
 
 static uint8_t twi_rxBuffer[TWI_BUFFER_LENGTH];
 static volatile uint8_t twi_rxBufferIndex;
+static volatile uint8_t twi_rxBufferLength;
 
 static volatile uint8_t twi_error;
-
+static volatile uint8_t transmitting;
+static volatile uint8_t txAddress;
 /* 
  * Function twi_init
  * Desc     readys twi pins and sets twi bitrate
@@ -67,6 +74,8 @@ static volatile uint8_t twi_error;
  */
 void twi_init(void)
 {
+  
+  portENTER_CRITICAL();
   // initialize state
   twi_state = TWI_READY;
   twi_sendStop = true;		// default value
@@ -88,6 +97,7 @@ void twi_init(void)
 
   // enable twi module, acks, and twi interrupt
   TWCR = _BV(TWEN) | _BV(TWIE) | _BV(TWEA);
+	portEXIT_CRITICAL();
 }
 
 /* 
@@ -358,6 +368,98 @@ void twi_releaseBus(void)
 
   // update twi state
   twi_state = TWI_READY;
+}
+/*Wire library functions*/
+void beginTransmission(uint8_t address)
+{
+  // indicate that we are transmitting
+  transmitting = 1;
+  // set address of targeted slave
+  txAddress = address;
+  // reset tx buffer iterator vars
+  twi_txBufferIndex = 0;
+  twi_txBufferLength = 0;
+}
+
+size_t write(uint8_t data)
+{
+  if(transmitting){
+  // in master transmitter mode
+    // don't bother if buffer is full
+    if(twi_txBufferLength >= BUFFER_LENGTH){
+      return 0;
+    }
+    // put byte in tx buffer
+    twi_txBuffer[twi_txBufferIndex] = data;
+    ++twi_txBufferIndex;
+    // update amount in buffer   
+    twi_txBufferLength = twi_txBufferIndex;
+  }else{
+  // in slave send mode
+    // reply to master
+    twi_transmit(&data, 1);
+  }
+  return 1;
+}
+
+size_t writemany(const uint8_t *data, size_t quantity)
+{
+  if(transmitting){
+  // in master transmitter mode
+    for(size_t i = 0; i < quantity; ++i){
+      write(data[i]);
+    }
+  }else{
+  // in slave send mode
+    // reply to master
+    twi_transmit(data, quantity);
+  }
+  return quantity;
+}
+
+uint8_t endTransmission(uint8_t sendStop)
+{
+  // transmit buffer (blocking)
+  int8_t ret = twi_writeTo(txAddress, twi_txBuffer, twi_txBufferLength, 1, sendStop);
+  // reset tx buffer iterator vars
+  twi_txBufferIndex = 0;
+  twi_txBufferLength = 0;
+  // indicate that we are done transmitting
+  transmitting = 0;
+  return ret;
+}
+
+uint8_t requestFrom(uint8_t address, uint8_t quantity, uint8_t sendStop)
+{
+  // clamp to buffer length
+  if(quantity > BUFFER_LENGTH){
+    quantity = BUFFER_LENGTH;
+  }
+  // perform blocking read into buffer
+  uint8_t read = twi_readFrom(address, twi_rxBuffer, quantity, sendStop);
+  // set rx buffer iterator vars
+  twi_rxBufferIndex = 0;
+  twi_rxBufferLength = read;
+
+  return read;
+}
+
+int available(void)
+{
+  return twi_rxBufferLength - twi_rxBufferIndex;
+}
+
+int read(void)
+{
+  int value = -1;
+  
+  // get each successive byte on each call
+  if(twi_rxBufferIndex < twi_rxBufferLength){
+    value = twi_rxBuffer[twi_rxBufferIndex];
+    ++twi_rxBufferIndex;
+  }
+
+  return value;
 }
 
 ISR(TWI_vect)
